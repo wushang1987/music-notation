@@ -41,6 +41,11 @@ const AppContent = () => {
                 <ScoreEditor />
               </PrivateRoute>
             } />
+            <Route path="/edit/:id" element={
+              <PrivateRoute>
+                <ScoreEditor />
+              </PrivateRoute>
+            } />
             <Route path="/created" element={
               <PrivateRoute>
                 <Home title="My Scores" endpoint="/scores/my" />

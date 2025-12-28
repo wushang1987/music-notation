@@ -1,31 +1,120 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import abcjs from 'abcjs';
+import 'abcjs/abcjs-audio.css';
 import api from '../api';
 
 const ScoreEditor = () => {
+    const { id } = useParams();
+    const isEdit = !!id;
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |');
     const [isPublic, setIsPublic] = useState(false);
+    const [loading, setLoading] = useState(isEdit);
     const navigate = useNavigate();
 
     useEffect(() => {
-        abcjs.renderAbc('paper', content);
-    }, [content]);
+        if (isEdit) {
+            const fetchScore = async () => {
+                try {
+                    const { data } = await api.get(`/scores/${id}`);
+                    setTitle(data.title);
+                    setContent(data.content);
+                    setIsPublic(data.isPublic);
+                } catch (err) {
+                    console.error('Failed to fetch score', err);
+                    alert('Failed to load score for editing');
+                    navigate('/');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchScore();
+        }
+    }, [id, isEdit, navigate]);
+
+    useEffect(() => {
+        if (!loading) {
+            const visualObj = abcjs.renderAbc('paper', content, {
+                responsive: 'resize',
+                add_classes: true
+            })[0];
+
+            if (abcjs.synth.supportsAudio()) {
+                const synthControl = new abcjs.synth.SynthController();
+
+                const cursorControl = {
+                    onStart: () => {
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+                    },
+                    onEvent: (ev) => {
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+
+                        if (ev && ev.elements) {
+                            ev.elements.forEach(item => {
+                                if (Array.isArray(item) || item instanceof NodeList) {
+                                    Array.from(item).forEach(subEl => {
+                                        if (subEl && subEl.classList) {
+                                            subEl.classList.add('highlight');
+                                        }
+                                    });
+                                } else if (item && item.classList) {
+                                    item.classList.add('highlight');
+                                }
+                            });
+                        }
+                    },
+                    onFinished: () => {
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+                    }
+                };
+
+                synthControl.load("#audio",
+                    cursorControl,
+                    {
+                        displayLoop: true,
+                        displayRestart: true,
+                        displayPlay: true,
+                        displayProgress: true,
+                        displayWarp: true
+                    }
+                );
+
+                const createSynth = new abcjs.synth.CreateSynth();
+                createSynth.init({ visualObj: visualObj }).then(() => {
+                    synthControl.setTune(visualObj, false);
+                }).catch((error) => {
+                    console.warn("Audio problem:", error);
+                });
+            } else {
+                const audioEl = document.querySelector("#audio");
+                if (audioEl) audioEl.innerHTML = "Audio not supported";
+            }
+        }
+    }, [content, loading]);
 
     const handleSave = async () => {
         try {
-            await api.post('/scores', { title, content, isPublic });
-            navigate('/');
+            if (isEdit) {
+                await api.put(`/scores/${id}`, { title, content, isPublic });
+            } else {
+                await api.post('/scores', { title, content, isPublic });
+            }
+            navigate(isEdit ? `/score/${id}` : '/');
         } catch (err) {
             alert('Failed to save score');
         }
     };
 
+    if (loading) return <div className="p-8 text-center">Loading score...</div>;
+
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/2">
-                <h1 className="text-2xl font-bold mb-4">Create Score</h1>
+                <h1 className="text-2xl font-bold mb-4">{isEdit ? 'Edit Score' : 'Create Score'}</h1>
                 <div className="mb-4">
                     <label className="block mb-1">Title</label>
                     <input
@@ -54,10 +143,13 @@ const ScoreEditor = () => {
                         <span className="ml-2">Public</span>
                     </label>
                 </div>
-                <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Score</button>
+                <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    {isEdit ? 'Update Score' : 'Save Score'}
+                </button>
             </div>
             <div className="w-full md:w-1/2">
                 <h2 className="text-xl font-bold mb-4">Preview</h2>
+                <div id="audio" className="w-full mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100"></div>
                 <div id="paper" className="border p-4 bg-white min-h-[300px]"></div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import abcjs from 'abcjs';
 import 'abcjs/abcjs-audio.css';
 import api from '../api';
@@ -138,6 +138,19 @@ const ScoreView = () => {
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
+                                {user && (user.role === 'admin' || (score.owner && (
+                                    (typeof score.owner === 'object' && (score.owner._id === user.id || score.owner._id === user._id)) ||
+                                    (typeof score.owner === 'string' && (score.owner === user.id || score.owner === user._id))
+                                ))) && (
+                                        <Link
+                                            to={`/edit/${id}`}
+                                            className="flex items-center gap-2 px-4 py-2 rounded-full border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 shadow-sm"
+                                            title="Edit Score"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                            <span className="font-semibold text-sm">Edit</span>
+                                        </Link>
+                                    )}
                                 <button
                                     onClick={handleLike}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 ${hasLiked ? 'bg-red-50 border-red-200 text-red-500 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
