@@ -169,10 +169,61 @@ def scrape_tune_page(url):
             "isPublic": True,
             "visibility": "public"
         }
+        
+        if not validate_tune_data(data):
+             print(f"Skipping invalid data for {url}")
+             return None
+             
+        return data
 
     except Exception as e:
         print(f"Error scraping {url}: {e}")
         return None
+
+def validate_tune_data(data):
+    if not data:
+        return False
+        
+    # Check title
+    if not data.get('title') or data['title'] == "Unknown" or len(data['title']) < 2:
+        return False
+        
+    # Check ABC content
+    content = data.get('content', '')
+    if "X:" not in content or "K:" not in content:
+        return False
+        
+    # Ensure there are notes after the K: field
+    # Split by K: to find the body. Note: K: might appear multiple times but usually denotes key change or start.
+    # We want to ensure there is at least some content line that is not a header field.
+    
+    lines = content.splitlines()
+    has_k = False
+    has_notes = False
+    
+    for i, line in enumerate(lines):
+        if line.startswith("K:"):
+            has_k = True
+            # Check lines after K:
+            rest = lines[i+1:]
+            for r in rest:
+                r = r.strip()
+                if not r:
+                    continue
+                # If a line doesn't start with a header letter followed by colon, it's likely notes.
+                # Headers: X, T, M, L, Q, P, C, Z, N, G, H, I, K, O, R, S, U, W, B, D, F
+                # Note: some legitimate note lines might start with a letter and colon if inline fields, but rare to start line.
+                # Heuristic: If it doesn't look like X: or T:, etc.
+                if not re.match(r'^[A-Z]:', r):
+                    has_notes = True
+                    break
+            if has_notes:
+                break
+                
+    if not has_notes:
+         return False
+
+    return True
 
 def save_to_mongo(data):
     if not data:
