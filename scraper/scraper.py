@@ -7,10 +7,30 @@ from datetime import datetime
 import argparse
 import re
 
+import json
+import os
+
 # MongoDB Setup
 MONGO_URI = "mongodb://localhost:27017/"
 DB_NAME = "music-notation"
 COLLECTION_NAME = "scores"
+STATE_FILE = ".scraper_state.json"
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading state: {e}")
+    return {"last_browse_page": -1, "last_search_page": {}}
+
+def save_state(state):
+    try:
+        with open(STATE_FILE, 'w') as f:
+            json.dump(state, f, indent=4)
+    except Exception as e:
+        print(f"Error saving state: {e}")
 
 def get_mongo_collection():
     client = MongoClient(MONGO_URI)
@@ -150,18 +170,41 @@ def save_to_mongo(data):
     )
     print(f"Saved/Updated: {data['title']}")
 
-def browse_tunes(start_page=0, page_limit=1):
+def browse_tunes(start_page=0, page_limit=None, end_page=None):
     base_url = "https://abcnotation.com/browseTunes"
     results = []
     
-    for i in range(page_limit):
-        page_num = start_page + i
+    current_page = start_page
+    pages_scraped = 0
+    
+    state = load_state()
+    
+    while True:
+        # Check limits
+        if page_limit is not None and pages_scraped >= page_limit:
+            break
+        if end_page is not None and current_page > end_page:
+            break
+            
         # Format page number as 4 digits based on observed URL pattern (e.g. n=0021)
-        page_str = f"{page_num:04d}"
+        page_str = f"{current_page:04d}"
         params = {'n': page_str}
         
         print(f"Browsing page {page_str}...")
-        results.extend(extract_tune_urls(base_url, params))
+        page_urls = extract_tune_urls(base_url, params)
+        
+        if not page_urls:
+            print(f"No more tunes found on page {page_str}. Stopping.")
+            break
+            
+        results.extend(page_urls)
+        
+        # Save state after finding URLs
+        state["last_browse_page"] = current_page
+        save_state(state)
+        
+        current_page += 1
+        pages_scraped += 1
         
     return results
 
@@ -214,18 +257,34 @@ def extract_tune_urls(base_url, params):
 def main():
     parser = argparse.ArgumentParser(description="Scrape ABC tunes")
     parser.add_argument("--query", default="jig", help="Search query (ignored if --browse is used)")
-    parser.add_argument("--limit", type=int, default=1, help="Number of search result pages or browse pages to scrape")
+    parser.add_argument("--limit", type=int, help="Number of search result pages or browse pages to scrape")
     parser.add_argument("--browse", action="store_true", help="Browse tunes instead of searching")
-    parser.add_argument("--start-page", type=int, default=0, help="Starting page number for browse mode")
+    parser.add_argument("--start-page", type=int, help="Starting page number for browse mode")
+    parser.add_argument("--end-page", type=int, help="Ending page number for browse mode")
+    parser.add_argument("--resume", action="store_true", help="Resume from the last successfully scraped page")
     
     args = parser.parse_args()
     
+    state = load_state()
+    
     if args.browse:
-        print(f"Starting browse mode from page {args.start_page}")
-        tune_urls = browse_tunes(args.start_page, args.limit)
+        start_page = args.start_page
+        if args.resume:
+            # If resume is set, start from the next page after the last one saved
+            last_page = state.get("last_browse_page", -1)
+            start_page = last_page + 1
+            print(f"Resuming browse mode from page {start_page}")
+        elif start_page is None:
+            start_page = 0
+            
+        print(f"Starting browse mode from page {start_page}")
+        tune_urls = browse_tunes(start_page, args.limit, args.end_page)
     else:
+        # Search mode logic could be similarly expanded if needed
+        # For now, keeping it simple or matching browse logic if requested later
+        limit = args.limit if args.limit is not None else 1
         print(f"Starting search mode for '{args.query}'")
-        tune_urls = search_tunes(args.query, args.limit)
+        tune_urls = search_tunes(args.query, limit)
         
     print(f"Found {len(tune_urls)} tunes to scrape.")
     
