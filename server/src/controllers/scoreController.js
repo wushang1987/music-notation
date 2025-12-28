@@ -113,4 +113,15 @@ const toggleLike = async (req, res) => {
     }
 };
 
-module.exports = { createScore, getScores, getMyScores, getScoreById, updateScore, deleteScore, toggleLike };
+
+const getLikedScores = async (req, res) => {
+    try {
+        const scores = await Score.find({ likes: req.user.id }).populate('owner', 'username');
+        res.json(scores);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching liked scores', error: error.message });
+    }
+};
+
+module.exports = { createScore, getScores, getMyScores, getLikedScores, getScoreById, updateScore, deleteScore, toggleLike };
+

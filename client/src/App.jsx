@@ -14,23 +14,40 @@ const PrivateRoute = ({ children }) => {
   return user ? children : <Navigate to="/login" />;
 };
 
+import Sidebar from './components/Sidebar';
+
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
           <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/create" element={
-              <PrivateRoute>
-                <ScoreEditor />
-              </PrivateRoute>
-            } />
-            <Route path="/score/:id" element={<ScoreView />} />
-          </Routes>
+          <div className="flex flex-1 container mx-auto max-w-7xl">
+            <Sidebar />
+            <main className="flex-1 overflow-x-hidden">
+              <Routes>
+                <Route path="/" element={<Home title="All Scores" endpoint="/scores" />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/create" element={
+                  <PrivateRoute>
+                    <ScoreEditor />
+                  </PrivateRoute>
+                } />
+                <Route path="/created" element={
+                  <PrivateRoute>
+                    <Home title="My Created Scores" endpoint="/scores/my" />
+                  </PrivateRoute>
+                } />
+                <Route path="/liked" element={
+                  <PrivateRoute>
+                    <Home title="My Liked Scores" endpoint="/scores/liked" />
+                  </PrivateRoute>
+                } />
+                <Route path="/score/:id" element={<ScoreView />} />
+              </Routes>
+            </main>
+          </div>
         </div>
       </AuthProvider>
     </Router>
