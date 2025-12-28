@@ -10,8 +10,8 @@ body {
 }
 
 .highlight {
-  fill: #0d9488 !important;
+  fill: #f936f9 !important;
   /* teal-600 */
-  stroke: #0d9488 !important;
+  stroke: #f936f9 !important;
   font-weight: bold;
 }
