@@ -161,7 +161,7 @@ def scrape_tune_page(url):
                 title = line[2:].strip()
                 break
                 
-        return {
+        data = {
             "source_url": url,
             "title": title,
             "content": abc_content,
