@@ -14,6 +14,19 @@ const protect = (req, res, next) => {
     }
 };
 
+const resolveUser = (req, res, next) => {
+    const token = req.header('Authorization')?.split(' ')[1];
+    if (token) {
+        try {
+            const verified = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = verified;
+        } catch (err) {
+            // Silently fail if token is invalid, req.user remains undefined
+        }
+    }
+    next();
+};
+
 const admin = (req, res, next) => {
     if (req.user && req.user.role === 'admin') {
         next();
@@ -22,4 +35,4 @@ const admin = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin };
+module.exports = { protect, admin, resolveUser };

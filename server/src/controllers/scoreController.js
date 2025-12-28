@@ -47,7 +47,9 @@ const getScoreById = async (req, res) => {
 
         // access check
         const isOwner = score.owner && req.user && (score.owner._id.toString() === req.user.id || score.owner.toString() === req.user.id);
-        if (!score.isPublic && !isOwner) {
+        const isAdmin = req.user && req.user.role === 'admin';
+
+        if (!score.isPublic && !isOwner && !isAdmin) {
             return res.status(403).json({ message: 'Not authorized to view this score' });
         }
 
