@@ -17,95 +17,7 @@ def get_mongo_collection():
     db = client[DB_NAME]
     return db[COLLECTION_NAME]
 
-def search_tunes(query, page_limit=1):
-    base_url = "https://abcnotation.com/searchTunes"
-    results = []
-    
-    for page in range(page_limit):
-        # The site uses 's' parameter for pagination (0, 10, 20...), so we multiply page index by 10
-        start_index = page * 10 
-        params = {
-            'q': query,
-            'f': 'c',
-            'o': 'a',
-            's': start_index 
-        }
-        
-        print(f"Searching page {page + 1}... (start={start_index})")
-        response = requests.get(base_url, params=params)
-        
-        if response.status_code != 200:
-            print(f"Failed to fetch search results: {response.status_code}")
-            continue
-            
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # It seems the result items are h3 headers
-        headers = soup.find_all('h3')
 
-        if not headers:
-            print("No more results found.")
-            break
-
-        for header in headers:
-            # The structure seems to be:
-            # ### 1. 100 Pipers
-            # [tune page](url)
-            # ...
-            
-            # The next sibling of the header usually contains the links
-            # But based on the text structure analysis, it might be separate paragraphs or div soup
-            
-            # Let's verify via the DOM analysis I did:
-            # The view_content_chunk showed markdown, which makes it a bit abstract.
-            # But typically, headers are followed by content.
-            # In the raw HTML, the tune titles are likely in <h3> tags, and following links are anchors.
-            
-            # Find the 'tune page' link
-            # We look for the link with text 'tune page' within the siblings of the header
-            # However, beautifulsoup usage on raw HTML is more direct.
-            
-            # The link usually has text "tune page"
-            # It's better to search for a specific pattern if simple traversal fails.
-            
-            # Since the header is a starting point, let's look for the next 'a' tag with href containing 'tunePage'
-            
-            link = None
-            curr = header.next_sibling
-            while curr:
-                if curr.name == 'a' and 'tunePage' in curr.get('href', ''):
-                    link = curr
-                    break
-                if curr.name == 'h3': # hit next item
-                    break
-                curr = curr.next_sibling
-                
-                # In parsed HTML, there might be nav strings (newlines)
-                if hasattr(curr, 'next_element'):
-                   # deeper search not needed if structure is flat-ish
-                   pass
-
-            # Alternative approach: Find all links to tunePage on the page
-            pass
-        
-        # New strategy: Find all 'a' tags that link to tunePage
-        # The URL looks like: https://abcnotation.com/tunePage?a=...
-        
-        tune_links = soup.find_all('a', href=re.compile(r'tunePage\?a='))
-        
-        # Filter out duplicates and 'advanced' search link if any
-        seen_links = set()
-        for link in tune_links:
-            href = link['href']
-            # fix relative url if needed
-            if href.startswith('/'):
-                href = "https://abcnotation.com" + href
-                
-            if href not in seen_links and "richardrobinson.tunebook.org.uk" not in href: # Example exclusion validation? No, we want all sources.
-                seen_links.add(href)
-                results.append(href)
-                
-    return results
 
 def scrape_tune_page(url):
     print(f"Scraping tune page: {url}")
@@ -238,14 +150,83 @@ def save_to_mongo(data):
     )
     print(f"Saved/Updated: {data['title']}")
 
+def browse_tunes(start_page=0, page_limit=1):
+    base_url = "https://abcnotation.com/browseTunes"
+    results = []
+    
+    for i in range(page_limit):
+        page_num = start_page + i
+        # Format page number as 4 digits based on observed URL pattern (e.g. n=0021)
+        page_str = f"{page_num:04d}"
+        params = {'n': page_str}
+        
+        print(f"Browsing page {page_str}...")
+        results.extend(extract_tune_urls(base_url, params))
+        
+    return results
+
+def search_tunes(query, page_limit=1):
+    base_url = "https://abcnotation.com/searchTunes"
+    results = []
+    
+    for page in range(page_limit):
+        start_index = page * 10
+        params = {
+            'q': query,
+            'f': 'c',
+            'o': 'a',
+            's': start_index 
+        }
+        
+        print(f"Searching page {page + 1}... (start={start_index})")
+        results.extend(extract_tune_urls(base_url, params))
+        
+    return results
+
+def extract_tune_urls(base_url, params):
+    try:
+        response = requests.get(base_url, params=params)
+        if response.status_code != 200:
+            print(f"Failed to fetch {base_url}: {response.status_code}")
+            return []
+            
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find all 'a' tags that link to tunePage
+        tune_links = soup.find_all('a', href=re.compile(r'tunePage\?a='))
+        
+        urls = []
+        seen_links = set()
+        for link in tune_links:
+            href = link['href']
+            if href.startswith('/'):
+                href = "https://abcnotation.com" + href
+                
+            if href not in seen_links:
+                seen_links.add(href)
+                urls.append(href)
+                
+        return urls
+    except Exception as e:
+        print(f"Error extracting URLs: {e}")
+        return []
+
 def main():
     parser = argparse.ArgumentParser(description="Scrape ABC tunes")
-    parser.add_argument("--query", default="jig", help="Search query")
-    parser.add_argument("--limit", type=int, default=1, help="Number of search result pages to scrape")
+    parser.add_argument("--query", default="jig", help="Search query (ignored if --browse is used)")
+    parser.add_argument("--limit", type=int, default=1, help="Number of search result pages or browse pages to scrape")
+    parser.add_argument("--browse", action="store_true", help="Browse tunes instead of searching")
+    parser.add_argument("--start-page", type=int, default=0, help="Starting page number for browse mode")
     
     args = parser.parse_args()
     
-    tune_urls = search_tunes(args.query, args.limit)
+    if args.browse:
+        print(f"Starting browse mode from page {args.start_page}")
+        tune_urls = browse_tunes(args.start_page, args.limit)
+    else:
+        print(f"Starting search mode for '{args.query}'")
+        tune_urls = search_tunes(args.query, args.limit)
+        
     print(f"Found {len(tune_urls)} tunes to scrape.")
     
     for url in tune_urls:
