@@ -18,14 +18,32 @@ const createScore = async (req, res) => {
 
 const getScores = async (req, res) => {
     try {
-        // Get all public scores OR my scores
-        // For now, let's just return public scores and my scores
-        const filter = req.user && req.user.role === 'admin'
+        const { search, page = 1, limit = 12 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Base filter for public scores or owned scores
+        let filter = req.user && req.user.role === 'admin'
             ? {}
             : { $or: [{ isPublic: true }, { owner: req.user ? req.user.id : null }] };
 
-        const scores = await Score.find(filter).populate('owner', 'username');
-        res.json(scores);
+        // Add search filtering if provided
+        if (search) {
+            filter.title = { $regex: search, $options: 'i' };
+        }
+
+        const total = await Score.countDocuments(filter);
+        const scores = await Score.find(filter)
+            .populate('owner', 'username')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        res.json({
+            scores,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching scores', error: error.message });
     }
@@ -33,8 +51,28 @@ const getScores = async (req, res) => {
 
 const getMyScores = async (req, res) => {
     try {
-        const scores = await Score.find({ owner: req.user.id });
-        res.json(scores);
+        const { search, page = 1, limit = 12 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        let filter = { owner: req.user.id };
+
+        if (search) {
+            filter.title = { $regex: search, $options: 'i' };
+        }
+
+        const total = await Score.countDocuments(filter);
+        const scores = await Score.find(filter)
+            .populate('owner', 'username')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        res.json({
+            scores,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching scores', error: error.message });
     }
@@ -120,8 +158,28 @@ const toggleLike = async (req, res) => {
 
 const getLikedScores = async (req, res) => {
     try {
-        const scores = await Score.find({ likes: req.user.id }).populate('owner', 'username');
-        res.json(scores);
+        const { search, page = 1, limit = 12 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        let filter = { likes: req.user.id };
+
+        if (search) {
+            filter.title = { $regex: search, $options: 'i' };
+        }
+
+        const total = await Score.countDocuments(filter);
+        const scores = await Score.find(filter)
+            .populate('owner', 'username')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        res.json({
+            scores,
+            total,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching liked scores', error: error.message });
     }
