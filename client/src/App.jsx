@@ -43,7 +43,7 @@ const AppContent = () => {
             } />
             <Route path="/created" element={
               <PrivateRoute>
-                <Home title="My Created Scores" endpoint="/scores/my" />
+                <Home title="My Scores" endpoint="/scores/my" />
               </PrivateRoute>
             } />
             <Route path="/liked" element={
