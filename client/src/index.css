@@ -8,3 +8,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.highlight {
+  fill: #0d9488 !important;
+  /* teal-600 */
+  stroke: #0d9488 !important;
+  font-weight: bold;
+}

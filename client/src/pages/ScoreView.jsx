@@ -1,6 +1,7 @@
 import { useEffect, useState, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import abcjs from 'abcjs';
+import 'abcjs/abcjs-audio.css';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -27,7 +28,53 @@ const ScoreView = () => {
 
     useEffect(() => {
         if (score) {
-            abcjs.renderAbc('paper', score.content, { responsive: 'resize' });
+            const visualObj = abcjs.renderAbc('paper', score.content, {
+                responsive: 'resize',
+                add_classes: true
+            })[0];
+
+            if (abcjs.synth.supportsAudio()) {
+                const synthControl = new abcjs.synth.SynthController();
+                synthControl.load("#audio",
+                    {
+                        displayLoop: true,
+                        displayRestart: true,
+                        displayPlay: true,
+                        displayProgress: true,
+                        displayWarp: true
+                    }
+                );
+
+                const cursorControl = {
+                    onStart: () => {
+                        console.log("onStart");
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+                    },
+                    onEvent: (ev) => {
+                        console.log("onEvent", ev);
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+                        if (ev && ev.elements) {
+                            ev.elements.forEach(el => el.classList.add('highlight'));
+                        }
+                    },
+                    onFinished: () => {
+                        console.log("onFinished");
+                        const els = document.querySelectorAll('.highlight');
+                        els.forEach(el => el.classList.remove('highlight'));
+                    }
+                };
+
+                const createSynth = new abcjs.synth.CreateSynth();
+                createSynth.init({ visualObj: visualObj }).then(() => {
+                    synthControl.setTune(visualObj, false, { cursorControl: cursorControl });
+                }).catch((error) => {
+                    console.warn("Audio problem:", error);
+                });
+            } else {
+                document.querySelector("#audio").innerHTML = "<div class='text-red-500'>Audio not supported by this browser.</div>";
+            }
         }
     }, [score]);
 
@@ -53,6 +100,7 @@ const ScoreView = () => {
                         <h1 className="text-3xl font-bold">{score.title}</h1>
                         <p className="text-gray-600">By {score.owner?.username || 'Music Notation'}</p>
                     </div>
+                    <div id="audio" className="w-full mb-4"></div>
                     <div id="paper" className="w-full overflow-x-auto"></div>
                 </div>
 
