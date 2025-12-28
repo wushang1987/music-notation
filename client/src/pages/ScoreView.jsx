@@ -26,8 +26,10 @@ const ScoreView = () => {
         fetchScoreAndComments();
     }, [id]);
 
+    const [activeTab, setActiveTab] = useState('notation');
+
     useEffect(() => {
-        if (score) {
+        if (score && activeTab === 'notation') {
             const visualObj = abcjs.renderAbc('paper', score.content, {
                 responsive: 'resize',
                 add_classes: true
@@ -43,7 +45,6 @@ const ScoreView = () => {
                         els.forEach(el => el.classList.remove('highlight'));
                     },
                     onEvent: (ev) => {
-                        // console.log("onEvent", ev);
                         const els = document.querySelectorAll('.highlight');
                         els.forEach(el => el.classList.remove('highlight'));
 
@@ -86,10 +87,11 @@ const ScoreView = () => {
                     console.warn("Audio problem:", error);
                 });
             } else {
-                document.querySelector("#audio").innerHTML = "<div class='text-red-500'>Audio not supported by this browser.</div>";
+                const audioEl = document.querySelector("#audio");
+                if (audioEl) audioEl.innerHTML = "<div class='text-red-500'>Audio not supported by this browser.</div>";
             }
         }
-    }, [score]);
+    }, [score, activeTab]);
 
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
@@ -120,29 +122,70 @@ const ScoreView = () => {
 
     const hasLiked = user && score?.likes?.some(uid => uid === user.id || uid === user._id);
 
-    if (!score) return <div>Loading...</div>;
+    if (!score) return <div className="p-10 text-center font-bold">Loading Score...</div>;
 
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-2/3">
-                <div className="border p-4 bg-white shadow-sm mb-6">
-                    <div className="flex justify-between items-center mb-4">
-                        <h1 className="text-3xl font-bold">{score.title}</h1>
-                        <p className="text-gray-600">By {score.owner?.username || 'Music Notation'}</p>
-                        <div className="flex items-center gap-2">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                    <div className="p-6 border-b border-gray-100">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h1 className="text-3xl font-bold text-gray-900 mb-1">{score.title}</h1>
+                                <p className="text-gray-500 flex items-center">
+                                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                    By <span className="font-medium text-gray-800 ml-1">{score.owner?.username || 'Music Notation'}</span>
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={handleLike}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 ${hasLiked ? 'bg-red-50 border-red-200 text-red-500 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                    title={hasLiked ? 'Unlike' : 'Like'}
+                                >
+                                    <span className="text-lg">{hasLiked ? '❤️' : '🤍'}</span>
+                                    <span className="font-bold">{score.likes?.length || 0}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tabs Navigation */}
+                        <div className="flex border-b border-gray-100 -mb-6 mt-4">
                             <button
-                                onClick={handleLike}
-                                className={`flex items-center gap-1 px-3 py-1 rounded border ${hasLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                                    }`}
-                                title={hasLiked ? 'Unlike' : 'Like'}
+                                onClick={() => setActiveTab('notation')}
+                                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === 'notation' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                <span className="text-xl">{hasLiked ? '❤️' : '🤍'}</span>
-                                <span className="font-semibold">{score.likes?.length || 0}</span>
+                                Musical Notation
+                                {activeTab === 'notation' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('abc')}
+                                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === 'abc' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                ABC Source
+                                {activeTab === 'abc' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                             </button>
                         </div>
                     </div>
-                    <div id="audio" className="w-full mb-4"></div>
-                    <div id="paper" className="w-full overflow-x-auto"></div>
+
+                    <div className="p-6">
+                        {activeTab === 'notation' ? (
+                            <div className="animate-fadeIn">
+                                <div id="audio" className="w-full mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100"></div>
+                                <div id="paper" className="w-full overflow-x-auto min-h-[300px]"></div>
+                            </div>
+                        ) : (
+                            <div className="animate-fadeIn">
+                                <div className="relative">
+                                    <div className="absolute top-2 right-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-50">ABC Notation</div>
+                                    <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto font-mono text-sm leading-relaxed shadow-inner">
+                                        {score.content}
+                                    </pre>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded">
