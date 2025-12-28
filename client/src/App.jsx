@@ -7,11 +7,18 @@ import Home from './pages/Home';
 import Auth from './pages/Auth';
 import ScoreEditor from './pages/ScoreEditor';
 import ScoreView from './pages/ScoreView';
+import AdminDashboard from './pages/AdminDashboard';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
   if (loading) return <div className="p-10 text-center font-bold">Loading...</div>;
   return user ? children : <Navigate to="/auth" />;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <div className="p-10 text-center font-bold">Loading...</div>;
+  return user && user.role === 'admin' ? children : <Navigate to="/" />;
 };
 
 const AppContent = () => {
@@ -45,6 +52,11 @@ const AppContent = () => {
               </PrivateRoute>
             } />
             <Route path="/score/:id" element={<ScoreView />} />
+            <Route path="/admin" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
           </Routes>
         </main>
       </div>

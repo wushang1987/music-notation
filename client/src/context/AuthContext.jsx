@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
             try {
                 const decoded = jwtDecode(token);
                 // Check expiry if needed
-                setUser({ token, ...decoded }); // Simplified, ideally fetch user profile
+                setUser({ token, ...decoded }); // decoded now contains role from backend 
             } catch (error) {
                 localStorage.removeItem('token');
             }

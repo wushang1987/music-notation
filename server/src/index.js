@@ -23,10 +23,12 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/authRoutes');
 const scoreRoutes = require('./routes/scoreRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/scores', scoreRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/users', userRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
