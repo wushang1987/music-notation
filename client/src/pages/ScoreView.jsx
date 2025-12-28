@@ -35,15 +35,6 @@ const ScoreView = () => {
 
             if (abcjs.synth.supportsAudio()) {
                 const synthControl = new abcjs.synth.SynthController();
-                synthControl.load("#audio",
-                    {
-                        displayLoop: true,
-                        displayRestart: true,
-                        displayPlay: true,
-                        displayProgress: true,
-                        displayWarp: true
-                    }
-                );
 
                 const cursorControl = {
                     onStart: () => {
@@ -52,11 +43,22 @@ const ScoreView = () => {
                         els.forEach(el => el.classList.remove('highlight'));
                     },
                     onEvent: (ev) => {
-                        console.log("onEvent", ev);
+                        // console.log("onEvent", ev);
                         const els = document.querySelectorAll('.highlight');
                         els.forEach(el => el.classList.remove('highlight'));
+
                         if (ev && ev.elements) {
-                            ev.elements.forEach(el => el.classList.add('highlight'));
+                            ev.elements.forEach(item => {
+                                if (Array.isArray(item) || item instanceof NodeList) {
+                                    Array.from(item).forEach(subEl => {
+                                        if (subEl && subEl.classList) {
+                                            subEl.classList.add('highlight');
+                                        }
+                                    });
+                                } else if (item && item.classList) {
+                                    item.classList.add('highlight');
+                                }
+                            });
                         }
                     },
                     onFinished: () => {
@@ -66,9 +68,20 @@ const ScoreView = () => {
                     }
                 };
 
+                synthControl.load("#audio",
+                    cursorControl,
+                    {
+                        displayLoop: true,
+                        displayRestart: true,
+                        displayPlay: true,
+                        displayProgress: true,
+                        displayWarp: true
+                    }
+                );
+
                 const createSynth = new abcjs.synth.CreateSynth();
                 createSynth.init({ visualObj: visualObj }).then(() => {
-                    synthControl.setTune(visualObj, false, { cursorControl: cursorControl });
+                    synthControl.setTune(visualObj, false);
                 }).catch((error) => {
                     console.warn("Audio problem:", error);
                 });
