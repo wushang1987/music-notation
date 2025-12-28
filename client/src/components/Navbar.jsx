@@ -26,8 +26,8 @@ const Navbar = () => {
                         </div>
                     ) : (
                         <div className="flex gap-4 items-center">
-                            <Link to="/login" className="text-gray-600 hover:text-blue-600 font-medium text-sm">Login</Link>
-                            <Link to="/register" className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg">
+                            <Link to="/auth" className="text-gray-600 hover:text-blue-600 font-medium text-sm">Login</Link>
+                            <Link to="/auth" className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg">
                                 Join Now
                             </Link>
                         </div>
