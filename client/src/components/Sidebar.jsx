@@ -10,7 +10,7 @@ const Sidebar = () => {
     };
 
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 sticky top-0 h-[calc(100vh-64px)] overflow-y-auto z-10 hidden md:block">
+        <aside className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto z-10 hidden md:block flex-shrink-0">
             <div className="p-6">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Navigation</p>
                 <nav className="space-y-1">
@@ -33,12 +33,7 @@ const Sidebar = () => {
                 </nav>
             </div>
 
-            <div className="absolute bottom-0 w-full p-6 border-t border-gray-100 bg-gray-50/50">
-                <div className="bg-blue-600 rounded-2xl p-4 text-white">
-                    <p className="text-sm font-bold mb-1">Sheet Music</p>
-                    <p className="text-xs opacity-80">Explore and share amazing music scores today.</p>
-                </div>
-            </div>
+
         </aside>
     );
 };

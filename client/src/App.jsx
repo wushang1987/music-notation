@@ -20,11 +20,11 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
           <Navbar />
-          <div className="flex flex-1">
+          <div className="flex flex-1 overflow-hidden">
             <Sidebar />
-            <main className="flex-1 min-h-0 overflow-auto bg-white shadow-inner">
+            <main className="flex-1 overflow-y-auto bg-white shadow-inner">
               <Routes>
                 <Route path="/" element={<Home title="All Scores" endpoint="/scores" />} />
                 <Route path="/login" element={<Login />} />
