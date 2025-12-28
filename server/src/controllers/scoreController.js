@@ -44,7 +44,8 @@ const getScoreById = async (req, res) => {
         if (!score) return res.status(404).json({ message: 'Score not found' });
 
         // access check
-        if (!score.isPublic && (!req.user || score.owner._id.toString() !== req.user.id)) {
+        const isOwner = score.owner && req.user && (score.owner._id.toString() === req.user.id || score.owner.toString() === req.user.id);
+        if (!score.isPublic && !isOwner) {
             return res.status(403).json({ message: 'Not authorized to view this score' });
         }
 
@@ -59,7 +60,7 @@ const updateScore = async (req, res) => {
         const score = await Score.findById(req.params.id);
         if (!score) return res.status(404).json({ message: 'Score not found' });
 
-        if (score.owner.toString() !== req.user.id) {
+        if (!score.owner || score.owner.toString() !== req.user.id) {
             return res.status(401).json({ message: 'Not authorized to edit this score' });
         }
 
@@ -80,7 +81,7 @@ const deleteScore = async (req, res) => {
         const score = await Score.findById(req.params.id);
         if (!score) return res.status(404).json({ message: 'Score not found' });
 
-        if (score.owner.toString() !== req.user.id) {
+        if (!score.owner || score.owner.toString() !== req.user.id) {
             return res.status(401).json({ message: 'Not authorized to delete this score' });
         }
 
@@ -91,4 +92,25 @@ const deleteScore = async (req, res) => {
     }
 };
 
-module.exports = { createScore, getScores, getMyScores, getScoreById, updateScore, deleteScore };
+const toggleLike = async (req, res) => {
+    try {
+        const score = await Score.findById(req.params.id);
+        if (!score) return res.status(404).json({ message: 'Score not found' });
+
+        // Ensure likes array exists (migration support)
+        if (!score.likes) score.likes = [];
+
+        const index = score.likes.indexOf(req.user.id);
+        if (index === -1) {
+            score.likes.push(req.user.id);
+        } else {
+            score.likes.splice(index, 1);
+        }
+        await score.save();
+        res.json(score.likes);
+    } catch (error) {
+        res.status(500).json({ message: 'Error toggling like', error: error.message });
+    }
+};
+
+module.exports = { createScore, getScores, getMyScores, getScoreById, updateScore, deleteScore, toggleLike };

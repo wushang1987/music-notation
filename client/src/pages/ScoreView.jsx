@@ -103,6 +103,23 @@ const ScoreView = () => {
         }
     };
 
+    const handleLike = async () => {
+        if (!user) {
+            alert('Please login to like this score.');
+            return;
+        }
+
+        try {
+            const { data } = await api.put(`/scores/${id}/like`);
+            setScore(prev => ({ ...prev, likes: data }));
+        } catch (err) {
+            console.error('Failed to toggle like', err);
+            alert('Failed to update like status');
+        }
+    };
+
+    const hasLiked = user && score?.likes?.some(uid => uid === user.id || uid === user._id);
+
     if (!score) return <div>Loading...</div>;
 
     return (
@@ -112,6 +129,17 @@ const ScoreView = () => {
                     <div className="flex justify-between items-center mb-4">
                         <h1 className="text-3xl font-bold">{score.title}</h1>
                         <p className="text-gray-600">By {score.owner?.username || 'Music Notation'}</p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleLike}
+                                className={`flex items-center gap-1 px-3 py-1 rounded border ${hasLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                                    }`}
+                                title={hasLiked ? 'Unlike' : 'Like'}
+                            >
+                                <span className="text-xl">{hasLiked ? '❤️' : '🤍'}</span>
+                                <span className="font-semibold">{score.likes?.length || 0}</span>
+                            </button>
+                        </div>
                     </div>
                     <div id="audio" className="w-full mb-4"></div>
                     <div id="paper" className="w-full overflow-x-auto"></div>
