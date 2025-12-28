@@ -51,7 +51,7 @@ const ScoreView = () => {
                 <div className="border p-4 bg-white shadow-sm mb-6">
                     <div className="flex justify-between items-center mb-4">
                         <h1 className="text-3xl font-bold">{score.title}</h1>
-                        <p className="text-gray-600">By {score.owner.username}</p>
+                        <p className="text-gray-600">By {score.owner?.username || 'Music Notation'}</p>
                     </div>
                     <div id="paper" className="w-full overflow-x-auto"></div>
                 </div>

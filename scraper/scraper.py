@@ -164,8 +164,10 @@ def scrape_tune_page(url):
         return {
             "source_url": url,
             "title": title,
-            "abc_content": abc_content,
-            "scraped_at": datetime.now()
+            "content": abc_content,
+            "scraped_at": datetime.now(),
+            "isPublic": True,
+            "visibility": "public"
         }
 
     except Exception as e:
