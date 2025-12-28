@@ -24,7 +24,7 @@ const Home = () => {
                 {scores.map((score) => (
                     <div key={score._id} className="border p-4 rounded shadow hover:shadow-lg transition">
                         <h2 className="text-xl font-bold mb-2">{score.title}</h2>
-                        <p className="text-gray-600 mb-2">By: {score.owner.username}</p>
+                        <p className="text-gray-600 mb-2">By: {score.owner?.username || 'Music Notation'}</p>
                         <Link to={`/score/${score._id}`} className="text-blue-500 hover:underline">View Score</Link>
                     </div>
                 ))}
