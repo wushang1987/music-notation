@@ -22,9 +22,9 @@ function App() {
       <AuthProvider>
         <div className="min-h-screen bg-gray-50 flex flex-col">
           <Navbar />
-          <div className="flex flex-1 container mx-auto max-w-7xl">
+          <div className="flex flex-1">
             <Sidebar />
-            <main className="flex-1 overflow-x-hidden">
+            <main className="flex-1 min-h-0 overflow-auto bg-white shadow-inner">
               <Routes>
                 <Route path="/" element={<Home title="All Scores" endpoint="/scores" />} />
                 <Route path="/login" element={<Login />} />

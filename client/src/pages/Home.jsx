@@ -29,7 +29,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
             {scores.length === 0 ? (
                 <p className="text-gray-500">No scores found.</p>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                     {scores.map((score) => (
                         <div key={score._id} className="bg-white border border-gray-200 p-6 rounded-xl shadow-sm hover:shadow-md transition duration-200">
                             <h2 className="text-xl font-bold mb-2 text-gray-900 truncate">{score.title}</h2>
