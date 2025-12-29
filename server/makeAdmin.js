@@ -1,13 +1,10 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const path = require('path');
+const config = require('./src/config/config');
 const User = require('./src/models/User');
-
-dotenv.config();
 
 async function makeAdmin(email) {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        await mongoose.connect(config.MONGODB_URI);
         const user = await User.findOneAndUpdate({ email }, { role: 'admin' }, { new: true });
         if (user) {
             console.log(`Success: ${email} is now an admin.`);
