@@ -33,7 +33,7 @@ const AppContent = () => {
         {!isAuthPage && <Sidebar />}
         <main className={`flex-1 overflow-y-auto bg-white ${!isAuthPage ? 'shadow-inner' : ''}`}>
           <Routes>
-            <Route path="/" element={<Home title="All Scores" endpoint="/scores" />} />
+            <Route path="/" element={<Home title="home.allScores" endpoint="/scores" />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/verify/:token" element={<VerifyEmail />} />
             <Route path="/login" element={<Navigate to="/auth" />} />
@@ -50,12 +50,12 @@ const AppContent = () => {
             } />
             <Route path="/created" element={
               <PrivateRoute>
-                <Home title="My Scores" endpoint="/scores/my" />
+                <Home title="home.myScores" endpoint="/scores/my" />
               </PrivateRoute>
             } />
             <Route path="/liked" element={
               <PrivateRoute>
-                <Home title="My Liked Scores" endpoint="/scores/liked" />
+                <Home title="home.myLikedScores" endpoint="/scores/liked" />
               </PrivateRoute>
             } />
             <Route path="/score/:id" element={<ScoreView />} />

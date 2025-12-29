@@ -3,9 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import abcjs from 'abcjs';
 import 'abcjs/abcjs-audio.css';
 import api from '../api';
+import { useTranslation } from 'react-i18next';
 
 const ScoreEditor = () => {
     const { id } = useParams();
+    const { t } = useTranslation();
     const isEdit = !!id;
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |');
@@ -91,10 +93,10 @@ const ScoreEditor = () => {
                 });
             } else {
                 const audioEl = document.querySelector("#audio");
-                if (audioEl) audioEl.innerHTML = "Audio not supported";
+                if (audioEl) audioEl.innerHTML = t('score.notSupported');
             }
         }
-    }, [content, loading]);
+    }, [content, loading, t]);
 
     const handleSave = async () => {
         try {
@@ -105,18 +107,18 @@ const ScoreEditor = () => {
             }
             navigate(isEdit ? `/score/${id}` : '/');
         } catch (err) {
-            alert('Failed to save score');
+            alert(t('score.saveFailed') || 'Failed to save score');
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading score...</div>;
+    if (loading) return <div className="p-8 text-center">{t('common.loading')}</div>;
 
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/2">
-                <h1 className="text-2xl font-bold mb-4">{isEdit ? 'Edit Score' : 'Create Score'}</h1>
+                <h1 className="text-2xl font-bold mb-4">{isEdit ? t('common.edit') : t('common.create')}</h1>
                 <div className="mb-4">
-                    <label className="block mb-1">Title</label>
+                    <label className="block mb-1">{t('score.scoreTitle')}</label>
                     <input
                         type="text"
                         className="w-full border p-2 rounded"
@@ -125,7 +127,7 @@ const ScoreEditor = () => {
                     />
                 </div>
                 <div className="mb-4">
-                    <label className="block mb-1">ABC Notation</label>
+                    <label className="block mb-1">{t('score.abcNotation')}</label>
                     <textarea
                         className="w-full border p-2 rounded h-64 font-mono"
                         value={content}
@@ -140,15 +142,15 @@ const ScoreEditor = () => {
                             checked={isPublic}
                             onChange={(e) => setIsPublic(e.target.checked)}
                         />
-                        <span className="ml-2">Public</span>
+                        <span className="ml-2">{t('score.public')}</span>
                     </label>
                 </div>
                 <button onClick={handleSave} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    {isEdit ? 'Update Score' : 'Save Score'}
+                    {isEdit ? t('common.update') : t('common.save')}
                 </button>
             </div>
             <div className="w-full md:w-1/2">
-                <h2 className="text-xl font-bold mb-4">Preview</h2>
+                <h2 className="text-xl font-bold mb-4">{t('score.preview')}</h2>
                 <div id="audio" className="w-full mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100"></div>
                 <div id="paper" className="border p-4 bg-white min-h-[300px]"></div>
             </div>

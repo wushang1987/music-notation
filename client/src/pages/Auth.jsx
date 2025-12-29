@@ -1,11 +1,13 @@
 import { useState, useContext, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const Auth = () => {
     const { login, register, user } = useContext(AuthContext);
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
 
     // Determine initial mode from path or default to login
     const [isLogin, setIsLogin] = useState(location.pathname !== '/register');
@@ -33,7 +35,7 @@ const Auth = () => {
             } else {
                 const response = await register(username, email, password);
                 setIsLogin(true); // Switch to login after successful registration
-                setError(response.message || 'Registration successful! Please check your email to verify your account.');
+                setError(response.message || t('auth.regSuccess'));
             }
         } catch (err) {
             setError(err.response?.data?.message || (isLogin ? 'Login failed' : 'Registration failed'));
@@ -50,7 +52,7 @@ const Auth = () => {
                         MusicNotation
                     </h1>
                     <p className="text-gray-500 font-medium">
-                        {isLogin ? 'Welcome back! Please enter your details.' : 'Start your musical journey with us.'}
+                        {isLogin ? t('auth.welcomeBack') : t('auth.startJourney')}
                     </p>
                 </div>
 
@@ -63,7 +65,7 @@ const Auth = () => {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {!isLogin && (
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2 px-1">Username</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2 px-1">{t('common.username')}</label>
                             <input
                                 type="text"
                                 placeholder="maestro_johann"
@@ -75,7 +77,7 @@ const Auth = () => {
                         </div>
                     )}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 px-1">Email Address</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 px-1">{t('common.email')}</label>
                         <input
                             type="email"
                             placeholder="you@example.com"
@@ -86,7 +88,7 @@ const Auth = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 px-1">Password</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 px-1">{t('common.password')}</label>
                         <input
                             type="password"
                             placeholder="••••••••"
@@ -102,19 +104,19 @@ const Auth = () => {
                         disabled={loading}
                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-blue-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+                        {loading ? t('common.processing') : (isLogin ? t('auth.signIn') : t('auth.createAccount'))}
                     </button>
                 </form>
 
                 <div className="mt-10 text-center">
                     <p className="text-gray-600 font-medium">
-                        {isLogin ? "Don't have an account?" : "Already have an account?"}
+                        {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
                     </p>
                     <button
                         onClick={() => setIsLogin(!isLogin)}
                         className="mt-2 text-blue-600 font-bold hover:text-indigo-700 transition-colors underline decoration-2 underline-offset-4"
                     >
-                        {isLogin ? 'Create one for free' : 'Sign in to your account'}
+                        {isLogin ? t('auth.createOne') : t('auth.signInToAcc')}
                     </button>
                 </div>
             </div>

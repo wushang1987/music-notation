@@ -4,9 +4,11 @@ import abcjs from 'abcjs';
 import 'abcjs/abcjs-audio.css';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const ScoreView = () => {
     const { id } = useParams();
+    const { t } = useTranslation();
     const [score, setScore] = useState(null);
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState('');
@@ -88,10 +90,10 @@ const ScoreView = () => {
                 });
             } else {
                 const audioEl = document.querySelector("#audio");
-                if (audioEl) audioEl.innerHTML = "<div class='text-red-500'>Audio not supported by this browser.</div>";
+                if (audioEl) audioEl.innerHTML = `<div class='text-red-500'>${t('score.notSupported')}</div>`;
             }
         }
-    }, [score, activeTab]);
+    }, [score, activeTab, t]);
 
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
@@ -101,7 +103,7 @@ const ScoreView = () => {
             setComments([data, ...comments]);
             setNewComment('');
         } catch (err) {
-            alert('Failed to post comment');
+            alert(t('score.postCommentFailed') || 'Failed to post comment');
         }
     };
 
@@ -122,7 +124,7 @@ const ScoreView = () => {
 
     const hasLiked = user && score?.likes?.some(uid => uid === user.id || uid === user._id);
 
-    if (!score) return <div className="p-10 text-center font-bold">Loading Score...</div>;
+    if (!score) return <div className="p-10 text-center font-bold">{t('common.loading')}</div>;
 
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
@@ -134,7 +136,7 @@ const ScoreView = () => {
                                 <h1 className="text-3xl font-bold text-gray-900 mb-1">{score.title}</h1>
                                 <p className="text-gray-500 flex items-center">
                                     <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                    By <span className="font-medium text-gray-800 ml-1">{score.owner?.username || 'Music Notation'}</span>
+                                    {t('score.by')} <span className="font-medium text-gray-800 ml-1">{score.owner?.username || 'Music Notation'}</span>
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -145,10 +147,10 @@ const ScoreView = () => {
                                         <Link
                                             to={`/edit/${id}`}
                                             className="flex items-center gap-2 px-4 py-2 rounded-full border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 shadow-sm"
-                                            title="Edit Score"
+                                            title={t('common.edit')}
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                            <span className="font-semibold text-sm">Edit</span>
+                                            <span className="font-semibold text-sm">{t('common.edit')}</span>
                                         </Link>
                                     )}
                                 <button
@@ -169,14 +171,14 @@ const ScoreView = () => {
                                 onClick={() => setActiveTab('notation')}
                                 className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === 'notation' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                Musical Notation
+                                {t('score.musicalNotation')}
                                 {activeTab === 'notation' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                             </button>
                             <button
                                 onClick={() => setActiveTab('abc')}
                                 className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === 'abc' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                ABC Source
+                                {t('score.abcSource')}
                                 {activeTab === 'abc' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                             </button>
                         </div>
@@ -202,20 +204,20 @@ const ScoreView = () => {
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded">
-                    <h3 className="text-xl font-bold mb-4">Comments</h3>
+                    <h3 className="text-xl font-bold mb-4">{t('score.comments')}</h3>
                     {user ? (
                         <form onSubmit={handleCommentSubmit} className="mb-6">
                             <textarea
                                 className="w-full p-2 border rounded mb-2"
                                 rows="3"
-                                placeholder="Add a comment..."
+                                placeholder={t('score.addComment')}
                                 value={newComment}
                                 onChange={(e) => setNewComment(e.target.value)}
                             ></textarea>
-                            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Post Comment</button>
+                            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">{t('score.postComment')}</button>
                         </form>
                     ) : (
-                        <p className="mb-4 text-gray-600">Please login to comment.</p>
+                        <p className="mb-4 text-gray-600">{t('score.loginToComment')}</p>
                     )}
 
                     <div className="space-y-4">
@@ -225,7 +227,7 @@ const ScoreView = () => {
                                 <p>{comment.content}</p>
                             </div>
                         ))}
-                        {comments.length === 0 && <p className="text-gray-500 italic">No comments yet.</p>}
+                        {comments.length === 0 && <p className="text-gray-500 italic">{t('score.noComments')}</p>}
                     </div>
                 </div>
             </div>
@@ -233,9 +235,9 @@ const ScoreView = () => {
             <div className="w-full md:w-1/3">
                 {/* Sidebar for additional info or actions could go here */}
                 <div className="bg-white p-4 shadow rounded">
-                    <h3 className="font-bold mb-2">Details</h3>
-                    <p>Created: {new Date(score.createdAt).toLocaleDateString()}</p>
-                    <p>Visibility: {score.isPublic ? 'Public' : 'Private'}</p>
+                    <h3 className="font-bold mb-2">{t('score.details')}</h3>
+                    <p>{t('score.created')}: {new Date(score.createdAt).toLocaleDateString()}</p>
+                    <p>{t('score.visibility')}: {score.isPublic ? t('score.public') : t('score.private')}</p>
                 </div>
             </div>
         </div>

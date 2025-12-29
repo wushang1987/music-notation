@@ -3,9 +3,12 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import Pagination from '../components/Pagination';
+import { useTranslation } from 'react-i18next';
 
-const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
+const Home = ({ title, endpoint = "/scores" }) => {
     const { user } = useContext(AuthContext);
+    const { t } = useTranslation();
+    const displayTitle = title ? t(title) : t('home.title');
     const [scores, setScores] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -14,7 +17,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
     const [total, setTotal] = useState(0);
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this score?')) return;
+        if (!window.confirm(t('score.deleteConfirm'))) return;
         try {
             await api.delete(`/scores/${id}`);
             setScores(scores.filter(s => s._id !== id));
@@ -67,12 +70,12 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
         setPage(1);
     };
 
-    if (loading && page === 1 && !search) return <div className="p-8 text-center text-gray-500">Loading scores...</div>;
+    if (loading && page === 1 && !search) return <div className="p-8 text-center text-gray-500">{t('common.loading')}</div>;
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{title}</h1>
+                <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">{displayTitle}</h1>
 
                 <div className="relative w-full md:w-96">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -82,7 +85,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
                     </div>
                     <input
                         type="text"
-                        placeholder="Search scores by title..."
+                        placeholder={t('common.search')}
                         value={search}
                         onChange={handleSearchChange}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
@@ -99,8 +102,8 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
                     <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                     </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No scores found</h3>
-                    <p className="mt-1 text-sm text-gray-500">No scores matched your search criteria or the collection is empty.</p>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">{t('common.noScores')}</h3>
+                    <p className="mt-1 text-sm text-gray-500">{t('common.noScoresDesc')}</p>
                 </div>
             ) : (
                 <>
@@ -118,7 +121,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
                                         className="flex-1 flex items-center justify-center bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-sm active:scale-95"
                                     >
                                         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        View
+                                        {t('common.view')}
                                     </Link>
                                     {user && (user.role === 'admin' || (score.owner && (
                                         (typeof score.owner === 'object' && (score.owner._id === user.id || score.owner._id === user._id)) ||
@@ -127,7 +130,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
                                             <Link
                                                 to={`/edit/${score._id}`}
                                                 className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 active:scale-95"
-                                                title="Edit Score"
+                                                title={t('common.edit')}
                                             >
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                             </Link>
@@ -136,7 +139,7 @@ const Home = ({ title = "Music Scores", endpoint = "/scores" }) => {
                                         <button
                                             onClick={() => handleDelete(score._id)}
                                             className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors border border-red-100 active:scale-95"
-                                            title="Delete Score"
+                                            title={t('common.delete')}
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>

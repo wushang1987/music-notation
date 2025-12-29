@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    const { t } = useTranslation();
     const [jumpPage, setJumpPage] = useState('');
 
     useEffect(() => {
@@ -13,7 +15,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         if (pageNum >= 1 && pageNum <= totalPages) {
             onPageChange(pageNum);
         } else {
-            alert(`Please enter a valid page number between 1 and ${totalPages}`);
+            alert(t('pagination.invalidPage', { total: totalPages }));
         }
     };
 
@@ -54,8 +56,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             key={page}
             onClick={() => onPageChange(page)}
             className={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-200 ${currentPage === page
-                    ? 'bg-blue-600 text-white shadow-lg scale-105'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
+                ? 'bg-blue-600 text-white shadow-lg scale-105'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
                 }`}
         >
             {page}
@@ -73,7 +75,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
                 >
                     <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-                    Previous
+                    {t('pagination.previous')}
                 </button>
 
                 <div className="hidden sm:flex items-center gap-1">
@@ -81,7 +83,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                 </div>
 
                 <div className="sm:hidden px-4 text-sm font-bold text-gray-900 bg-gray-50 py-2 rounded-lg border border-gray-200">
-                    Page {currentPage} of {totalPages}
+                    {t('pagination.pageOf', { current: currentPage, total: totalPages })}
                 </div>
 
                 <button
@@ -89,13 +91,13 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     disabled={currentPage === totalPages}
                     className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
                 >
-                    Next
+                    {t('pagination.next')}
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
 
             <form onSubmit={handleJump} className="flex items-center gap-4 bg-gray-50 p-2 rounded-2xl border border-gray-200">
-                <span className="text-sm font-medium text-gray-600 ml-2">Jump to:</span>
+                <span className="text-sm font-medium text-gray-600 ml-2">{t('pagination.jumpTo')}</span>
                 <input
                     type="number"
                     min="1"
@@ -109,10 +111,10 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     type="submit"
                     className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-all active:scale-95 shadow-md"
                 >
-                    Go
+                    {t('pagination.go')}
                 </button>
                 <div className="h-6 w-px bg-gray-300 mx-1"></div>
-                <span className="text-xs font-bold text-gray-500 mr-2 uppercase tracking-wider">Total {totalPages} Pages</span>
+                <span className="text-xs font-bold text-gray-500 mr-2 uppercase tracking-wider">{t('pagination.total', { count: totalPages })}</span>
             </form>
         </div>
     );
