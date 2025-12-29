@@ -9,11 +9,19 @@ import re
 
 import json
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+env_file = '.env.production' if os.getenv('SCRAPER_ENV') == 'production' else '.env'
+load_dotenv(env_file)
+
+
 
 # MongoDB Setup
-MONGO_URI = "mongodb://localhost:27017/"
-DB_NAME = "music-notation"
+MONGO_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+DB_NAME = os.getenv("DB_NAME", "music-notation")
 COLLECTION_NAME = "scores"
+
 STATE_FILE = ".scraper_state.json"
 
 def load_state():

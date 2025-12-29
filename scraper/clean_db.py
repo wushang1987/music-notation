@@ -1,11 +1,22 @@
 from pymongo import MongoClient
 import re
+import os
+from dotenv import load_dotenv
 from scraper import validate_tune_data
 
+# Load environment variables
+env_file = '.env.production' if os.getenv('SCRAPER_ENV') == 'production' else '.env'
+load_dotenv(env_file)
+
+
+
 def clean_database():
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["music-notation"]
+    mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+    db_name = os.getenv("DB_NAME", "music-notation")
+    client = MongoClient(mongo_uri)
+    db = client[db_name]
     collection = db["scores"]
+
     
     cursor = collection.find({})
     deleted_count = 0
@@ -27,9 +38,12 @@ def clean_database():
     print(f"Cleanup complete. Deleted {deleted_count} invalid documents.")
 
 def deduplicate_scores():
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["music-notation"]
+    mongo_uri = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+    db_name = os.getenv("DB_NAME", "music-notation")
+    client = MongoClient(mongo_uri)
+    db = client[db_name]
     collection = db["scores"]
+
     
     print("Scanning for duplicate scores (matching content)...")
     
