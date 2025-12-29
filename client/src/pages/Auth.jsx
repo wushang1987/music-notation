@@ -31,9 +31,9 @@ const Auth = () => {
                 await login(email, password);
                 navigate('/');
             } else {
-                await register(username, email, password);
+                const response = await register(username, email, password);
                 setIsLogin(true); // Switch to login after successful registration
-                setError('Registration successful! Please sign in.');
+                setError(response.message || 'Registration successful! Please check your email to verify your account.');
             }
         } catch (err) {
             setError(err.response?.data?.message || (isLogin ? 'Login failed' : 'Registration failed'));

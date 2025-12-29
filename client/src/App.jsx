@@ -8,6 +8,7 @@ import Auth from './pages/Auth';
 import ScoreEditor from './pages/ScoreEditor';
 import ScoreView from './pages/ScoreView';
 import AdminDashboard from './pages/AdminDashboard';
+import VerifyEmail from './pages/VerifyEmail';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -23,7 +24,7 @@ const AdminRoute = ({ children }) => {
 
 const AppContent = () => {
   const location = useLocation();
-  const isAuthPage = ['/auth', '/login', '/register'].includes(location.pathname);
+  const isAuthPage = ['/auth', '/login', '/register'].includes(location.pathname) || location.pathname.startsWith('/verify/');
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
@@ -34,6 +35,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/" element={<Home title="All Scores" endpoint="/scores" />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/verify/:token" element={<VerifyEmail />} />
             <Route path="/login" element={<Navigate to="/auth" />} />
             <Route path="/register" element={<Navigate to="/auth" />} />
             <Route path="/create" element={
