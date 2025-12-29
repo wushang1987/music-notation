@@ -4,7 +4,9 @@ const User = require('./src/models/User');
 
 async function makeAdmin(email) {
     try {
-        await mongoose.connect(config.MONGODB_URI);
+        await mongoose.connect(config.MONGODB_URI, {
+            dbName: config.DB_NAME
+        });
         const user = await User.findOneAndUpdate({ email }, { role: 'admin' }, { new: true });
         if (user) {
             console.log(`Success: ${email} is now an admin.`);

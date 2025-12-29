@@ -5,7 +5,9 @@ async function verifyConnection() {
     try {
         console.log(`Attempting to connect with NODE_ENV: ${config.NODE_ENV}`);
 
-        await mongoose.connect(config.MONGODB_URI);
+        await mongoose.connect(config.MONGODB_URI, {
+            dbName: config.DB_NAME
+        });
 
         const dbName = mongoose.connection.name;
         console.log(`Successfully connected to MongoDB!`);

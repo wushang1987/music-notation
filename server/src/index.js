@@ -9,7 +9,9 @@ const PORT = config.PORT;
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect(config.MONGODB_URI)
+mongoose.connect(config.MONGODB_URI, {
+    dbName: config.DB_NAME
+})
     .then(() => {
         console.log(`Connected to MongoDB (${config.NODE_ENV} mode)`);
         // Log database name if possible (security tip: don't log URI)
