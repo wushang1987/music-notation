@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import abcjs from 'abcjs';
 import { useTranslation } from 'react-i18next';
 
 const ScoreCard = ({ score, user, onDelete }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const paperRef = useRef(null);
 
     useEffect(() => {
@@ -35,8 +36,15 @@ const ScoreCard = ({ score, user, onDelete }) => {
 
     const isAdmin = user && user.role === 'admin';
 
+    const handleCardClick = () => {
+        navigate(`/score/${score._id}`);
+    };
+
     return (
-        <div className="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden">
+        <div
+            onClick={handleCardClick}
+            className="group bg-white border border-gray-200 rounded-sm shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer active:scale-[0.98]"
+        >
             {/* Music Notation Preview Area */}
             <div className="h-40 bg-gray-50 border-b border-gray-100 relative overflow-hidden flex items-center justify-center p-2">
                 <div
@@ -59,21 +67,11 @@ const ScoreCard = ({ score, user, onDelete }) => {
                     <span>{score.owner?.username || 'Anonymous'}</span>
                 </p>
 
-                <div className="flex items-center gap-2 mt-auto">
-                    <Link
-                        to={`/score/${score._id}`}
-                        className="flex-1 flex items-center justify-center bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm active:scale-95 text-sm"
-                    >
-                        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {t('common.view')}
-                    </Link>
-
+                <div className="flex items-center justify-end gap-2 mt-auto">
                     {isOwnerOrAdmin && (
                         <Link
                             to={`/edit/${score._id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100 transition-colors border border-amber-100 active:scale-95"
                             title={t('common.edit')}
                         >
@@ -85,7 +83,10 @@ const ScoreCard = ({ score, user, onDelete }) => {
 
                     {isAdmin && (
                         <button
-                            onClick={() => onDelete(score._id)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(score._id);
+                            }}
                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors border border-red-100 active:scale-95"
                             title={t('common.delete')}
                         >
