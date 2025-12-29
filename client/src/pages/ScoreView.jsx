@@ -129,7 +129,7 @@ const ScoreView = () => {
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-2/3">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden mb-6">
                     <div className="p-6 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-4">
                             <div>
@@ -146,7 +146,7 @@ const ScoreView = () => {
                                 ))) && (
                                         <Link
                                             to={`/edit/${id}`}
-                                            className="flex items-center gap-2 px-4 py-2 rounded-full border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 shadow-sm"
+                                            className="flex items-center gap-2 px-4 py-2 rounded-md border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 shadow-sm"
                                             title={t('common.edit')}
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -155,7 +155,7 @@ const ScoreView = () => {
                                     )}
                                 <button
                                     onClick={handleLike}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all duration-200 ${hasLiked ? 'bg-red-50 border-red-200 text-red-500 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-md border transition-all duration-200 ${hasLiked ? 'bg-red-50 border-red-200 text-red-500 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
                                         }`}
                                     title={hasLiked ? 'Unlike' : 'Like'}
                                 >
@@ -187,14 +187,14 @@ const ScoreView = () => {
                     <div className="p-6">
                         {activeTab === 'notation' ? (
                             <div className="animate-fadeIn">
-                                <div id="audio" className="w-full mb-8 bg-gray-50 p-4 rounded-xl border border-gray-100"></div>
+                                <div id="audio" className="w-full mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100"></div>
                                 <div id="paper" className="w-full overflow-x-auto min-h-[300px]"></div>
                             </div>
                         ) : (
                             <div className="animate-fadeIn">
                                 <div className="relative">
                                     <div className="absolute top-2 right-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-50">ABC Notation</div>
-                                    <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto font-mono text-sm leading-relaxed shadow-inner">
+                                    <pre className="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto font-mono text-sm leading-relaxed shadow-inner">
                                         {score.content}
                                     </pre>
                                 </div>

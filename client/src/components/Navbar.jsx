@@ -31,7 +31,7 @@ const Navbar = () => {
                             <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
                                 {t('nav.greeting', { name: user.username })}
                             </span>
-                            <Link to="/create" className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100">
+                            <Link to="/create" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100">
                                 {t('nav.newScore')}
                             </Link>
                             <button onClick={logout} className="text-gray-500 hover:text-red-500 transition-colors" title={t('common.logout')}>
@@ -41,7 +41,7 @@ const Navbar = () => {
                     ) : (
                         <div className="flex gap-4 items-center">
                             <Link to="/auth" className="text-gray-600 hover:text-blue-600 font-medium text-sm">{t('common.login')}</Link>
-                            <Link to="/auth" className="bg-gray-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg">
+                            <Link to="/auth" className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-black transition-all shadow-lg">
                                 {t('common.join')}
                             </Link>
                         </div>

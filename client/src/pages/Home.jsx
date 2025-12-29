@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import Pagination from '../components/Pagination';
+import ScoreCard from '../components/ScoreCard';
 import { useTranslation } from 'react-i18next';
 
 const Home = ({ title, endpoint = "/scores" }) => {
@@ -109,43 +110,12 @@ const Home = ({ title, endpoint = "/scores" }) => {
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                         {scores.map((score) => (
-                            <div key={score._id} className="group bg-white border border-gray-200 p-5 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
-                                <h2 className="text-xl font-bold mb-2 text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={score.title}>{score.title}</h2>
-                                <p className="text-gray-500 mb-6 text-sm flex items-center gap-1.5">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                    <span>{score.owner?.username || 'Anonymous'}</span>
-                                </p>
-                                <div className="flex items-center gap-2 mt-auto">
-                                    <Link
-                                        to={`/score/${score._id}`}
-                                        className="flex-1 flex items-center justify-center bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-all shadow-sm active:scale-95"
-                                    >
-                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        {t('common.view')}
-                                    </Link>
-                                    {user && (user.role === 'admin' || (score.owner && (
-                                        (typeof score.owner === 'object' && (score.owner._id === user.id || score.owner._id === user._id)) ||
-                                        (typeof score.owner === 'string' && (score.owner === user.id || score.owner === user._id))
-                                    ))) && (
-                                            <Link
-                                                to={`/edit/${score._id}`}
-                                                className="p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors border border-amber-100 active:scale-95"
-                                                title={t('common.edit')}
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                                            </Link>
-                                        )}
-                                    {user && user.role === 'admin' && (
-                                        <button
-                                            onClick={() => handleDelete(score._id)}
-                                            className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors border border-red-100 active:scale-95"
-                                            title={t('common.delete')}
-                                        >
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
+                            <ScoreCard
+                                key={score._id}
+                                score={score}
+                                user={user}
+                                onDelete={handleDelete}
+                            />
                         ))}
                     </div>
 

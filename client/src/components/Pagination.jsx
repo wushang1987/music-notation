@@ -72,7 +72,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                 <button
                     onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
-                    className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                    className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-lg text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
                 >
                     <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                     {t('pagination.previous')}
@@ -89,14 +89,14 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                 <button
                     onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
-                    className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-xl text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
+                    className="group flex items-center px-4 py-2 bg-white border border-gray-200 text-sm font-semibold rounded-lg text-gray-700 hover:bg-gray-50 hover:border-blue-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm active:scale-95"
                 >
                     {t('pagination.next')}
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
             </div>
 
-            <form onSubmit={handleJump} className="flex items-center gap-4 bg-gray-50 p-2 rounded-2xl border border-gray-200">
+            <form onSubmit={handleJump} className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-200">
                 <span className="text-sm font-medium text-gray-600 ml-2">{t('pagination.jumpTo')}</span>
                 <input
                     type="number"
@@ -105,11 +105,11 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     value={jumpPage}
                     onChange={(e) => setJumpPage(e.target.value)}
                     placeholder={currentPage}
-                    className="w-16 px-3 py-1.5 border border-gray-300 rounded-xl text-center text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+                    className="w-16 px-3 py-1.5 border border-gray-300 rounded-lg text-center text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
                 />
                 <button
                     type="submit"
-                    className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-xl hover:bg-black transition-all active:scale-95 shadow-md"
+                    className="px-4 py-1.5 bg-gray-900 text-white text-sm font-bold rounded-lg hover:bg-black transition-all active:scale-95 shadow-md"
                 >
                     {t('pagination.go')}
                 </button>

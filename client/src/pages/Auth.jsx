@@ -46,7 +46,7 @@ const Auth = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
-            <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 transform transition-all duration-500">
+            <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-10 transform transition-all duration-500">
                 <div className="text-center mb-10">
                     <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic mb-2">
                         MusicNotation
@@ -57,7 +57,7 @@ const Auth = () => {
                 </div>
 
                 {error && (
-                    <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${error.includes('successful') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
+                    <div className={`mb-6 p-4 rounded-lg text-sm font-medium ${error.includes('successful') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
                         {error}
                     </div>
                 )}
@@ -71,7 +71,7 @@ const Auth = () => {
                                 placeholder="maestro_johann"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-5 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-900"
+                                className="w-full px-5 py-4 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-900"
                                 required={!isLogin}
                             />
                         </div>
@@ -102,7 +102,7 @@ const Auth = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-blue-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-blue-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {loading ? t('common.processing') : (isLogin ? t('auth.signIn') : t('auth.createAccount'))}
                     </button>
