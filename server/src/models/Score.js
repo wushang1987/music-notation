@@ -1,11 +1,19 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const scoreSchema = new mongoose.Schema({
+const scoreSchema = new mongoose.Schema(
+  {
     title: { type: String, required: true },
     content: { type: String, required: true }, // ABC notation content
-    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
     isPublic: { type: Boolean, default: false },
-    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-}, { timestamps: true });
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    views: { type: Number, default: 0 },
+  },
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Score', scoreSchema);
+module.exports = mongoose.model("Score", scoreSchema);

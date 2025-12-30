@@ -1,92 +1,93 @@
 {
-    "common": {
-        "home": "Home",
-        "create": "Create New",
-        "created": "My Created",
-        "likes": "My Likes",
-        "admin": "Admin Dashboard",
-        "logout": "Logout",
-        "login": "Login",
-        "join": "Join Now",
-        "save": "Save",
-        "update": "Update",
-        "delete": "Delete",
-        "edit": "Edit",
-        "view": "View",
-        "cancel": "Cancel",
-        "loading": "Loading...",
-        "search": "Search scores by title...",
-        "noScores": "No scores found",
-        "noScoresDesc": "No scores matched your search criteria or the collection is empty.",
-        "username": "Username",
-        "email": "Email Address",
-        "password": "Password",
-        "processing": "Processing..."
-    },
-    "nav": {
-        "greeting": "👋 {{name}}",
-        "newScore": "+ New Score"
-    },
-    "sidebar": {
-        "navigation": "Navigation"
-    },
-    "home": {
-        "title": "Music Scores",
-        "allScores": "All Scores",
-        "myScores": "My Scores",
-        "myLikedScores": "My Liked Scores"
-    },
-    "hero": {
-        "title": "Discover & Create",
-        "titleHighlight": "Beautiful Music",
-        "subtitle": "Join our community of musicians. Browse thousands of scores, create your own compositions, and share your music with the world.",
-        "getStarted": "Get Started Free",
-        "exploreTrending": "Explore Trending",
-        "feature1Title": "Browse Library",
-        "feature1Desc": "Explore thousands of music scores",
-        "feature2Title": "Create Scores",
-        "feature2Desc": "Compose with ABC notation",
-        "feature3Title": "Share Music",
-        "feature3Desc": "Connect with musicians worldwide"
-    },
-    "pagination": {
-        "previous": "Previous",
-        "next": "Next",
-        "jumpTo": "Jump to:",
-        "go": "Go",
-        "total": "Total {{count}} Pages",
-        "pageOf": "Page {{current}} of {{total}}",
-        "invalidPage": "Please enter a valid page number between 1 and {{total}}"
-    },
-    "auth": {
-        "welcomeBack": "Welcome back! Please enter your details.",
-        "startJourney": "Start your musical journey with us.",
-        "signIn": "Sign In",
-        "createAccount": "Create Account",
-        "noAccount": "Don't have an account?",
-        "hasAccount": "Already have an account?",
-        "createOne": "Create one for free",
-        "signInToAcc": "Sign in to your account",
-        "regSuccess": "Registration successful! Please check your email to verify your account."
-    },
-    "score": {
-        "musicalNotation": "Musical Notation",
-        "abcSource": "ABC Source",
-        "comments": "Comments",
-        "addComment": "Add a comment...",
-        "postComment": "Post Comment",
-        "loginToComment": "Please login to comment.",
-        "noComments": "No comments yet.",
-        "details": "Details",
-        "created": "Created",
-        "visibility": "Visibility",
-        "public": "Public",
-        "private": "Private",
-        "notSupported": "Audio not supported by this browser.",
-        "by": "By",
-        "deleteConfirm": "Are you sure you want to delete this score?",
-        "scoreTitle": "Title",
-        "abcNotation": "ABC Notation",
-        "preview": "Preview"
-    }
+  "common": {
+    "home": "Home",
+    "create": "Create New",
+    "created": "My Created",
+    "likes": "My Likes",
+    "admin": "Admin Dashboard",
+    "logout": "Logout",
+    "login": "Login",
+    "join": "Join Now",
+    "save": "Save",
+    "update": "Update",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "search": "Search scores by title...",
+    "noScores": "No scores found",
+    "noScoresDesc": "No scores matched your search criteria or the collection is empty.",
+    "username": "Username",
+    "email": "Email Address",
+    "password": "Password",
+    "processing": "Processing..."
+  },
+  "nav": {
+    "greeting": "👋 {{name}}",
+    "newScore": "+ New Score"
+  },
+  "sidebar": {
+    "navigation": "Navigation"
+  },
+  "home": {
+    "title": "Music Scores",
+    "allScores": "All Scores",
+    "myScores": "My Scores",
+    "myLikedScores": "My Liked Scores"
+  },
+  "hero": {
+    "title": "Discover & Create",
+    "titleHighlight": "Beautiful Music",
+    "subtitle": "Join our community of musicians. Browse thousands of scores, create your own compositions, and share your music with the world.",
+    "getStarted": "Get Started Free",
+    "exploreTrending": "Explore Trending",
+    "feature1Title": "Browse Library",
+    "feature1Desc": "Explore thousands of music scores",
+    "feature2Title": "Create Scores",
+    "feature2Desc": "Compose with ABC notation",
+    "feature3Title": "Share Music",
+    "feature3Desc": "Connect with musicians worldwide"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "jumpTo": "Jump to:",
+    "go": "Go",
+    "total": "Total {{count}} Pages",
+    "pageOf": "Page {{current}} of {{total}}",
+    "invalidPage": "Please enter a valid page number between 1 and {{total}}"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back! Please enter your details.",
+    "startJourney": "Start your musical journey with us.",
+    "signIn": "Sign In",
+    "createAccount": "Create Account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createOne": "Create one for free",
+    "signInToAcc": "Sign in to your account",
+    "regSuccess": "Registration successful! Please check your email to verify your account."
+  },
+  "score": {
+    "musicalNotation": "Musical Notation",
+    "abcSource": "ABC Source",
+    "comments": "Comments",
+    "addComment": "Add a comment...",
+    "postComment": "Post Comment",
+    "loginToComment": "Please login to comment.",
+    "noComments": "No comments yet.",
+    "details": "Details",
+    "created": "Created",
+    "visibility": "Visibility",
+    "public": "Public",
+    "private": "Private",
+    "notSupported": "Audio not supported by this browser.",
+    "by": "By",
+    "deleteConfirm": "Are you sure you want to delete this score?",
+    "scoreTitle": "Title",
+    "abcNotation": "ABC Notation",
+    "preview": "Preview",
+    "views": "Views"
+  }
 }
