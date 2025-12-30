@@ -47,7 +47,7 @@ const ScoreCard = ({ score, user, onDelete }) => {
         >
             {/* Music Notation Paper - Prominent Display */}
             <div className="relative bg-gradient-to-b from-gray-100 to-gray-50">
-                <div className="bg-white rounded-sm shadow-lg border border-gray-300 h-60 overflow-hidden p-2">
+                <div className="bg-white rounded-sm shadow-lg border border-gray-300 h-55 overflow-hidden p-2">
                     <div
                         ref={paperRef}
                         className="w-full min-h-[280px] p-4 pointer-events-none"

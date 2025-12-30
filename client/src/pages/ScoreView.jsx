@@ -191,10 +191,10 @@ const ScoreView = () => {
                         </div>
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-0 md:p-6">
                         {/* Notation Tab Content - always render but hide when not active */}
                         <div className={activeTab === 'notation' ? 'animate-fadeIn' : 'hidden'}>
-                            <div id="paper" className="w-full overflow-x-auto min-h-[800px] rounded-md shadow-sm border border-gray-100  "></div>
+                            <div id="paper" className="w-full overflow-x-auto min-h-100 md:rounded-md md:shadow-sm md:border md:border-gray-100"></div>
                         </div>
 
                         {/* ABC Tab Content */}

@@ -41,9 +41,9 @@ const Navbar = () => {
                     ) : (
                         <div className="flex gap-4 items-center">
                             <Link to="/auth" className="text-gray-600 hover:text-blue-600 font-medium text-sm">{t('common.login')}</Link>
-                            <Link to="/auth" className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-black transition-all shadow-lg">
+                            {/* <Link to="/auth" className="bg-gray-900 text-white px-5 py-2 rounded-lg text-sm font-bold hover:bg-black transition-all shadow-lg">
                                 {t('common.join')}
-                            </Link>
+                            </Link> */}
                         </div>
                     )}
                 </div>
