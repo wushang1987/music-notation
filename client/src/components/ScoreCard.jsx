@@ -83,28 +83,7 @@ const ScoreCard = ({ score, user, onDelete }) => {
           <span>{score.owner?.username || "Anonymous"}</span>
         </p>
 
-        {Array.isArray(score.tags) && score.tags.length > 0 && (
-          <div
-            className="flex flex-wrap gap-2 mb-3"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {score.tags.slice(0, 3).map((tag, idx) => (
-              <span
-                key={idx}
-                className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 rounded"
-              >
-                #{tag}
-              </span>
-            ))}
-            {score.tags.length > 3 && (
-              <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
-                +{score.tags.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center justify-end gap-2 mt-auto">
+        <div className="flex items-center justify-end gap-2 ">
           {/* Rating badge */}
           <span
             className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
@@ -184,6 +163,27 @@ const ScoreCard = ({ score, user, onDelete }) => {
             </button>
           )}
         </div>
+
+        {Array.isArray(score.tags) && score.tags.length > 0 && (
+          <div
+            className="flex flex-wrap gap-2 mt-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {score.tags.slice(0, 3).map((tag, idx) => (
+              <span
+                key={idx}
+                className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 rounded"
+              >
+                #{tag}
+              </span>
+            ))}
+            {score.tags.length > 3 && (
+              <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                +{score.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

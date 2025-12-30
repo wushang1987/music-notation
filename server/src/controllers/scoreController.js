@@ -225,8 +225,9 @@ const getMyScores = async (req, res) => {
     const order = (req.query.order || "desc").toString();
     const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const tagsQuery = normalizeTags(req.query.tags);
 
-    let filter = { owner: req.user.id };
+    let filter = { owner: new mongoose.Types.ObjectId(req.user.id) };
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
@@ -488,7 +489,7 @@ const getLikedScores = async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const tagsQuery = normalizeTags(req.query.tags);
 
-    let filter = { likes: req.user.id };
+    let filter = { likes: new mongoose.Types.ObjectId(req.user.id) };
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
