@@ -171,6 +171,13 @@ const ScoreView = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                <span
+                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 shadow-sm"
+                  title={t("score.views")}
+                >
+                  <span className="text-base">👁</span>
+                  <span className="font-bold">{score.views || 0}</span>
+                </span>
                 {user &&
                   (user.role === "admin" ||
                     (score.owner &&
