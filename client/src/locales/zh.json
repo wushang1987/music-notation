@@ -36,6 +36,19 @@
         "myScores": "我的乐谱",
         "myLikedScores": "我点赞的乐谱"
     },
+    "hero": {
+        "title": "发现与创作",
+        "titleHighlight": "动人音乐",
+        "subtitle": "加入我们的音乐家社区。浏览数千首乐谱，创作您自己的作品，与世界分享您的音乐。",
+        "getStarted": "免费开始",
+        "exploreTrending": "探索热门",
+        "feature1Title": "浏览曲库",
+        "feature1Desc": "探索数千首音乐乐谱",
+        "feature2Title": "创作乐谱",
+        "feature2Desc": "使用 ABC 记谱法作曲",
+        "feature3Title": "分享音乐",
+        "feature3Desc": "与全球音乐家交流"
+    },
     "pagination": {
         "previous": "上一页",
         "next": "下一页",

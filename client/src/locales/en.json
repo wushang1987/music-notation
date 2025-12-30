@@ -36,6 +36,19 @@
         "myScores": "My Scores",
         "myLikedScores": "My Liked Scores"
     },
+    "hero": {
+        "title": "Discover & Create",
+        "titleHighlight": "Beautiful Music",
+        "subtitle": "Join our community of musicians. Browse thousands of scores, create your own compositions, and share your music with the world.",
+        "getStarted": "Get Started Free",
+        "exploreTrending": "Explore Trending",
+        "feature1Title": "Browse Library",
+        "feature1Desc": "Explore thousands of music scores",
+        "feature2Title": "Create Scores",
+        "feature2Desc": "Compose with ABC notation",
+        "feature3Title": "Share Music",
+        "feature3Desc": "Connect with musicians worldwide"
+    },
     "pagination": {
         "previous": "Previous",
         "next": "Next",

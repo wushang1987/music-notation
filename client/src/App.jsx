@@ -23,6 +23,7 @@ const AdminRoute = ({ children }) => {
 };
 
 const AppContent = () => {
+  const { user } = useContext(AuthContext);
   const location = useLocation();
   const isAuthPage = ['/auth', '/login', '/register'].includes(location.pathname) || location.pathname.startsWith('/verify/');
 
@@ -30,7 +31,7 @@ const AppContent = () => {
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {!isAuthPage && <Navbar />}
       <div className="flex flex-1 overflow-hidden">
-        {!isAuthPage && <Sidebar />}
+        {!isAuthPage && user && <Sidebar />}
         <main className={`flex-1 overflow-y-auto bg-white ${!isAuthPage ? 'shadow-inner' : ''}`}>
           <Routes>
             <Route path="/" element={<Home title="home.allScores" endpoint="/scores" />} />
