@@ -31,3 +31,80 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+/* Custom ABCJS Audio Player Styling */
+.abcjs-inline-audio {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.abcjs-inline-audio .abcjs-btn {
+  /* background: #3b82f6 !important; */
+  /* border: 2px solid #2563eb !important; */
+  border-radius: 8px !important;
+  width: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  /* box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important; */
+  padding: 8px !important;
+}
+
+
+
+.abcjs-inline-audio .abcjs-btn svg g {
+  fill: rgb(208, 30, 224) !important;
+  width: 16px !important;
+  height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+}
+
+.abcjs-inline-audio .abcjs-midi-clock {
+  background: transparent !important;
+  color: #374151 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+.abcjs-inline-audio .abcjs-midi-progress-background {
+  background: #e5e7eb !important;
+  border-radius: 9999px !important;
+  height: 6px !important;
+}
+
+.abcjs-inline-audio .abcjs-midi-progress-indicator {
+  background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%) !important;
+  border-radius: 9999px !important;
+  height: 6px !important;
+}
+
+.abcjs-inline-audio .abcjs-tempo-wrapper {
+  background: #f3f4f6 !important;
+  border-radius: 8px !important;
+  padding: 4px 12px !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.abcjs-inline-audio .abcjs-tempo-wrapper label {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+}
+
+.abcjs-inline-audio .abcjs-tempo-wrapper input {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+}
+
+.abcjs-inline-audio .abcjs-loading {
+  color: #6366f1 !important;
+}
+
+/* Warp slider styling */
+.abcjs-inline-audio input[type="range"] {
+  accent-color: #6366f1 !important;
+}

@@ -34,6 +34,10 @@ const ScoreView = () => {
         if (score && activeTab === 'notation') {
             const visualObj = abcjs.renderAbc('paper', score.content, {
                 responsive: 'resize',
+                paddingtop: 20,
+                paddingbottom: 20,
+                paddingright: 20,
+                paddingleft: 20,
                 add_classes: true
             })[0];
 
@@ -129,7 +133,7 @@ const ScoreView = () => {
     return (
         <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-2/3">
-                <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden mb-6">
+                <div className="bg-white  overflow-hidden mb-6">
                     <div className="p-6 border-b border-gray-100">
                         <div className="flex justify-between items-start mb-4">
                             <div>
@@ -165,6 +169,9 @@ const ScoreView = () => {
                             </div>
                         </div>
 
+                        {/* Audio Player - Moved to top */}
+                        <div id="audio" className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm"></div>
+
                         {/* Tabs Navigation */}
                         <div className="flex border-b border-gray-100 -mb-6 mt-4">
                             <button
@@ -185,12 +192,13 @@ const ScoreView = () => {
                     </div>
 
                     <div className="p-6">
-                        {activeTab === 'notation' ? (
-                            <div className="animate-fadeIn">
-                                <div id="audio" className="w-full mb-8 bg-gray-50 p-4 rounded-lg border border-gray-100"></div>
-                                <div id="paper" className="w-full overflow-x-auto min-h-[300px]"></div>
-                            </div>
-                        ) : (
+                        {/* Notation Tab Content - always render but hide when not active */}
+                        <div className={activeTab === 'notation' ? 'animate-fadeIn' : 'hidden'}>
+                            <div id="paper" className="w-full overflow-x-auto min-h-[800px] rounded-md shadow-sm border border-gray-100  "></div>
+                        </div>
+
+                        {/* ABC Tab Content */}
+                        {activeTab === 'abc' && (
                             <div className="animate-fadeIn">
                                 <div className="relative">
                                     <div className="absolute top-2 right-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-50">ABC Notation</div>
