@@ -1,14 +1,32 @@
 const Score = require("../models/Score");
 const mongoose = require("mongoose");
 
+// Normalize tags from array or comma-separated string
+const normalizeTags = (tags) => {
+  try {
+    let arr = [];
+    if (Array.isArray(tags)) arr = tags;
+    else if (typeof tags === "string") arr = tags.split(",");
+    const cleaned = arr
+      .map((t) => (typeof t === "string" ? t.trim() : ""))
+      .filter(Boolean)
+      .map((t) => t.toLowerCase());
+    // dedupe and cap to 10 tags
+    return Array.from(new Set(cleaned)).slice(0, 10);
+  } catch {
+    return [];
+  }
+};
+
 const createScore = async (req, res) => {
   try {
-    const { title, content, isPublic } = req.body;
+    const { title, content, isPublic, tags } = req.body;
     const score = new Score({
       title,
       content,
       isPublic,
       owner: req.user.id,
+      tags: normalizeTags(tags),
     });
     const savedScore = await score.save();
     res.status(201).json(savedScore);
@@ -26,6 +44,7 @@ const getScores = async (req, res) => {
     const order = (req.query.order || "desc").toString();
     const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const tagsQuery = normalizeTags(req.query.tags);
 
     // Base filter for public scores or owned scores
     let filter =
@@ -38,6 +57,9 @@ const getScores = async (req, res) => {
     // Add search filtering if provided
     if (search) {
       filter.title = { $regex: search, $options: "i" };
+    }
+    if (tagsQuery && tagsQuery.length) {
+      filter.tags = { $in: tagsQuery };
     }
 
     const total = await Score.countDocuments(filter);
@@ -59,6 +81,9 @@ const getScores = async (req, res) => {
 
       if (search) {
         matchFilter.title = { $regex: search, $options: "i" };
+      }
+      if (tagsQuery && tagsQuery.length) {
+        matchFilter.tags = { $in: tagsQuery };
       }
 
       effectiveTotal = await Score.countDocuments(matchFilter);
@@ -95,6 +120,9 @@ const getScores = async (req, res) => {
 
       if (search) {
         matchFilter.title = { $regex: search, $options: "i" };
+      }
+      if (tagsQuery && tagsQuery.length) {
+        matchFilter.tags = { $in: tagsQuery };
       }
 
       effectiveTotal = await Score.countDocuments(matchFilter);
@@ -201,6 +229,9 @@ const getMyScores = async (req, res) => {
     let filter = { owner: req.user.id };
     if (search) {
       filter.title = { $regex: search, $options: "i" };
+    }
+    if (tagsQuery && tagsQuery.length) {
+      filter.tags = { $in: tagsQuery };
     }
 
     const total = await Score.countDocuments(filter);
@@ -339,10 +370,13 @@ const updateScore = async (req, res) => {
         .json({ message: "Not authorized to edit this score" });
     }
 
-    const { title, content, isPublic } = req.body;
+    const { title, content, isPublic, tags } = req.body;
     score.title = title || score.title;
     score.content = content || score.content;
     score.isPublic = isPublic !== undefined ? isPublic : score.isPublic;
+    if (tags !== undefined) {
+      score.tags = normalizeTags(tags);
+    }
 
     const updatedScore = await score.save();
     res.json(updatedScore);
@@ -452,10 +486,14 @@ const getLikedScores = async (req, res) => {
     const order = (req.query.order || "desc").toString();
     const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    const tagsQuery = normalizeTags(req.query.tags);
 
     let filter = { likes: req.user.id };
     if (search) {
       filter.title = { $regex: search, $options: "i" };
+    }
+    if (tagsQuery && tagsQuery.length) {
+      filter.tags = { $in: tagsQuery };
     }
 
     const total = await Score.countDocuments(filter);

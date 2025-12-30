@@ -14,6 +14,7 @@ const ScoreEditor = () => {
     "X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |"
   );
   const [isPublic, setIsPublic] = useState(false);
+  const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(isEdit);
   const navigate = useNavigate();
 
@@ -27,6 +28,7 @@ const ScoreEditor = () => {
           setTitle(data.title);
           setContent(data.content);
           setIsPublic(data.isPublic);
+          setTagsInput(Array.isArray(data.tags) ? data.tags.join(", ") : "");
         } catch (err) {
           console.error("Failed to fetch score", err);
           alert("Failed to load score for editing");
@@ -104,10 +106,20 @@ const ScoreEditor = () => {
 
   const handleSave = async () => {
     try {
+      const raw = tagsInput || "";
+      const tags = Array.from(
+        new Set(
+          raw
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .map((t) => t.toLowerCase())
+        )
+      ).slice(0, 10);
       if (isEdit) {
-        await api.put(`/scores/${id}`, { title, content, isPublic });
+        await api.put(`/scores/${id}`, { title, content, isPublic, tags });
       } else {
-        await api.post("/scores", { title, content, isPublic });
+        await api.post("/scores", { title, content, isPublic, tags });
       }
       navigate(isEdit ? `/score/${id}` : "/");
     } catch (err) {
@@ -151,6 +163,16 @@ const ScoreEditor = () => {
             />
             <span className="ml-2">{t("score.public")}</span>
           </label>
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1">{t("score.tags")}</label>
+          <input
+            type="text"
+            className="w-full border p-2 rounded"
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder={t("score.tagsPlaceholder")}
+          />
         </div>
         <button
           onClick={handleSave}

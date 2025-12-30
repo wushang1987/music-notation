@@ -22,6 +22,7 @@ const scoreSchema = new mongoose.Schema(
         value: { type: Number, min: 1, max: 5, required: true },
       },
     ],
+    tags: { type: [String], default: [] },
   },
   { timestamps: true }
 );

@@ -402,6 +402,21 @@ const ScoreView = () => {
           <p>
             {t("score.views")}: {score.views || 0}
           </p>
+          {Array.isArray(score.tags) && score.tags.length > 0 && (
+            <div className="mt-2">
+              <p className="mb-2">{t("score.tags")}</p>
+              <div className="flex flex-wrap gap-2">
+                {score.tags.map((tag, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 rounded"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

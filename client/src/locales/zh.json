@@ -43,7 +43,13 @@
       "views": "浏览",
       "rating": "评分"
     },
-    "orderLabels": { "asc": "升序", "desc": "降序" }
+    "orderLabels": { "asc": "升序", "desc": "降序" },
+    "filter": {
+      "tags": "标签",
+      "tagsPlaceholder": "按标签筛选（用逗号分隔）",
+      "apply": "应用",
+      "clear": "清除"
+    }
   },
   "hero": {
     "title": "发现与创作",
@@ -100,6 +106,8 @@
     "views": "浏览次数",
     "likes": "点赞",
     "rating": "评分",
+    "tags": "标签",
+    "tagsPlaceholder": "添加标签（用逗号分隔）",
     "loginToRate": "请登录后进行评分。",
     "rateFailed": "评分提交失败"
   }

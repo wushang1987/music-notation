@@ -43,7 +43,13 @@
       "views": "Views",
       "rating": "Rating"
     },
-    "orderLabels": { "asc": "Ascending", "desc": "Descending" }
+    "orderLabels": { "asc": "Ascending", "desc": "Descending" },
+    "filter": {
+      "tags": "Tags",
+      "tagsPlaceholder": "Filter by tags (comma-separated)",
+      "apply": "Apply",
+      "clear": "Clear"
+    }
   },
   "hero": {
     "title": "Discover & Create",
@@ -100,6 +106,8 @@
     "views": "Views",
     "likes": "Likes",
     "rating": "Rating",
+    "tags": "Tags",
+    "tagsPlaceholder": "Add tags (comma-separated)",
     "loginToRate": "Please login to rate this score.",
     "rateFailed": "Failed to submit rating"
   }

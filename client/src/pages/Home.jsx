@@ -18,6 +18,8 @@ const Home = ({ title, endpoint = "/scores" }) => {
   const [total, setTotal] = useState(0);
   const [sortBy, setSortBy] = useState("date");
   const [order, setOrder] = useState("desc");
+  const [tagsInput, setTagsInput] = useState("");
+  const [tagsApplied, setTagsApplied] = useState("");
 
   const handleDelete = async (id) => {
     if (!window.confirm(t("score.deleteConfirm"))) return;
@@ -34,9 +36,10 @@ const Home = ({ title, endpoint = "/scores" }) => {
     const fetchScores = async () => {
       setLoading(true);
       try {
-        // Add query parameters for search and pagination
+        // Add query parameters for search, tags and pagination
         const params = new URLSearchParams();
         if (search) params.append("search", search);
+        if (tagsApplied) params.append("tags", tagsApplied);
         params.append("page", page);
         params.append("limit", 12);
         params.append("sortBy", sortBy);
@@ -67,11 +70,21 @@ const Home = ({ title, endpoint = "/scores" }) => {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [endpoint, search, page, sortBy, order]);
+  }, [endpoint, search, tagsApplied, page, sortBy, order]);
 
   // Reset page when search changes
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
+    setPage(1);
+  };
+
+  const handleTagsChange = (e) => {
+    setTagsInput(e.target.value);
+    setPage(1);
+  };
+
+  const applyTagsFilter = () => {
+    setTagsApplied(tagsInput);
     setPage(1);
   };
 
@@ -115,6 +128,46 @@ const Home = ({ title, endpoint = "/scores" }) => {
                 onChange={handleSearchChange}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
               />
+            </div>
+            <div className="relative w-full md:w-80">
+              <input
+                type="text"
+                placeholder={t("home.filter.tagsPlaceholder", {
+                  defaultValue: "Filter by tags (comma-separated)",
+                })}
+                value={tagsInput}
+                onChange={handleTagsChange}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    applyTagsFilter();
+                  }
+                }}
+                className="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+                title={t("home.filter.tags", { defaultValue: "Tags" })}
+              />
+              <div className="mt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={applyTagsFilter}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  title={t("home.filter.apply", { defaultValue: "Apply" })}
+                >
+                  {t("home.filter.apply", { defaultValue: "Apply" })}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTagsInput("");
+                    setTagsApplied("");
+                    setPage(1);
+                  }}
+                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300"
+                  title={t("home.filter.clear", { defaultValue: "Clear" })}
+                >
+                  {t("home.filter.clear", { defaultValue: "Clear" })}
+                </button>
+              </div>
             </div>
             <label className="sr-only">{t("home.sortBy")}</label>
             <select
