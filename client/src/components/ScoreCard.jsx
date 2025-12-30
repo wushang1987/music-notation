@@ -84,6 +84,21 @@ const ScoreCard = ({ score, user, onDelete }) => {
         </p>
 
         <div className="flex items-center justify-end gap-2 mt-auto">
+          {/* Rating badge */}
+          <span
+            className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
+            title={t("score.rating")}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="mr-1">⭐</span>
+            {(() => {
+              const arr = score.ratings || [];
+              if (!arr.length) return "0.0";
+              const avg =
+                arr.reduce((s, r) => s + (r.value || 0), 0) / arr.length;
+              return avg.toFixed(1);
+            })()}
+          </span>
           <span
             className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
             title={t("score.likes")}

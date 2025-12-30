@@ -129,6 +129,7 @@ const Home = ({ title, endpoint = "/scores" }) => {
               <option value="date">{t("home.sort.date")}</option>
               <option value="likes">{t("home.sort.likes")}</option>
               <option value="views">{t("home.sort.views")}</option>
+              <option value="rating">{t("home.sort.rating")}</option>
             </select>
             <label className="sr-only">{t("home.order")}</label>
             <select

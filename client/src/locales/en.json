@@ -40,7 +40,8 @@
     "sort": {
       "date": "Date",
       "likes": "Likes",
-      "views": "Views"
+      "views": "Views",
+      "rating": "Rating"
     },
     "orderLabels": { "asc": "Ascending", "desc": "Descending" }
   },
@@ -97,6 +98,9 @@
     "abcNotation": "ABC Notation",
     "preview": "Preview",
     "views": "Views",
-    "likes": "Likes"
+    "likes": "Likes",
+    "rating": "Rating",
+    "loginToRate": "Please login to rate this score.",
+    "rateFailed": "Failed to submit rating"
   }
 }

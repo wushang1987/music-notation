@@ -80,6 +80,94 @@ const getScores = async (req, res) => {
         { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
         { $project: { "owner.password": 0 } },
       ]);
+    } else if (sortBy === "rating") {
+      const matchFilter =
+        req.user && req.user.role === "admin"
+          ? {}
+          : req.user
+          ? {
+              $or: [
+                { isPublic: true },
+                { owner: new mongoose.Types.ObjectId(req.user.id) },
+              ],
+            }
+          : { isPublic: true };
+
+      if (search) {
+        matchFilter.title = { $regex: search, $options: "i" };
+      }
+
+      effectiveTotal = await Score.countDocuments(matchFilter);
+
+      scores = await Score.aggregate([
+        { $match: matchFilter },
+        {
+          $addFields: {
+            avgRating: {
+              $ifNull: [
+                {
+                  $avg: {
+                    $map: {
+                      input: { $ifNull: ["$ratings", []] },
+                      as: "r",
+                      in: "$$r.value"
+                    }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        { $sort: { avgRating: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
+      ]);
+    } else if (sortBy === "rating") {
+      scores = await Score.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            avgRating: {
+              $ifNull: [
+                {
+                  $avg: {
+                    $map: {
+                      input: { $ifNull: ["$ratings", []] },
+                      as: "r",
+                      in: "$$r.value"
+                    }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        { $sort: { avgRating: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'owner',
+            foreignField: '_id',
+            as: 'owner'
+          }
+        },
+        { $unwind: { path: '$owner', preserveNullAndEmptyArrays: true } },
+        { $project: { 'owner.password': 0 } }
+      ]);
     } else {
       const sortField = sortBy === "views" ? "views" : "createdAt";
       scores = await Score.find(filter)
@@ -135,6 +223,41 @@ const getMyScores = async (req, res) => {
         },
         { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
         { $project: { "owner.password": 0 } },
+      ]);
+    } else if (sortBy === "rating") {
+      scores = await Score.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            avgRating: {
+              $ifNull: [
+                {
+                  $avg: {
+                    $map: {
+                      input: { $ifNull: ["$ratings", []] },
+                      as: "r",
+                      in: "$$r.value"
+                    }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        { $sort: { avgRating: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'owner',
+            foreignField: '_id',
+            as: 'owner'
+          }
+        },
+        { $unwind: { path: '$owner', preserveNullAndEmptyArrays: true } },
+        { $project: { 'owner.password': 0 } }
       ]);
     } else {
       const sortField = sortBy === "views" ? "views" : "createdAt";
@@ -277,6 +400,51 @@ const toggleLike = async (req, res) => {
   }
 };
 
+const rateScore = async (req, res) => {
+  try {
+    const { value } = req.body;
+    const ratingValue = parseInt(value);
+    if (!ratingValue || ratingValue < 1 || ratingValue > 5) {
+      return res.status(400).json({ message: "Invalid rating value" });
+    }
+
+    const score = await Score.findById(req.params.id).populate(
+      "owner",
+      "username"
+    );
+    if (!score) return res.status(404).json({ message: "Score not found" });
+
+    // access: user must be able to view the score
+    const isOwner =
+      score.owner &&
+      (score.owner._id?.toString?.() === req.user.id ||
+        score.owner.toString?.() === req.user.id);
+    const isAdmin = req.user && req.user.role === "admin";
+    if (!score.isPublic && !isOwner && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to rate this score" });
+    }
+
+    if (!Array.isArray(score.ratings)) score.ratings = [];
+    const idx = score.ratings.findIndex(
+      (r) => r.user.toString() === req.user.id
+    );
+    if (idx >= 0) {
+      score.ratings[idx].value = ratingValue;
+    } else {
+      score.ratings.push({ user: req.user.id, value: ratingValue });
+    }
+
+    await score.save();
+    res.json(score.ratings);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error rating score", error: error.message });
+  }
+};
+
 const getLikedScores = async (req, res) => {
   try {
     const { search, page = 1, limit = 12 } = req.query;
@@ -342,4 +510,5 @@ module.exports = {
   updateScore,
   deleteScore,
   toggleLike,
+  rateScore,
 };

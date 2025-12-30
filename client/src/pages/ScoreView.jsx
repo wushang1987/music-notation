@@ -13,12 +13,28 @@ const ScoreView = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const { user } = useContext(AuthContext);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [myRating, setMyRating] = useState(0);
 
   useEffect(() => {
     const fetchScoreAndComments = async () => {
       try {
         const scoreRes = await api.get(`/scores/${id}`);
         setScore(scoreRes.data);
+        // initialize myRating from server data if available
+        const me = user;
+        if (me && scoreRes.data?.ratings?.length) {
+          const r = scoreRes.data.ratings.find(
+            (x) =>
+              x.user === me.id ||
+              x.user === me._id ||
+              x.user?._id === me.id ||
+              x.user?._id === me._id
+          );
+          setMyRating(r ? r.value : 0);
+        } else {
+          setMyRating(0);
+        }
         const commentsRes = await api.get(`/comments/${id}`);
         setComments(commentsRes.data);
       } catch (err) {
@@ -26,7 +42,7 @@ const ScoreView = () => {
       }
     };
     fetchScoreAndComments();
-  }, [id]);
+  }, [id, user]);
 
   const [activeTab, setActiveTab] = useState("notation");
 
@@ -135,6 +151,27 @@ const ScoreView = () => {
   const hasLiked =
     user && score?.likes?.some((uid) => uid === user.id || uid === user._id);
 
+  const avgRating = (() => {
+    const arr = score?.ratings || [];
+    if (!arr.length) return 0;
+    return arr.reduce((sum, r) => sum + (r.value || 0), 0) / arr.length;
+  })();
+
+  const handleRate = async (value) => {
+    if (!user) {
+      alert(t("score.loginToRate") || "Please login to rate this score.");
+      return;
+    }
+    try {
+      const { data } = await api.put(`/scores/${id}/rate`, { value });
+      setScore((prev) => ({ ...prev, ratings: data }));
+      setMyRating(value);
+    } catch (err) {
+      console.error("Failed to rate score", err);
+      alert(t("score.rateFailed") || "Failed to submit rating");
+    }
+  };
+
   if (!score)
     return (
       <div className="p-10 text-center font-bold">{t("common.loading")}</div>
@@ -171,6 +208,29 @@ const ScoreView = () => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {/* Rating control */}
+                <div
+                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 shadow-sm"
+                  title={t("score.rating")}
+                >
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className="text-lg"
+                        onMouseEnter={() => setHoverRating(n)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        onClick={() => handleRate(n)}
+                      >
+                        {(hoverRating || myRating) >= n ? "⭐" : "☆"}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold text-gray-700">
+                    {avgRating ? avgRating.toFixed(1) : "0.0"}
+                  </span>
+                </div>
                 <span
                   className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 shadow-sm"
                   title={t("score.views")}
