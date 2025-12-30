@@ -130,10 +130,25 @@ const Home = ({ title, endpoint = "/scores" }) => {
               />
             </div>
             <div className="relative w-full md:w-80">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  />
+                </svg>
+              </div>
               <input
                 type="text"
                 placeholder={t("home.filter.tagsPlaceholder", {
-                  defaultValue: "Filter by tags (comma-separated)",
+                  defaultValue: "Filter by tags",
                 })}
                 value={tagsInput}
                 onChange={handleTagsChange}
@@ -143,30 +158,59 @@ const Home = ({ title, endpoint = "/scores" }) => {
                     applyTagsFilter();
                   }
                 }}
-                className="block w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+                className="block w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
                 title={t("home.filter.tags", { defaultValue: "Tags" })}
               />
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  onClick={applyTagsFilter}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-                  title={t("home.filter.apply", { defaultValue: "Apply" })}
-                >
-                  {t("home.filter.apply", { defaultValue: "Apply" })}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTagsInput("");
-                    setTagsApplied("");
-                    setPage(1);
-                  }}
-                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 border border-gray-300"
-                  title={t("home.filter.clear", { defaultValue: "Clear" })}
-                >
-                  {t("home.filter.clear", { defaultValue: "Clear" })}
-                </button>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
+                {tagsInput && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTagsInput("");
+                        setTagsApplied("");
+                        setPage(1);
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                      title={t("home.filter.clear", { defaultValue: "Clear" })}
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                    <div className="h-4 w-px bg-gray-300 mx-1"></div>
+                    <button
+                      type="button"
+                      onClick={applyTagsFilter}
+                      className="p-1 text-blue-600 hover:text-blue-700 rounded-full hover:bg-blue-50"
+                      title={t("home.filter.apply", { defaultValue: "Apply" })}
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <label className="sr-only">{t("home.sortBy")}</label>
