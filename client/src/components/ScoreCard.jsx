@@ -86,6 +86,14 @@ const ScoreCard = ({ score, user, onDelete }) => {
         <div className="flex items-center justify-end gap-2 mt-auto">
           <span
             className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
+            title={t("score.likes")}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="mr-1">❤️</span>
+            {score.likes?.length || 0}
+          </span>
+          <span
+            className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
             title={t("score.views")}
             onClick={(e) => e.stopPropagation()}
           >

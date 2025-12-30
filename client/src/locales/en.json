@@ -34,7 +34,15 @@
     "title": "Music Scores",
     "allScores": "All Scores",
     "myScores": "My Scores",
-    "myLikedScores": "My Liked Scores"
+    "myLikedScores": "My Liked Scores",
+    "sortBy": "Sort by",
+    "order": "Order",
+    "sort": {
+      "date": "Date",
+      "likes": "Likes",
+      "views": "Views"
+    },
+    "orderLabels": { "asc": "Ascending", "desc": "Descending" }
   },
   "hero": {
     "title": "Discover & Create",
@@ -88,6 +96,7 @@
     "scoreTitle": "Title",
     "abcNotation": "ABC Notation",
     "preview": "Preview",
-    "views": "Views"
+    "views": "Views",
+    "likes": "Likes"
   }
 }

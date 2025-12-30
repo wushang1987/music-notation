@@ -34,7 +34,15 @@
     "title": "音乐曲谱",
     "allScores": "所有乐谱",
     "myScores": "我的乐谱",
-    "myLikedScores": "我点赞的乐谱"
+    "myLikedScores": "我点赞的乐谱",
+    "sortBy": "排序字段",
+    "order": "排序方式",
+    "sort": {
+      "date": "日期",
+      "likes": "点赞",
+      "views": "浏览"
+    },
+    "orderLabels": { "asc": "升序", "desc": "降序" }
   },
   "hero": {
     "title": "发现与创作",
@@ -88,6 +96,7 @@
     "scoreTitle": "标题",
     "abcNotation": "ABC 记谱法",
     "preview": "预览",
-    "views": "浏览次数"
+    "views": "浏览次数",
+    "likes": "点赞"
   }
 }

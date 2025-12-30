@@ -1,4 +1,5 @@
 const Score = require("../models/Score");
+const mongoose = require("mongoose");
 
 const createScore = async (req, res) => {
   try {
@@ -21,6 +22,9 @@ const createScore = async (req, res) => {
 const getScores = async (req, res) => {
   try {
     const { search, page = 1, limit = 12 } = req.query;
+    const sortBy = (req.query.sortBy || "date").toString();
+    const order = (req.query.order || "desc").toString();
+    const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Base filter for public scores or owned scores
@@ -37,17 +41,59 @@ const getScores = async (req, res) => {
     }
 
     const total = await Score.countDocuments(filter);
-    const scores = await Score.find(filter)
-      .populate("owner", "username")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    let scores;
+    let effectiveTotal = total;
+
+    if (sortBy === "likes") {
+      const matchFilter =
+        req.user && req.user.role === "admin"
+          ? {}
+          : req.user
+          ? {
+              $or: [
+                { isPublic: true },
+                { owner: new mongoose.Types.ObjectId(req.user.id) },
+              ],
+            }
+          : { isPublic: true };
+
+      if (search) {
+        matchFilter.title = { $regex: search, $options: "i" };
+      }
+
+      effectiveTotal = await Score.countDocuments(matchFilter);
+
+      scores = await Score.aggregate([
+        { $match: matchFilter },
+        { $addFields: { likesCount: { $size: { $ifNull: ["$likes", []] } } } },
+        { $sort: { likesCount: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
+      ]);
+    } else {
+      const sortField = sortBy === "views" ? "views" : "createdAt";
+      scores = await Score.find(filter)
+        .populate("owner", "username")
+        .sort({ [sortField]: sortDir, _id: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+    }
 
     res.json({
       scores,
-      total,
+      total: effectiveTotal,
       page: parseInt(page),
-      totalPages: Math.ceil(total / parseInt(limit)),
+      totalPages: Math.ceil(effectiveTotal / parseInt(limit)),
     });
   } catch (error) {
     res
@@ -59,20 +105,45 @@ const getScores = async (req, res) => {
 const getMyScores = async (req, res) => {
   try {
     const { search, page = 1, limit = 12 } = req.query;
+    const sortBy = (req.query.sortBy || "date").toString();
+    const order = (req.query.order || "desc").toString();
+    const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     let filter = { owner: req.user.id };
-
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
 
     const total = await Score.countDocuments(filter);
-    const scores = await Score.find(filter)
-      .populate("owner", "username")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    let scores;
+
+    if (sortBy === "likes") {
+      scores = await Score.aggregate([
+        { $match: filter },
+        { $addFields: { likesCount: { $size: { $ifNull: ["$likes", []] } } } },
+        { $sort: { likesCount: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
+      ]);
+    } else {
+      const sortField = sortBy === "views" ? "views" : "createdAt";
+      scores = await Score.find(filter)
+        .populate("owner", "username")
+        .sort({ [sortField]: sortDir, _id: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+    }
 
     res.json({
       scores,
@@ -209,20 +280,45 @@ const toggleLike = async (req, res) => {
 const getLikedScores = async (req, res) => {
   try {
     const { search, page = 1, limit = 12 } = req.query;
+    const sortBy = (req.query.sortBy || "date").toString();
+    const order = (req.query.order || "desc").toString();
+    const sortDir = order === "asc" ? 1 : -1;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     let filter = { likes: req.user.id };
-
     if (search) {
       filter.title = { $regex: search, $options: "i" };
     }
 
     const total = await Score.countDocuments(filter);
-    const scores = await Score.find(filter)
-      .populate("owner", "username")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    let scores;
+
+    if (sortBy === "likes") {
+      scores = await Score.aggregate([
+        { $match: filter },
+        { $addFields: { likesCount: { $size: { $ifNull: ["$likes", []] } } } },
+        { $sort: { likesCount: sortDir, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+          $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
+        },
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
+      ]);
+    } else {
+      const sortField = sortBy === "views" ? "views" : "createdAt";
+      scores = await Score.find(filter)
+        .populate("owner", "username")
+        .sort({ [sortField]: sortDir, _id: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+    }
 
     res.json({
       scores,
