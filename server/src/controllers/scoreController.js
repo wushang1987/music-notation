@@ -110,14 +110,14 @@ const getScores = async (req, res) => {
                     $map: {
                       input: { $ifNull: ["$ratings", []] },
                       as: "r",
-                      in: "$$r.value"
-                    }
-                  }
+                      in: "$$r.value",
+                    },
+                  },
                 },
-                0
-              ]
-            }
-          }
+                0,
+              ],
+            },
+          },
         },
         { $sort: { avgRating: sortDir, createdAt: -1 } },
         { $skip: skip },
@@ -145,28 +145,28 @@ const getScores = async (req, res) => {
                     $map: {
                       input: { $ifNull: ["$ratings", []] },
                       as: "r",
-                      in: "$$r.value"
-                    }
-                  }
+                      in: "$$r.value",
+                    },
+                  },
                 },
-                0
-              ]
-            }
-          }
+                0,
+              ],
+            },
+          },
         },
         { $sort: { avgRating: sortDir, createdAt: -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
         {
           $lookup: {
-            from: 'users',
-            localField: 'owner',
-            foreignField: '_id',
-            as: 'owner'
-          }
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
         },
-        { $unwind: { path: '$owner', preserveNullAndEmptyArrays: true } },
-        { $project: { 'owner.password': 0 } }
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
       ]);
     } else {
       const sortField = sortBy === "views" ? "views" : "createdAt";
@@ -236,28 +236,28 @@ const getMyScores = async (req, res) => {
                     $map: {
                       input: { $ifNull: ["$ratings", []] },
                       as: "r",
-                      in: "$$r.value"
-                    }
-                  }
+                      in: "$$r.value",
+                    },
+                  },
                 },
-                0
-              ]
-            }
-          }
+                0,
+              ],
+            },
+          },
         },
         { $sort: { avgRating: sortDir, createdAt: -1 } },
         { $skip: skip },
         { $limit: parseInt(limit) },
         {
           $lookup: {
-            from: 'users',
-            localField: 'owner',
-            foreignField: '_id',
-            as: 'owner'
-          }
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+          },
         },
-        { $unwind: { path: '$owner', preserveNullAndEmptyArrays: true } },
-        { $project: { 'owner.password': 0 } }
+        { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true } },
+        { $project: { "owner.password": 0 } },
       ]);
     } else {
       const sortField = sortBy === "views" ? "views" : "createdAt";
