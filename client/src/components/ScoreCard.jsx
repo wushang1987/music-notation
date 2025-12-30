@@ -13,11 +13,11 @@ const ScoreCard = ({ score, user, onDelete }) => {
             try {
                 abcjs.renderAbc(paperRef.current, score.content, {
                     responsive: 'resize',
-                    scale: 0.8,
-                    paddingtop: 0,
-                    paddingbottom: 0,
-                    paddingright: 0,
-                    paddingleft: 0,
+                    scale: 1,
+                    paddingtop: 10,
+                    paddingbottom: 10,
+                    paddingright: 10,
+                    paddingleft: 10,
                     staffwidth: 400,
                     add_classes: true
                 });
@@ -43,25 +43,26 @@ const ScoreCard = ({ score, user, onDelete }) => {
     return (
         <div
             onClick={handleCardClick}
-            className="group bg-white border border-gray-200 rounded-sm shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden cursor-pointer active:scale-[0.98]"
+            className="group  transition-all duration-300 flex flex-col overflow-hidden cursor-pointer active:scale-[0.98]"
         >
-            {/* Music Notation Preview Area */}
-            <div className="h-40 bg-gray-50 border-b border-gray-100 relative overflow-hidden flex items-center justify-center p-2">
-                <div
-                    ref={paperRef}
-                    className="w-full h-full opacity-80 pointer-events-none"
-                    style={{ maskImage: 'linear-gradient(to bottom, black 70%, transparent)' }}
-                ></div>
+            {/* Music Notation Paper - Prominent Display */}
+            <div className="relative bg-gradient-to-b from-gray-100 to-gray-50">
+                <div className="bg-white rounded-sm shadow-lg border border-gray-300 h-60 overflow-hidden p-2">
+                    <div
+                        ref={paperRef}
+                        className="w-full min-h-[280px] p-4 pointer-events-none"
+                    ></div>
+                </div>
             </div>
 
-            {/* Content */}
+            {/* Content Below the Paper */}
             <div className="p-4 flex flex-col flex-1">
-                <h2 className="text-lg font-bold mb-1 text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={score.title}>
+                <h2 className="text-sm  mb-2 text-gray-900 truncate group-hover:text-blue-600 transition-colors" title={score.title}>
                     {score.title}
                 </h2>
 
-                <p className="text-gray-500 mb-4 text-xs flex items-center gap-1.5 font-medium">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <p className="text-gray-500 mb-4 text-sm flex items-center gap-1.5 font-medium">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span>{score.owner?.username || 'Anonymous'}</span>
