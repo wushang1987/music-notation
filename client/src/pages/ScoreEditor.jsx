@@ -31,6 +31,8 @@ const ScoreEditor = () => {
 
   // Selection State
   const [selection, setSelection] = useState({ start: -1, end: -1 });
+  const sourceRef = useRef(null);
+  const [abcTypingEnabled, setAbcTypingEnabled] = useState(false);
 
   const navigate = useNavigate();
 
@@ -193,6 +195,61 @@ const ScoreEditor = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
+  // --- Line Break Helpers (insert at caret in source textarea) ---
+  const insertAtSource = useCallback(
+    (text) => {
+      const ta = sourceRef.current;
+      if (!ta) {
+        // Fallback: append to end
+        setContent((prev) => prev + text);
+        return;
+      }
+      const start = ta.selectionStart ?? content.length;
+      const end = ta.selectionEnd ?? start;
+      const before = content.slice(0, start);
+      const after = content.slice(end);
+      const next = before + text + after;
+      setContent(next);
+      // Restore caret after React updates DOM
+      requestAnimationFrame(() => {
+        try {
+          ta.focus();
+          const pos = start + text.length;
+          ta.selectionStart = pos;
+          ta.selectionEnd = pos;
+          ta.scrollTop = ta.scrollTop; // keep scroll position
+        } catch {}
+      });
+    },
+    [content]
+  );
+
+  const insertLineBreak = useCallback(
+    () => insertAtSource("\n"),
+    [insertAtSource]
+  );
+  const insertBarLineBreak = useCallback(
+    () => insertAtSource(" |\n"),
+    [insertAtSource]
+  );
+
+  // Map keyboard keys to ABC notes for quick entry
+  const KEY_TO_ABC = {
+    a: "C",
+    w: "^C",
+    s: "D",
+    e: "^D",
+    d: "E",
+    f: "F",
+    t: "^F",
+    g: "G",
+    y: "^G",
+    h: "A",
+    u: "^A",
+    j: "B",
+    k: "c",
+  };
+
   const handleSave = async () => {
     try {
       const tags = tagsInput
@@ -246,7 +303,7 @@ const ScoreEditor = () => {
 
         {/* Center Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto p-8 flex justify-center">
-          <div className="bg-white shadow-lg p-8 min-h-[800px] w-full max-w-4xl">
+          <div className="bg-white shadow-lg p-8 min-h-200 w-full max-w-4xl">
             <div id="paper"></div>
           </div>
         </div>
@@ -260,6 +317,25 @@ const ScoreEditor = () => {
             className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            ref={sourceRef}
+            onKeyDown={(e) => {
+              // Ctrl+Enter inserts a measure break with newline
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                insertBarLineBreak();
+                return;
+              }
+              // ABC typing: map letter keys to notes when enabled
+              if (abcTypingEnabled && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const k = e.key.toLowerCase();
+                const abc = KEY_TO_ABC[k];
+                if (abc) {
+                  e.preventDefault();
+                  insertAtSource(abc);
+                  return;
+                }
+              }
+            }}
           />
           <div className="p-4 border-t">
             <label className="block text-xs font-bold mb-1">Instrument</label>
@@ -274,13 +350,43 @@ const ScoreEditor = () => {
                 </option>
               ))}
             </select>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                className="px-3 py-1 rounded border bg-white hover:bg-gray-50 text-gray-700"
+                onClick={insertLineBreak}
+                title="在光标处插入换行"
+              >
+                换行
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1 rounded border bg-white hover:bg-gray-50 text-gray-700"
+                onClick={insertBarLineBreak}
+                title="在光标处插入小节线并换行 (Ctrl+Enter)"
+              >
+                小节换行
+              </button>
+              <label className="ml-auto flex items-center gap-2 text-xs text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={abcTypingEnabled}
+                  onChange={(e) => setAbcTypingEnabled(e.target.checked)}
+                />
+                ABC键盘输入（默认虚拟键盘）
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom: Virtual Piano (Optional, can be toggled) */}
       <div className="border-t bg-white">
-        <VirtualPiano onNoteClick={(n) => setContent((prev) => prev + n)} />
+        <VirtualPiano
+          initialKeyboardEnabled={true}
+          captureInTextarea={!abcTypingEnabled}
+          onNoteClick={(n) => insertAtSource(n)}
+        />
       </div>
     </div>
   );

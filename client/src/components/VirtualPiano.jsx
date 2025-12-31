@@ -16,9 +16,16 @@ const NOTES = [
   { note: "c", type: "white", abc: "c", key: "k" }, // Next octave C
 ];
 
-const VirtualPiano = ({ onNoteClick, duration = "" }) => {
+const VirtualPiano = ({
+  onNoteClick,
+  duration = "",
+  initialKeyboardEnabled = false,
+  captureInTextarea = false,
+}) => {
   const [octave, setOctave] = useState(0);
-  const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(false);
+  const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(
+    initialKeyboardEnabled
+  );
   const audioCtxRef = useRef(null);
 
   const ensureAudioContext = useCallback(() => {
@@ -154,11 +161,10 @@ const VirtualPiano = ({ onNoteClick, duration = "" }) => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Always ignore inputs that are NOT the main textarea (e.g. Title input)
-      if (e.target.tagName === "INPUT") return;
-
-      // If typing in textarea, only intercept if keyboard mode is enabled
-      if (e.target.tagName === "TEXTAREA" && !isKeyboardEnabled) return;
+      // Ignore typing inside inputs; textarea can be captured when desired
+      const tag = e.target.tagName;
+      if (tag === "INPUT") return;
+      if (tag === "TEXTAREA" && !captureInTextarea) return;
 
       const key = e.key.toLowerCase();
       const noteDef = NOTES.find((n) => n.key === key);
@@ -170,7 +176,7 @@ const VirtualPiano = ({ onNoteClick, duration = "" }) => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleNoteClick, isKeyboardEnabled]);
+  }, [handleNoteClick, isKeyboardEnabled, captureInTextarea]);
 
   return (
     <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-md mt-4">
@@ -194,7 +200,7 @@ const VirtualPiano = ({ onNoteClick, duration = "" }) => {
           >
             Octave -
           </button>
-          <span className="px-2 py-1 bg-white rounded border min-w-[30px] text-center">
+          <span className="px-2 py-1 bg-white rounded border min-w-7.5 text-center">
             {octave}
           </span>
           <button
