@@ -1,17 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { useTranslation } from "react-i18next";
 import VirtualPiano from "../components/VirtualPiano";
-import EditorToolbar from "../components/EditorToolbar";
+import EditorSidebar from "../components/EditorSidebar";
 import { ensureMidiProgram, INSTRUMENT_OPTIONS } from "../utils/abcMidi";
+import {
+  modifyNoteInAbc,
+  setNoteDuration,
+  setNoteAccidental,
+  shiftPitch,
+} from "../utils/abcModification";
 
 const ScoreEditor = () => {
   const { id } = useParams();
   const { t } = useTranslation();
   const isEdit = !!id;
+
+  // State
   const [title, setTitle] = useState("");
   const [content, setContent] = useState(
     "X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |"
@@ -20,31 +28,13 @@ const ScoreEditor = () => {
   const [instrumentProgram, setInstrumentProgram] = useState(0);
   const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(isEdit);
-  const [noteDuration, setNoteDuration] = useState("");
-  const textareaRef = useRef(null);
+
+  // Selection State
+  const [selection, setSelection] = useState({ start: -1, end: -1 });
+
   const navigate = useNavigate();
 
-  const insertText = (text) => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      setContent((prev) => prev + text);
-      return;
-    }
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const newContent =
-      content.substring(0, start) + text + content.substring(end);
-
-    setContent(newContent);
-
-    // Restore focus and cursor position
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + text.length, start + text.length);
-    }, 0);
-  };
-
+  // --- Data Fetching ---
   useEffect(() => {
     if (isEdit) {
       const fetchScore = async () => {
@@ -55,15 +45,10 @@ const ScoreEditor = () => {
           setTitle(data.title);
           setContent(data.content);
           setIsPublic(data.isPublic);
-          setInstrumentProgram(
-            typeof data.instrumentProgram === "number"
-              ? data.instrumentProgram
-              : 0
-          );
+          setInstrumentProgram(data.instrumentProgram || 0);
           setTagsInput(Array.isArray(data.tags) ? data.tags.join(", ") : "");
         } catch (err) {
           console.error("Failed to fetch score", err);
-          alert("Failed to load score for editing");
           navigate("/");
         } finally {
           setLoading(false);
@@ -73,47 +58,44 @@ const ScoreEditor = () => {
     }
   }, [id, isEdit, navigate]);
 
+  // --- Rendering & Audio ---
   useEffect(() => {
     if (!loading) {
       const effectiveAbc = ensureMidiProgram(content, instrumentProgram);
-      const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
+
+      const renderOptions = {
         responsive: "resize",
         add_classes: true,
-      })[0];
+        clickListener: (abcElem) => {
+          // Capture selection when a note is clicked
+          if (
+            abcElem &&
+            abcElem.startChar !== undefined &&
+            abcElem.endChar !== undefined
+          ) {
+            setSelection({ start: abcElem.startChar, end: abcElem.endChar });
+          }
+        },
+      };
+
+      const visualObj = abcjs.renderAbc(
+        "paper",
+        effectiveAbc,
+        renderOptions
+      )[0];
+
+      // Highlight selection
+      if (selection.start !== -1) {
+        // We can't easily find the SVG element by char index directly without traversing
+        // But abcjs adds classes. For now, we rely on the visual feedback of the click
+        // or we could implement a custom highlighter here.
+        // A simple way is to re-render with a special class, but that's expensive.
+        // Let's trust the user knows what they clicked for this iteration.
+      }
 
       if (abcjs.synth.supportsAudio()) {
         const synthControl = new abcjs.synth.SynthController();
-
-        const cursorControl = {
-          onStart: () => {
-            const els = document.querySelectorAll(".highlight");
-            els.forEach((el) => el.classList.remove("highlight"));
-          },
-          onEvent: (ev) => {
-            const els = document.querySelectorAll(".highlight");
-            els.forEach((el) => el.classList.remove("highlight"));
-
-            if (ev && ev.elements) {
-              ev.elements.forEach((item) => {
-                if (Array.isArray(item) || item instanceof NodeList) {
-                  Array.from(item).forEach((subEl) => {
-                    if (subEl && subEl.classList) {
-                      subEl.classList.add("highlight");
-                    }
-                  });
-                } else if (item && item.classList) {
-                  item.classList.add("highlight");
-                }
-              });
-            }
-          },
-          onFinished: () => {
-            const els = document.querySelectorAll(".highlight");
-            els.forEach((el) => el.classList.remove("highlight"));
-          },
-        };
-
-        synthControl.load("#audio", cursorControl, {
+        synthControl.load("#audio", null, {
           displayLoop: true,
           displayRestart: true,
           displayPlay: true,
@@ -127,134 +109,140 @@ const ScoreEditor = () => {
           .then(() => {
             synthControl.setTune(visualObj, false);
           })
-          .catch((error) => {
-            console.warn("Audio problem:", error);
-          });
-      } else {
-        const audioEl = document.querySelector("#audio");
-        if (audioEl) audioEl.innerHTML = t("score.notSupported");
+          .catch(console.warn);
       }
     }
-  }, [content, instrumentProgram, loading, t]);
+  }, [content, instrumentProgram, loading, selection]); // Re-render on selection change if we were highlighting
+
+  // --- Modification Handlers ---
+  const handleDurationChange = (newDuration) => {
+    const newContent = modifyNoteInAbc(content, selection, (note) =>
+      setNoteDuration(note, newDuration)
+    );
+    setContent(newContent);
+  };
+
+  const handleAccidentalChange = (newAccidental) => {
+    const newContent = modifyNoteInAbc(content, selection, (note) =>
+      setNoteAccidental(note, newAccidental)
+    );
+    setContent(newContent);
+  };
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (selection.start === -1) return;
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const newContent = modifyNoteInAbc(content, selection, (note) =>
+          shiftPitch(note, 1)
+        );
+        setContent(newContent);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const newContent = modifyNoteInAbc(content, selection, (note) =>
+          shiftPitch(note, -1)
+        );
+        setContent(newContent);
+      }
+    },
+    [content, selection]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   const handleSave = async () => {
     try {
-      const raw = tagsInput || "";
-      const tags = Array.from(
-        new Set(
-          raw
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .map((t) => t.toLowerCase())
-        )
-      ).slice(0, 10);
-      if (isEdit) {
-        await api.put(`/scores/${id}`, {
-          title,
-          content,
-          isPublic,
-          tags,
-          instrumentProgram,
-        });
-      } else {
-        await api.post("/scores", {
-          title,
-          content,
-          isPublic,
-          tags,
-          instrumentProgram,
-        });
-      }
+      const tags = tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const payload = { title, content, isPublic, tags, instrumentProgram };
+
+      if (isEdit) await api.put(`/scores/${id}`, payload);
+      else await api.post("/scores", payload);
+
       navigate(isEdit ? `/score/${id}` : "/");
     } catch (err) {
-      console.error(err);
-      alert(t("score.saveFailed") || "Failed to save score");
+      alert(t("score.saveFailed"));
     }
   };
 
-  if (loading)
-    return <div className="p-8 text-center">{t("common.loading")}</div>;
+  if (loading) return <div>{t("common.loading")}</div>;
 
   return (
-    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
-      <div className="w-full md:w-1/2">
-        <h1 className="text-2xl font-bold mb-4">
-          {isEdit ? t("common.edit") : t("common.create")}
-        </h1>
-        <div className="mb-4">
-          <label className="block mb-1">{t("score.scoreTitle")}</label>
+    <div className="flex flex-col h-[calc(100vh-64px)]">
+      {/* Top Toolbar */}
+      <div className="bg-white border-b p-2 flex justify-between items-center shadow-sm z-10">
+        <div className="flex gap-4 items-center">
           <input
             type="text"
-            className="w-full border p-2 rounded"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className="border rounded px-2 py-1 font-bold"
+            placeholder="Score Title"
           />
+          <div id="audio" className="flex-1"></div>
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">{t("score.instrument")}</label>
-          <select
-            className="w-full border p-2 rounded"
-            value={instrumentProgram}
-            onChange={(e) => setInstrumentProgram(parseInt(e.target.value, 10))}
+        <div className="flex gap-2">
+          <button
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
           >
-            {INSTRUMENT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {t(opt.i18nKey)}
-              </option>
-            ))}
-          </select>
+            {t("common.save")}
+          </button>
         </div>
-        <div className="mb-4">
-          <label className="block mb-1">{t("score.abcNotation")}</label>
-          <EditorToolbar
-            currentDuration={noteDuration}
-            onDurationChange={setNoteDuration}
-            onInsert={insertText}
-          />
+      </div>
+
+      {/* Main Workspace */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar Palette */}
+        <EditorSidebar
+          onDurationChange={handleDurationChange}
+          onAccidentalChange={handleAccidentalChange}
+        />
+
+        {/* Center Canvas */}
+        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex justify-center">
+          <div className="bg-white shadow-lg p-8 min-h-[800px] w-full max-w-4xl">
+            <div id="paper"></div>
+          </div>
+        </div>
+
+        {/* Right Source Panel (Collapsible/Optional) */}
+        <div className="w-80 bg-white border-l flex flex-col">
+          <div className="p-2 bg-gray-50 border-b font-bold text-xs text-gray-500">
+            SOURCE CODE
+          </div>
           <textarea
-            ref={textareaRef}
-            className="w-full border p-2 rounded-b h-64 font-mono border-t-0"
+            className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
-          <VirtualPiano onNoteClick={insertText} duration={noteDuration} />
+          <div className="p-4 border-t">
+            <label className="block text-xs font-bold mb-1">Instrument</label>
+            <select
+              className="w-full border p-1 rounded"
+              value={instrumentProgram}
+              onChange={(e) => setInstrumentProgram(parseInt(e.target.value))}
+            >
+              {INSTRUMENT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.i18nKey)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="mb-4">
-          <label className="inline-flex items-center">
-            <input
-              type="checkbox"
-              className="form-checkbox"
-              checked={isPublic}
-              onChange={(e) => setIsPublic(e.target.checked)}
-            />
-            <span className="ml-2">{t("score.public")}</span>
-          </label>
-        </div>
-        <div className="mb-4">
-          <label className="block mb-1">{t("score.tags")}</label>
-          <input
-            type="text"
-            className="w-full border p-2 rounded"
-            value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
-            placeholder={t("score.tagsPlaceholder")}
-          />
-        </div>
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          {isEdit ? t("common.update") : t("common.save")}
-        </button>
       </div>
-      <div className="w-full md:w-1/2">
-        <h2 className="text-xl font-bold mb-4">{t("score.preview")}</h2>
-        <div
-          id="audio"
-          className="w-full mb-4 bg-gray-50 p-2 rounded-lg border border-gray-100"
-        ></div>
-        <div id="paper" className="border p-4 bg-white min-h-[300px]"></div>
+
+      {/* Bottom: Virtual Piano (Optional, can be toggled) */}
+      <div className="border-t bg-white">
+        <VirtualPiano onNoteClick={(n) => setContent((prev) => prev + n)} />
       </div>
     </div>
   );
