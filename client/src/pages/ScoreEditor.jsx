@@ -4,7 +4,7 @@ import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { useTranslation } from "react-i18next";
-import VirtualPiano from "../components/VirtualPiano";
+import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorSidebar from "../components/EditorSidebar";
 import { ensureMidiProgram, INSTRUMENT_OPTIONS } from "../utils/abcMidi";
 import {
@@ -234,21 +234,10 @@ const ScoreEditor = () => {
   );
 
   // Map keyboard keys to ABC notes for quick entry
-  const KEY_TO_ABC = {
-    a: "C",
-    w: "^C",
-    s: "D",
-    e: "^D",
-    d: "E",
-    f: "F",
-    t: "^F",
-    g: "G",
-    y: "^G",
-    h: "A",
-    u: "^A",
-    j: "B",
-    k: "c",
-  };
+  const KEY_TO_ABC = NOTES.reduce((acc, curr) => {
+    acc[curr.key] = curr.abc;
+    return acc;
+  }, {});
 
   const handleSave = async () => {
     try {

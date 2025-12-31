@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
-const NOTES = [
+export const NOTES = [
   { note: "C", type: "white", abc: "C", key: "a" },
   { note: "C#", type: "black", abc: "^C", key: "w" },
   { note: "D", type: "white", abc: "D", key: "s" },
@@ -14,6 +14,11 @@ const NOTES = [
   { note: "A#", type: "black", abc: "^A", key: "u" },
   { note: "B", type: "white", abc: "B", key: "j" },
   { note: "c", type: "white", abc: "c", key: "k" }, // Next octave C
+  { note: "c#", type: "black", abc: "^c", key: "o" },
+  { note: "d", type: "white", abc: "d", key: "l" },
+  { note: "d#", type: "black", abc: "^d", key: "p" },
+  { note: "e", type: "white", abc: "e", key: ";" },
+  { note: "f", type: "white", abc: "f", key: "'" },
 ];
 
 const VirtualPiano = ({
@@ -26,6 +31,7 @@ const VirtualPiano = ({
   const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(
     initialKeyboardEnabled
   );
+  const [activeKeys, setActiveKeys] = useState(new Set());
   const audioCtxRef = useRef(null);
 
   const ensureAudioContext = useCallback(() => {
@@ -127,10 +133,10 @@ const VirtualPiano = ({
 
       let note = baseAbc;
 
-      // Special handling for the high 'c' in the array which is already next octave
+      // Special handling for notes that are already in the next octave (lowercase)
       let currentOctave = octave;
-      if (baseAbc === "c") {
-        note = "C"; // Treat as base C for calculation, then add octave + 1
+      if (/[a-z]/.test(baseAbc)) {
+        note = baseAbc.toUpperCase(); // Treat as base note for calculation, then add octave + 1
         currentOctave += 1;
       }
 
@@ -161,6 +167,9 @@ const VirtualPiano = ({
 
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (!isKeyboardEnabled) return;
+      if (e.repeat) return;
+
       // Ignore typing inside inputs; textarea can be captured when desired
       const tag = e.target.tagName;
       if (tag === "INPUT") return;
@@ -171,11 +180,27 @@ const VirtualPiano = ({
       if (noteDef) {
         e.preventDefault(); // Prevent typing the character
         handleNoteClick(noteDef);
+        setActiveKeys((prev) => new Set(prev).add(key));
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      const key = e.key.toLowerCase();
+      if (NOTES.find((n) => n.key === key)) {
+        setActiveKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
   }, [handleNoteClick, isKeyboardEnabled, captureInTextarea]);
 
   return (
@@ -221,8 +246,16 @@ const VirtualPiano = ({
               relative border border-gray-400 rounded-b-md cursor-pointer transition-colors
               ${
                 n.type === "white"
-                  ? "w-10 h-32 bg-white hover:bg-gray-100 z-0"
-                  : "w-6 h-20 bg-black hover:bg-gray-800 z-10 -mx-3 text-white"
+                  ? `w-10 h-32 ${
+                      activeKeys.has(n.key)
+                        ? "bg-yellow-200"
+                        : "bg-white hover:bg-gray-100"
+                    } z-0`
+                  : `w-6 h-20 ${
+                      activeKeys.has(n.key)
+                        ? "bg-yellow-600"
+                        : "bg-black hover:bg-gray-800"
+                    } z-10 -mx-3 text-white`
               }
               flex items-end justify-center pb-2
             `}
@@ -238,7 +271,7 @@ const VirtualPiano = ({
         ))}
       </div>
       <div className="mt-2 text-xs text-gray-500">
-        Use keyboard keys (A-K) or click to play
+        Use keyboard keys (A-') or click to play
       </div>
     </div>
   );
