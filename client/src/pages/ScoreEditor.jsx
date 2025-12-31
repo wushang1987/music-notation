@@ -60,6 +60,15 @@ const ScoreEditor = () => {
     }
   }, [id, isEdit, navigate]);
 
+  // Set cursor to end of content when editor loads
+  useEffect(() => {
+    if (!loading && sourceRef.current) {
+      const length = sourceRef.current.value.length;
+      sourceRef.current.setSelectionRange(length, length);
+      sourceRef.current.scrollTop = sourceRef.current.scrollHeight;
+    }
+  }, [loading]);
+
   // --- Rendering & Audio ---
   useEffect(() => {
     if (!loading) {
@@ -229,7 +238,7 @@ const ScoreEditor = () => {
     [insertAtSource]
   );
   const insertBarLineBreak = useCallback(
-    () => insertAtSource(" |\n"),
+    () => insertAtSource(" |"),
     [insertAtSource]
   );
 
@@ -308,9 +317,10 @@ const ScoreEditor = () => {
             onChange={(e) => setContent(e.target.value)}
             ref={sourceRef}
             onKeyDown={(e) => {
-              // Ctrl+Enter inserts a measure break with newline
+              // Ctrl+Enter inserts a measure break
               if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
+                e.stopPropagation();
                 insertBarLineBreak();
                 return;
               }
@@ -352,9 +362,9 @@ const ScoreEditor = () => {
                 type="button"
                 className="px-3 py-1 rounded border bg-white hover:bg-gray-50 text-gray-700"
                 onClick={insertBarLineBreak}
-                title="在光标处插入小节线并换行 (Ctrl+Enter)"
+                title="在光标处插入小节线 (Ctrl+Enter)"
               >
-                小节换行
+                小节线
               </button>
               <label className="ml-auto flex items-center gap-2 text-xs text-gray-600">
                 <input
