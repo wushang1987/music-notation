@@ -13,6 +13,7 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import ScoreEditor from "./pages/ScoreEditor";
 import ScoreView from "./pages/ScoreView";
+import Albums from "./pages/Albums";
 import AlbumEditor from "./pages/AlbumEditor";
 import AlbumView from "./pages/AlbumView";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -90,6 +91,9 @@ const AppContent = () => {
                 </PrivateRoute>
               }
             />
+
+            <Route path="/albums" element={<Albums />} />
+
             <Route path="/score/:id" element={<ScoreView />} />
             <Route path="/album/:id" element={<AlbumView />} />
             <Route

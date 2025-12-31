@@ -6,11 +6,14 @@ import ScoreCard from "../components/ScoreCard";
 import AlbumCard from "../components/AlbumCard";
 import HeroSection from "../components/HeroSection";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 
 const Home = ({ title, endpoint = "/scores" }) => {
   const { user } = useContext(AuthContext);
   const { t } = useTranslation();
+  const location = useLocation();
   const displayTitle = title ? t(title) : t("home.title");
+  const showAlbums = endpoint === "/scores";
   const [scores, setScores] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +77,11 @@ const Home = ({ title, endpoint = "/scores" }) => {
 
   useEffect(() => {
     const fetchAlbums = async () => {
+      if (!showAlbums) {
+        setAlbums([]);
+        setAlbumsLoading(false);
+        return;
+      }
       setAlbumsLoading(true);
       try {
         const params = new URLSearchParams();
@@ -98,7 +106,14 @@ const Home = ({ title, endpoint = "/scores" }) => {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [search]);
+  }, [search, showAlbums]);
+
+  useEffect(() => {
+    if (!showAlbums) return;
+    if (location.hash !== "#albums") return;
+    const el = document.getElementById("albums");
+    if (el) el.scrollIntoView();
+  }, [location.hash, showAlbums]);
 
   // Reset page when search changes
   const handleSearchChange = (e) => {
@@ -272,34 +287,36 @@ const Home = ({ title, endpoint = "/scores" }) => {
           </div>
         </div>
 
-        {/* Albums (always shown before scores) */}
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {t("albums.sectionTitle")}
-            </h2>
+        {/* Albums (homepage only) */}
+        {showAlbums && (
+          <div id="albums" className="mb-10">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                {t("albums.sectionTitle")}
+              </h2>
+            </div>
+            {albumsLoading ? (
+              <div className="flex items-center justify-center min-h-30">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : albums.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+                <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  {t("albums.noAlbums")}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {t("albums.noAlbumsDesc")}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {albums.map((album) => (
+                  <AlbumCard key={album._id} album={album} />
+                ))}
+              </div>
+            )}
           </div>
-          {albumsLoading ? (
-            <div className="flex items-center justify-center min-h-30">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : albums.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-center">
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
-                {t("albums.noAlbums")}
-              </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {t("albums.noAlbumsDesc")}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-              {albums.map((album) => (
-                <AlbumCard key={album._id} album={album} />
-              ))}
-            </div>
-          )}
-        </div>
+        )}
 
         {loading && scores.length === 0 ? (
           <div className="flex items-center justify-center min-h-100">

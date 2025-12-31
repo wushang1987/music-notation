@@ -30,6 +30,7 @@
   },
   "albums": {
     "sectionTitle": "专辑",
+    "searchPlaceholder": "按标题搜索专辑...",
     "create": "创建专辑",
     "edit": "编辑专辑",
     "title": "标题",
