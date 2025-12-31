@@ -12,6 +12,7 @@ export const NOTES = LEGACY_NOTES;
 
 const VirtualPiano = ({
   onNoteClick,
+  onPlayNote,
   duration = "",
   initialKeyboardEnabled = false,
   captureInTextarea = false,
@@ -89,12 +90,16 @@ const VirtualPiano = ({
 
   const handleKeyInteraction = useCallback(
     (keyData) => {
-      playNoteByMidi(keyData.midi);
+      if (onPlayNote) {
+        onPlayNote(keyData.midi);
+      } else {
+        playNoteByMidi(keyData.midi);
+      }
       if (onNoteClick) {
         onNoteClick(keyData.abc + duration);
       }
     },
-    [playNoteByMidi, onNoteClick, duration]
+    [playNoteByMidi, onNoteClick, onPlayNote, duration]
   );
 
   // Computer Keyboard Handlers

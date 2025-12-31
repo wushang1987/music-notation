@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorSidebar from "../components/EditorSidebar";
 import { ensureMidiProgram, INSTRUMENT_OPTIONS } from "../utils/abcMidi";
+import { PIANO_KEYS } from "../utils/pianoUtils";
 import {
   modifyNoteInAbc,
   setNoteDuration,
@@ -277,6 +278,31 @@ const ScoreEditor = () => {
     return acc;
   }, {});
 
+  const handlePlayNote = useCallback(
+    (midiPitch) => {
+      if (abcjs.synth.supportsAudio()) {
+        const noteObj = PIANO_KEYS.find((n) => n.midi === midiPitch);
+        const abcNote = noteObj ? noteObj.abc : "C";
+        // Construct a tiny tune with the current instrument
+        const tune = `X:1\nK:C\nL:1/4\n%%MIDI program ${instrumentProgram}\n${abcNote}`;
+
+        const dummyDiv = document.createElement("div");
+        const visualObj = abcjs.renderAbc(dummyDiv, tune, {})[0];
+
+        const synth = new abcjs.synth.CreateSynth();
+        synth
+          .init({ visualObj: visualObj })
+          .then(() => {
+            synth.prime().then(() => {
+              synth.start();
+            });
+          })
+          .catch((e) => console.warn("Note playback failed", e));
+      }
+    },
+    [instrumentProgram]
+  );
+
   const handleSave = async () => {
     try {
       const tags = tagsInput
@@ -420,6 +446,7 @@ const ScoreEditor = () => {
           initialKeyboardEnabled={true}
           captureInTextarea={!abcTypingEnabled}
           onNoteClick={(n) => insertAtSource(n)}
+          onPlayNote={handlePlayNote}
         />
       </div>
     </div>
