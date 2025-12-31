@@ -175,6 +175,7 @@ const ScoreView = () => {
 
       const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
         responsive: "resize",
+        oneSvgPerLine: true,
         paddingtop: 20,
         paddingbottom: 20,
         paddingright: 20,
@@ -308,7 +309,7 @@ const ScoreView = () => {
     <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-2/3">
         <div className="bg-white  overflow-hidden mb-6">
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-gray-100 no-print">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-1">
@@ -398,6 +399,28 @@ const ScoreView = () => {
                     </Link>
                   )}
                 <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm transition-all duration-200"
+                  title={t("common.print") || "Print"}
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                    />
+                  </svg>
+                  <span className="font-semibold text-sm">
+                    {t("common.print") || "Print"}
+                  </span>
+                </button>
+                <button
                   onClick={handleLike}
                   className={`flex items-center gap-2 px-4 py-2 rounded-md border transition-all duration-200 ${
                     hasLiked
@@ -415,10 +438,10 @@ const ScoreView = () => {
             {/* Audio Player - Moved to top */}
             <div
               id="audio"
-              className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm"
+              className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm no-print"
             ></div>
 
-            <div className="-mt-2 mb-4 text-sm text-gray-600">
+            <div className="-mt-2 mb-4 text-sm text-gray-600 no-print">
               <span className="font-semibold text-gray-700">
                 {t("score.instrument")}:
               </span>
@@ -426,7 +449,7 @@ const ScoreView = () => {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="flex border-b border-gray-100 -mb-6 mt-4">
+            <div className="flex border-b border-gray-100 -mb-6 mt-4 no-print">
               <button
                 onClick={() => setActiveTab("notation")}
                 className={`px-6 py-3 text-sm font-semibold transition-colors relative ${
@@ -483,7 +506,7 @@ const ScoreView = () => {
           </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded">
+        <div className="bg-gray-50 p-4 rounded no-print">
           <h3 className="text-xl font-bold mb-4">{t("score.comments")}</h3>
           {user ? (
             <form onSubmit={handleCommentSubmit} className="mb-6">
@@ -521,7 +544,7 @@ const ScoreView = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-1/3">
+      <div className="w-full md:w-1/3 no-print">
         {/* Sidebar for additional info or actions could go here */}
         <div className="bg-white p-4 shadow rounded">
           <h3 className="font-bold mb-2">{t("score.details")}</h3>

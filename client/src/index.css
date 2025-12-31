@@ -108,3 +108,73 @@ body {
 .abcjs-inline-audio input[type="range"] {
   accent-color: #6366f1 !important;
 }
+
+@media print {
+  /* Hide everything by default */
+  body {
+    visibility: hidden;
+    background: white;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Reset layout containers to prevent them from affecting print flow */
+  #root, .h-screen, .flex, .flex-col, main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+  }
+
+  /* --- Score View Printing (#paper) --- */
+  #paper, #paper * {
+    visibility: visible;
+  }
+
+  #paper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* --- Score Editor Printing (#paper-container) --- */
+  #paper-container, #paper-container * {
+    visibility: visible;
+  }
+
+  #paper-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white;
+    overflow: visible !important;
+  }
+
+  /* Ensure Editor pages break correctly */
+  #paper-container > div {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    /* Force page breaks between the editor's simulated pages */
+    break-after: page;
+    page-break-after: always;
+  }
+
+  /* Remove break after the last page to avoid an empty sheet */
+  #paper-container > div:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Hide common UI elements */
+  nav, aside, .no-print {
+    display: none !important;
+  }
+}

@@ -325,7 +325,7 @@ const ScoreEditor = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Top Toolbar */}
-      <div className="bg-white border-b p-2 flex justify-between items-center shadow-sm z-10">
+      <div className="bg-white border-b p-2 flex justify-between items-center shadow-sm z-10 no-print">
         <div className="flex gap-4 items-center">
           <input
             type="text"
@@ -338,6 +338,26 @@ const ScoreEditor = () => {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => window.print()}
+            className="bg-gray-100 text-gray-700 px-4 py-1 rounded hover:bg-gray-200 border border-gray-300 flex items-center gap-2"
+            title={t("common.print") || "Print"}
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              />
+            </svg>
+            {t("common.print") || "Print"}
+          </button>
+          <button
             onClick={handleSave}
             className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
           >
@@ -349,10 +369,12 @@ const ScoreEditor = () => {
       {/* Main Workspace */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar Palette */}
-        <EditorSidebar
-          onDurationChange={handleDurationChange}
-          onAccidentalChange={handleAccidentalChange}
-        />
+        <div className="no-print">
+          <EditorSidebar
+            onDurationChange={handleDurationChange}
+            onAccidentalChange={handleAccidentalChange}
+          />
+        </div>
 
         {/* Center Canvas */}
         <div className="flex-1 bg-gray-100 overflow-auto p-8 flex flex-col items-center">
@@ -368,7 +390,7 @@ const ScoreEditor = () => {
         </div>
 
         {/* Right Source Panel (Collapsible/Optional) */}
-        <div className="w-80 bg-white border-l flex flex-col">
+        <div className="w-80 bg-white border-l flex flex-col no-print">
           <div className="p-2 bg-gray-50 border-b font-bold text-xs text-gray-500">
             SOURCE CODE
           </div>
