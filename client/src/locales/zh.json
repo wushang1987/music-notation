@@ -101,6 +101,15 @@
     "by": "作者",
     "deleteConfirm": "您确定要删除这个乐谱吗？",
     "scoreTitle": "标题",
+    "instrument": "乐器/音色",
+    "instruments": {
+      "piano": "钢琴",
+      "guitarNylon": "吉他（尼龙弦）",
+      "guitarSteel": "吉他（钢弦）",
+      "violin": "小提琴",
+      "cello": "大提琴",
+      "flute": "长笛"
+    },
     "abcNotation": "ABC 记谱法",
     "preview": "预览",
     "views": "浏览次数",

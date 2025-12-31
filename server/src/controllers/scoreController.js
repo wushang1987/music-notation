@@ -1,6 +1,14 @@
 const Score = require("../models/Score");
 const mongoose = require("mongoose");
 
+const parseInstrumentProgram = (value) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return 0;
+  const n = Number.parseInt(value, 10);
+  if (Number.isNaN(n) || n < 0 || n > 127) return null;
+  return n;
+};
+
 // Normalize tags from array or comma-separated string
 const normalizeTags = (tags) => {
   try {
@@ -20,13 +28,24 @@ const normalizeTags = (tags) => {
 
 const createScore = async (req, res) => {
   try {
-    const { title, content, isPublic, tags } = req.body;
+    const { title, content, isPublic, tags, instrumentProgram } = req.body;
+    const parsedProgram = parseInstrumentProgram(instrumentProgram);
+    if (parsedProgram === null) {
+      return res.status(400).json({
+        message:
+          "Invalid instrumentProgram (must be an integer between 0 and 127)",
+      });
+    }
+
     const score = new Score({
       title,
       content,
       isPublic,
       owner: req.user.id,
       tags: normalizeTags(tags),
+      ...(parsedProgram !== undefined
+        ? { instrumentProgram: parsedProgram }
+        : {}),
     });
     const savedScore = await score.save();
     res.status(201).json(savedScore);
@@ -371,12 +390,23 @@ const updateScore = async (req, res) => {
         .json({ message: "Not authorized to edit this score" });
     }
 
-    const { title, content, isPublic, tags } = req.body;
+    const { title, content, isPublic, tags, instrumentProgram } = req.body;
+    const parsedProgram = parseInstrumentProgram(instrumentProgram);
+    if (parsedProgram === null) {
+      return res.status(400).json({
+        message:
+          "Invalid instrumentProgram (must be an integer between 0 and 127)",
+      });
+    }
+
     score.title = title || score.title;
     score.content = content || score.content;
     score.isPublic = isPublic !== undefined ? isPublic : score.isPublic;
     if (tags !== undefined) {
       score.tags = normalizeTags(tags);
+    }
+    if (parsedProgram !== undefined) {
+      score.instrumentProgram = parsedProgram;
     }
 
     const updatedScore = await score.save();

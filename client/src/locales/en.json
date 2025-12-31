@@ -101,6 +101,15 @@
     "by": "By",
     "deleteConfirm": "Are you sure you want to delete this score?",
     "scoreTitle": "Title",
+    "instrument": "Instrument",
+    "instruments": {
+      "piano": "Piano",
+      "guitarNylon": "Guitar (Nylon)",
+      "guitarSteel": "Guitar (Steel)",
+      "violin": "Violin",
+      "cello": "Cello",
+      "flute": "Flute"
+    },
     "abcNotation": "ABC Notation",
     "preview": "Preview",
     "views": "Views",

@@ -6,6 +6,7 @@ import api from "../api";
 import { useTranslation } from "react-i18next";
 import VirtualPiano from "../components/VirtualPiano";
 import EditorToolbar from "../components/EditorToolbar";
+import { ensureMidiProgram, INSTRUMENT_OPTIONS } from "../utils/abcMidi";
 
 const ScoreEditor = () => {
   const { id } = useParams();
@@ -16,6 +17,7 @@ const ScoreEditor = () => {
     "X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |"
   );
   const [isPublic, setIsPublic] = useState(false);
+  const [instrumentProgram, setInstrumentProgram] = useState(0);
   const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(isEdit);
   const [noteDuration, setNoteDuration] = useState("");
@@ -53,6 +55,11 @@ const ScoreEditor = () => {
           setTitle(data.title);
           setContent(data.content);
           setIsPublic(data.isPublic);
+          setInstrumentProgram(
+            typeof data.instrumentProgram === "number"
+              ? data.instrumentProgram
+              : 0
+          );
           setTagsInput(Array.isArray(data.tags) ? data.tags.join(", ") : "");
         } catch (err) {
           console.error("Failed to fetch score", err);
@@ -68,7 +75,8 @@ const ScoreEditor = () => {
 
   useEffect(() => {
     if (!loading) {
-      const visualObj = abcjs.renderAbc("paper", content, {
+      const effectiveAbc = ensureMidiProgram(content, instrumentProgram);
+      const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
         responsive: "resize",
         add_classes: true,
       })[0];
@@ -127,7 +135,7 @@ const ScoreEditor = () => {
         if (audioEl) audioEl.innerHTML = t("score.notSupported");
       }
     }
-  }, [content, loading, t]);
+  }, [content, instrumentProgram, loading, t]);
 
   const handleSave = async () => {
     try {
@@ -142,9 +150,21 @@ const ScoreEditor = () => {
         )
       ).slice(0, 10);
       if (isEdit) {
-        await api.put(`/scores/${id}`, { title, content, isPublic, tags });
+        await api.put(`/scores/${id}`, {
+          title,
+          content,
+          isPublic,
+          tags,
+          instrumentProgram,
+        });
       } else {
-        await api.post("/scores", { title, content, isPublic, tags });
+        await api.post("/scores", {
+          title,
+          content,
+          isPublic,
+          tags,
+          instrumentProgram,
+        });
       }
       navigate(isEdit ? `/score/${id}` : "/");
     } catch (err) {
@@ -170,6 +190,20 @@ const ScoreEditor = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1">{t("score.instrument")}</label>
+          <select
+            className="w-full border p-2 rounded"
+            value={instrumentProgram}
+            onChange={(e) => setInstrumentProgram(parseInt(e.target.value, 10))}
+          >
+            {INSTRUMENT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {t(opt.i18nKey)}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="mb-4">
           <label className="block mb-1">{t("score.abcNotation")}</label>

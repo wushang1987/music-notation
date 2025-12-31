@@ -5,6 +5,7 @@ import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import { ensureMidiProgram, getInstrumentOption } from "../utils/abcMidi";
 
 const ScoreView = () => {
   const { id } = useParams();
@@ -48,7 +49,14 @@ const ScoreView = () => {
 
   useEffect(() => {
     if (score && activeTab === "notation") {
-      const visualObj = abcjs.renderAbc("paper", score.content, {
+      const effectiveAbc = ensureMidiProgram(
+        score.content,
+        typeof score.instrumentProgram === "number"
+          ? score.instrumentProgram
+          : 0
+      );
+
+      const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
         responsive: "resize",
         paddingtop: 20,
         paddingbottom: 20,
@@ -177,6 +185,8 @@ const ScoreView = () => {
       <div className="p-10 text-center font-bold">{t("common.loading")}</div>
     );
 
+  const instrumentOption = getInstrumentOption(score.instrumentProgram);
+
   return (
     <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-2/3">
@@ -290,6 +300,13 @@ const ScoreView = () => {
               id="audio"
               className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm"
             ></div>
+
+            <div className="-mt-2 mb-4 text-sm text-gray-600">
+              <span className="font-semibold text-gray-700">
+                {t("score.instrument")}:
+              </span>
+              <span>{t(instrumentOption.i18nKey)}</span>
+            </div>
 
             {/* Tabs Navigation */}
             <div className="flex border-b border-gray-100 -mb-6 mt-4">
