@@ -95,7 +95,37 @@ const ScoreEditor = () => {
 
       if (abcjs.synth.supportsAudio()) {
         const synthControl = new abcjs.synth.SynthController();
-        synthControl.load("#audio", null, {
+
+        const cursorControl = {
+          onStart: () => {
+            const els = document.querySelectorAll(".highlight");
+            els.forEach((el) => el.classList.remove("highlight"));
+          },
+          onEvent: (ev) => {
+            const els = document.querySelectorAll(".highlight");
+            els.forEach((el) => el.classList.remove("highlight"));
+
+            if (ev && ev.elements) {
+              ev.elements.forEach((item) => {
+                if (Array.isArray(item) || item instanceof NodeList) {
+                  Array.from(item).forEach((subEl) => {
+                    if (subEl && subEl.classList) {
+                      subEl.classList.add("highlight");
+                    }
+                  });
+                } else if (item && item.classList) {
+                  item.classList.add("highlight");
+                }
+              });
+            }
+          },
+          onFinished: () => {
+            const els = document.querySelectorAll(".highlight");
+            els.forEach((el) => el.classList.remove("highlight"));
+          },
+        };
+
+        synthControl.load("#audio", cursorControl, {
           displayLoop: true,
           displayRestart: true,
           displayPlay: true,
@@ -109,7 +139,15 @@ const ScoreEditor = () => {
           .then(() => {
             synthControl.setTune(visualObj, false);
           })
-          .catch(console.warn);
+          .catch((error) => {
+            console.warn("Audio problem:", error);
+          });
+      } else {
+        const audioEl = document.querySelector("#audio");
+        if (audioEl)
+          audioEl.innerHTML = `<div class='text-red-500'>${t(
+            "score.notSupported"
+          )}</div>`;
       }
     }
   }, [content, instrumentProgram, loading, selection]); // Re-render on selection change if we were highlighting

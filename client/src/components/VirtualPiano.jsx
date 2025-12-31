@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 const NOTES = [
   { note: "C", type: "white", abc: "C", key: "a" },
@@ -19,6 +19,94 @@ const NOTES = [
 const VirtualPiano = ({ onNoteClick, duration = "" }) => {
   const [octave, setOctave] = useState(0);
   const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(false);
+  const audioCtxRef = useRef(null);
+
+  const ensureAudioContext = useCallback(() => {
+    if (audioCtxRef.current) return audioCtxRef.current;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtxRef.current = new Ctx();
+    return audioCtxRef.current;
+  }, []);
+
+  const abcToFrequency = useCallback((abc) => {
+    if (!abc) return null;
+    // Strip duration parts like numbers or slashes
+    const clean = abc.replace(/[0-9/]/g, "");
+    // Accidentals
+    let accidental = 0;
+    let i = 0;
+    while (clean[i] === "^" || clean[i] === "_" || clean[i] === "=") {
+      if (clean[i] === "^") accidental += 1;
+      else if (clean[i] === "_") accidental -= 1;
+      // '=' keeps accidental at 0
+      i++;
+    }
+    const letter = clean[i];
+    if (!letter || !/[A-Ga-g]/.test(letter)) return null;
+    i++;
+    // Octave marks after the letter
+    let up = 0;
+    let down = 0;
+    for (; i < clean.length; i++) {
+      if (clean[i] === "'") up++;
+      else if (clean[i] === ",") down++;
+    }
+
+    // Base octave: uppercase = 4 (middle C octave), lowercase = 5
+    let octave = letter === letter.toLowerCase() ? 5 : 4;
+    octave += up - down;
+
+    // Semitone from C mapping
+    const base = letter.toUpperCase();
+    const SEMI_FROM_C = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    let n = SEMI_FROM_C[base];
+    if (n === undefined) return null;
+    n += accidental; // apply sharp/flat
+
+    // Convert to frequency relative to A4 = 440Hz
+    const semitoneFromA4 = n - 9 + 12 * (octave - 4);
+    const freq = 440 * Math.pow(2, semitoneFromA4 / 12);
+    return freq;
+  }, []);
+
+  const playAbcNote = useCallback(
+    (abc) => {
+      const ctx = ensureAudioContext();
+      if (!ctx) return;
+      // Some browsers require user gesture; resume if suspended
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      const freq = abcToFrequency(abc);
+      if (!freq) return;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle"; // softer than sine for piano-like feel
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      // Simple ADSR envelope
+      const now = ctx.currentTime;
+      const attack = 0.01;
+      const decay = 0.1;
+      const sustain = 0.2;
+      const release = 0.15;
+
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0.0, now);
+      gain.gain.linearRampToValueAtTime(0.8, now + attack);
+      gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
+      gain.gain.setValueAtTime(sustain, now + attack + decay);
+      gain.gain.linearRampToValueAtTime(0.0, now + attack + decay + release);
+
+      osc.start(now);
+      osc.stop(now + attack + decay + release);
+    },
+    [ensureAudioContext, abcToFrequency]
+  );
 
   const getAbcNote = useCallback(
     (baseAbc) => {
@@ -57,9 +145,11 @@ const VirtualPiano = ({ onNoteClick, duration = "" }) => {
   const handleNoteClick = useCallback(
     (noteDef) => {
       const abc = getAbcNote(noteDef.abc);
+      // Play sound locally
+      playAbcNote(abc);
       onNoteClick(abc);
     },
-    [getAbcNote, onNoteClick]
+    [getAbcNote, onNoteClick, playAbcNote]
   );
 
   useEffect(() => {
