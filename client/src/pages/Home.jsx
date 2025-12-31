@@ -3,6 +3,7 @@ import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 import Pagination from "../components/Pagination";
 import ScoreCard from "../components/ScoreCard";
+import AlbumCard from "../components/AlbumCard";
 import HeroSection from "../components/HeroSection";
 import { useTranslation } from "react-i18next";
 
@@ -11,11 +12,12 @@ const Home = ({ title, endpoint = "/scores" }) => {
   const { t } = useTranslation();
   const displayTitle = title ? t(title) : t("home.title");
   const [scores, setScores] = useState([]);
+  const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
   const [sortBy, setSortBy] = useState("date");
   const [order, setOrder] = useState("desc");
   const [tagsInput, setTagsInput] = useState("");
@@ -51,11 +53,9 @@ const Home = ({ title, endpoint = "/scores" }) => {
         if (Array.isArray(data)) {
           setScores(data);
           setTotalPages(1);
-          setTotal(data.length);
         } else {
           setScores(data.scores);
           setTotalPages(data.totalPages);
-          setTotal(data.total);
           setPage(data.page);
         }
       } catch (err) {
@@ -71,6 +71,34 @@ const Home = ({ title, endpoint = "/scores" }) => {
 
     return () => clearTimeout(debounceTimer);
   }, [endpoint, search, tagsApplied, page, sortBy, order]);
+
+  useEffect(() => {
+    const fetchAlbums = async () => {
+      setAlbumsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (search) params.append("search", search);
+        params.append("page", 1);
+        params.append("limit", 8);
+        params.append("sortBy", "date");
+        params.append("order", "desc");
+
+        const { data } = await api.get(`/albums?${params.toString()}`);
+        const nextAlbums = Array.isArray(data) ? data : data.albums;
+        setAlbums(Array.isArray(nextAlbums) ? nextAlbums : []);
+      } catch (err) {
+        console.error("Failed to fetch albums", err);
+      } finally {
+        setAlbumsLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(() => {
+      fetchAlbums();
+    }, 300);
+
+    return () => clearTimeout(debounceTimer);
+  }, [search]);
 
   // Reset page when search changes
   const handleSearchChange = (e) => {
@@ -244,8 +272,37 @@ const Home = ({ title, endpoint = "/scores" }) => {
           </div>
         </div>
 
+        {/* Albums (always shown before scores) */}
+        <div className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">
+              {t("albums.sectionTitle")}
+            </h2>
+          </div>
+          {albumsLoading ? (
+            <div className="flex items-center justify-center min-h-30">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : albums.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-8 text-center">
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                {t("albums.noAlbums")}
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {t("albums.noAlbumsDesc")}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {albums.map((album) => (
+                <AlbumCard key={album._id} album={album} />
+              ))}
+            </div>
+          )}
+        </div>
+
         {loading && scores.length === 0 ? (
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-100">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : scores.length === 0 ? (

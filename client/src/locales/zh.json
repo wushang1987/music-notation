@@ -25,7 +25,29 @@
   },
   "nav": {
     "greeting": "👋 {{name}}",
-    "newScore": "+ 新建乐谱"
+    "newScore": "+ 新建乐谱",
+    "newAlbum": "+ 新建专辑"
+  },
+  "albums": {
+    "sectionTitle": "专辑",
+    "create": "创建专辑",
+    "edit": "编辑专辑",
+    "title": "标题",
+    "titleRequired": "专辑标题不能为空",
+    "coverUrl": "封面链接",
+    "coverUrlPlaceholder": "https://...",
+    "public": "公开",
+    "private": "私有",
+    "scores": "乐谱",
+    "tracks": "曲目",
+    "trackCount": "曲目数量",
+    "noCover": "暂无封面",
+    "noAlbums": "未找到专辑",
+    "noAlbumsDesc": "没有匹配您搜索条件的专辑，或者专辑列表目前为空。",
+    "noTracks": "此专辑暂无曲目。",
+    "noMyScores": "您还没有创建任何乐谱。",
+    "saveFailed": "保存专辑失败",
+    "loadFailed": "加载专辑失败"
   },
   "sidebar": {
     "navigation": "导航"

@@ -25,7 +25,29 @@
   },
   "nav": {
     "greeting": "👋 {{name}}",
-    "newScore": "+ New Score"
+    "newScore": "+ New Score",
+    "newAlbum": "+ New Album"
+  },
+  "albums": {
+    "sectionTitle": "Albums",
+    "create": "Create Album",
+    "edit": "Edit Album",
+    "title": "Title",
+    "titleRequired": "Album title is required",
+    "coverUrl": "Cover URL",
+    "coverUrlPlaceholder": "https://...",
+    "public": "Public",
+    "private": "Private",
+    "scores": "Scores",
+    "tracks": "Tracks",
+    "trackCount": "Track count",
+    "noCover": "No cover",
+    "noAlbums": "No albums found",
+    "noAlbumsDesc": "No albums matched your search criteria or the collection is empty.",
+    "noTracks": "No tracks in this album.",
+    "noMyScores": "You have no scores yet.",
+    "saveFailed": "Failed to save album",
+    "loadFailed": "Failed to load album"
   },
   "sidebar": {
     "navigation": "Navigation"
