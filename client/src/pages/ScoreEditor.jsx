@@ -77,6 +77,7 @@ const ScoreEditor = () => {
       const renderOptions = {
         responsive: "resize",
         add_classes: true,
+        oneSvgPerLine: true,
         clickListener: (abcElem) => {
           // Capture selection when a note is clicked
           if (
@@ -90,18 +91,46 @@ const ScoreEditor = () => {
       };
 
       const visualObj = abcjs.renderAbc(
-        "paper",
+        "abc-staging",
         effectiveAbc,
         renderOptions
       )[0];
 
-      // Highlight selection
-      if (selection.start !== -1) {
-        // We can't easily find the SVG element by char index directly without traversing
-        // But abcjs adds classes. For now, we rely on the visual feedback of the click
-        // or we could implement a custom highlighter here.
-        // A simple way is to re-render with a special class, but that's expensive.
-        // Let's trust the user knows what they clicked for this iteration.
+      // Pagination Logic
+      const staging = document.getElementById("abc-staging");
+      const container = document.getElementById("paper-container");
+
+      if (staging && container) {
+        container.innerHTML = "";
+        const svgs = Array.from(staging.querySelectorAll("svg"));
+
+        const createPage = () => {
+          const page = document.createElement("div");
+          page.className =
+            "bg-white shadow-lg p-8 w-full min-h-[1123px] flex flex-col";
+          return page;
+        };
+
+        let currentPage = createPage();
+        container.appendChild(currentPage);
+
+        let currentHeight = 0;
+        const MAX_HEIGHT = 1000;
+
+        svgs.forEach((svg) => {
+          currentPage.appendChild(svg);
+          const height = svg.getBoundingClientRect().height;
+
+          if (currentHeight + height > MAX_HEIGHT && currentHeight > 0) {
+            currentPage.removeChild(svg);
+            currentPage = createPage();
+            container.appendChild(currentPage);
+            currentPage.appendChild(svg);
+            currentHeight = svg.getBoundingClientRect().height;
+          } else {
+            currentHeight += height;
+          }
+        });
       }
 
       if (abcjs.synth.supportsAudio()) {
@@ -268,7 +297,7 @@ const ScoreEditor = () => {
   if (loading) return <div>{t("common.loading")}</div>;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]">
+    <div className="flex flex-col h-full">
       {/* Top Toolbar */}
       <div className="bg-white border-b p-2 flex justify-between items-center shadow-sm z-10">
         <div className="flex gap-4 items-center">
@@ -300,10 +329,16 @@ const ScoreEditor = () => {
         />
 
         {/* Center Canvas */}
-        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex justify-center">
-          <div className="bg-white shadow-lg p-8 min-h-200 w-full max-w-4xl">
-            <div id="paper"></div>
-          </div>
+        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex flex-col items-center">
+          <div
+            id="paper-container"
+            className="w-full max-w-4xl flex flex-col gap-8 pb-8"
+          ></div>
+          {/* Staging area for pagination calculation */}
+          <div
+            id="abc-staging"
+            className="absolute opacity-0 pointer-events-none w-[896px]"
+          ></div>
         </div>
 
         {/* Right Source Panel (Collapsible/Optional) */}
