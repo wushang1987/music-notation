@@ -5,10 +5,11 @@ These instructions help AI coding agents work productively in this repo by expla
 ## Big Picture
 
 - Full-stack app with three parts:
-  - Frontend: React + Vite + Tailwind in `client/` renders ABC notation via `abcjs`, handles auth, routing, i18n.
+  - Frontend: React 19 + Vite + Tailwind 4 in `client/` renders ABC notation via `abcjs`, handles auth, routing, i18n.
   - Backend: Node + Express + MongoDB in `server/` exposes REST APIs for auth, scores, comments, users.
   - Scraper: Python in `scraper/` ingests ABC tunes from abcnotation.com into MongoDB.
-- Data model: `User`, `Score`, `Comment` in `server/src/models/`. Scores support `isPublic`, `likes[]`, `owner` and timestamps.
+- Data model: `User`, `Score`, `Comment` in `server/src/models/`.
+  - `Score` includes `title`, `content` (ABC), `owner`, `isPublic`, `likes[]`, `views`, `ratings[]`, and `tags[]`.
 - Auth: JWT in HTTP `Authorization: Bearer <token>`. Email verification via Resend; login requires `isVerified`.
 
 ## Dev Workflow
