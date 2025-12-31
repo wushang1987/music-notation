@@ -17,6 +17,14 @@ const ScoreView = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [myRating, setMyRating] = useState(0);
 
+  const [myAlbums, setMyAlbums] = useState([]);
+  const [albumsLoading, setAlbumsLoading] = useState(false);
+  const [selectedAlbumId, setSelectedAlbumId] = useState("");
+  const [albumActionStatus, setAlbumActionStatus] = useState({
+    type: "",
+    message: "",
+  });
+
   useEffect(() => {
     const fetchScoreAndComments = async () => {
       try {
@@ -44,6 +52,115 @@ const ScoreView = () => {
     };
     fetchScoreAndComments();
   }, [id, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setMyAlbums([]);
+      setSelectedAlbumId("");
+      setAlbumActionStatus({ type: "", message: "" });
+      return;
+    }
+
+    const fetchMyAlbums = async () => {
+      setAlbumsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.append("page", 1);
+        params.append("limit", 200);
+        params.append("sortBy", "date");
+        params.append("order", "desc");
+
+        const { data } = await api.get(`/albums?${params.toString()}`);
+        const albums = Array.isArray(data) ? data : data?.albums;
+
+        const myId = user?.id || user?._id;
+        const owned = (Array.isArray(albums) ? albums : []).filter((a) => {
+          const ownerId =
+            typeof a?.owner === "object" && a?.owner
+              ? a.owner._id || a.owner.id
+              : a?.owner;
+          return myId && ownerId && ownerId.toString() === myId.toString();
+        });
+
+        setMyAlbums(owned);
+        if (owned.length > 0 && !selectedAlbumId) {
+          setSelectedAlbumId(owned[0]._id);
+        }
+      } catch (err) {
+        console.error("Failed to load albums", err);
+        setMyAlbums([]);
+      } finally {
+        setAlbumsLoading(false);
+      }
+    };
+
+    fetchMyAlbums();
+  }, [user]);
+
+  const handleAddToAlbum = async () => {
+    if (!user) {
+      setAlbumActionStatus({
+        type: "error",
+        message: t("albums.addToAlbumLoginRequired"),
+      });
+      return;
+    }
+    if (!selectedAlbumId) return;
+
+    const album = (myAlbums || []).find((a) => a?._id === selectedAlbumId);
+    const scoreId = id;
+    const ids = Array.isArray(album?.scores) ? album.scores : [];
+    const alreadyInAlbum = ids.some((x) => x?.toString?.() === scoreId);
+    const isFull = !alreadyInAlbum && ids.length >= 20;
+
+    if (isFull) {
+      setAlbumActionStatus({
+        type: "error",
+        message: t("albums.maxScoresReached", { count: 20 }),
+      });
+      return;
+    }
+
+    try {
+      setAlbumActionStatus({ type: "", message: "" });
+      await api.put(`/albums/${selectedAlbumId}/scores/${scoreId}`);
+      setAlbumActionStatus({
+        type: "success",
+        message: t("albums.addToAlbumSuccess"),
+      });
+
+      // Refresh albums so counts/full state stay accurate
+      const params = new URLSearchParams();
+      params.append("page", 1);
+      params.append("limit", 200);
+      params.append("sortBy", "date");
+      params.append("order", "desc");
+      const { data } = await api.get(`/albums?${params.toString()}`);
+      const albums = Array.isArray(data) ? data : data?.albums;
+      const myId = user?.id || user?._id;
+      const owned = (Array.isArray(albums) ? albums : []).filter((a) => {
+        const ownerId =
+          typeof a?.owner === "object" && a?.owner
+            ? a.owner._id || a.owner.id
+            : a?.owner;
+        return myId && ownerId && ownerId.toString() === myId.toString();
+      });
+      setMyAlbums(owned);
+    } catch (err) {
+      const message = err?.response?.data?.message || "";
+      if (message.toLowerCase().includes("at most 20")) {
+        setAlbumActionStatus({
+          type: "error",
+          message: t("albums.maxScoresReached", { count: 20 }),
+        });
+      } else {
+        setAlbumActionStatus({
+          type: "error",
+          message: t("albums.addToAlbumFailed"),
+        });
+      }
+    }
+  };
 
   const [activeTab, setActiveTab] = useState("notation");
 
@@ -434,6 +551,74 @@ const ScoreView = () => {
               </div>
             </div>
           )}
+
+          {user ? (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <div className="font-semibold mb-2">{t("albums.addToAlbum")}</div>
+
+              {albumsLoading ? (
+                <div className="text-sm text-gray-500">
+                  {t("common.loading")}
+                </div>
+              ) : myAlbums.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  <div className="mb-2">{t("albums.noMyAlbums")}</div>
+                  <Link
+                    to="/albums/create"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {t("nav.newAlbum")}
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <select
+                    className="w-full border p-2 rounded"
+                    value={selectedAlbumId}
+                    onChange={(e) => {
+                      setSelectedAlbumId(e.target.value);
+                      setAlbumActionStatus({ type: "", message: "" });
+                    }}
+                  >
+                    {myAlbums.map((a) => {
+                      const ids = Array.isArray(a?.scores) ? a.scores : [];
+                      const already = ids.some((x) => x?.toString?.() === id);
+                      const full = !already && ids.length >= 20;
+                      const suffix = full
+                        ? ` (${t("albums.albumFull", { count: 20 })})`
+                        : "";
+                      return (
+                        <option key={a._id} value={a._id} disabled={full}>
+                          {a.title} ({ids.length}/20){suffix}
+                        </option>
+                      );
+                    })}
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={handleAddToAlbum}
+                    disabled={!selectedAlbumId || albumsLoading}
+                    className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {t("albums.add")}
+                  </button>
+
+                  {albumActionStatus.message ? (
+                    <div
+                      className={
+                        albumActionStatus.type === "success"
+                          ? "text-sm text-green-600"
+                          : "text-sm text-red-600"
+                      }
+                    >
+                      {albumActionStatus.message}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

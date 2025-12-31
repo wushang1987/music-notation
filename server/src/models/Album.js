@@ -10,7 +10,13 @@ const albumSchema = new mongoose.Schema(
       required: true,
     },
     isPublic: { type: Boolean, default: false },
-    scores: [{ type: mongoose.Schema.Types.ObjectId, ref: "Score" }],
+    scores: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Score" }],
+      validate: {
+        validator: (arr) => !Array.isArray(arr) || arr.length <= 20,
+        message: "Album can contain at most 20 scores",
+      },
+    },
   },
   { timestamps: true }
 );

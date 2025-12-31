@@ -2,6 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api";
 import { useTranslation } from "react-i18next";
+import Pagination from "../components/Pagination";
+
+const SCORE_PAGE_SIZE = 20;
+const MAX_ALBUM_SCORES = 20;
 
 const AlbumEditor = () => {
   const { id } = useParams();
@@ -16,7 +20,13 @@ const AlbumEditor = () => {
   const [coverUrl, setCoverUrl] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
-  const [myScores, setMyScores] = useState([]);
+  const [availableScores, setAvailableScores] = useState([]);
+  const [scoresPage, setScoresPage] = useState(1);
+  const [scoresTotalPages, setScoresTotalPages] = useState(1);
+  const [scoresSearch, setScoresSearch] = useState("");
+  const [scoresLoading, setScoresLoading] = useState(false);
+  const [maxScoresMessage, setMaxScoresMessage] = useState("");
+
   const [selectedScoreIds, setSelectedScoreIds] = useState([]);
   const [initialScoreIds, setInitialScoreIds] = useState([]);
 
@@ -31,24 +41,33 @@ const AlbumEditor = () => {
   );
 
   useEffect(() => {
-    const fetchMyScores = async () => {
+    const fetchScores = async () => {
+      setScoresLoading(true);
       try {
         const params = new URLSearchParams();
-        params.append("page", 1);
-        params.append("limit", 200);
+        params.append("page", scoresPage);
+        params.append("limit", SCORE_PAGE_SIZE);
         params.append("sortBy", "date");
         params.append("order", "desc");
+        if (scoresSearch.trim()) params.append("search", scoresSearch.trim());
 
-        const { data } = await api.get(`/scores/my?${params.toString()}`);
+        const { data } = await api.get(`/scores?${params.toString()}`);
         const scores = Array.isArray(data) ? data : data.scores;
-        setMyScores(Array.isArray(scores) ? scores : []);
+        setAvailableScores(Array.isArray(scores) ? scores : []);
+        setScoresTotalPages(
+          Math.max(1, parseInt(data?.totalPages || 1, 10) || 1)
+        );
       } catch (err) {
-        console.error("Failed to fetch my scores", err);
+        console.error("Failed to fetch scores", err);
+        setAvailableScores([]);
+        setScoresTotalPages(1);
+      } finally {
+        setScoresLoading(false);
       }
     };
 
-    fetchMyScores();
-  }, []);
+    fetchScores();
+  }, [scoresPage, scoresSearch]);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -84,7 +103,13 @@ const AlbumEditor = () => {
       const sid = scoreId.toString();
       const next = new Set((prev || []).map((x) => x.toString()));
       if (next.has(sid)) next.delete(sid);
-      else next.add(sid);
+      else {
+        if (next.size >= MAX_ALBUM_SCORES) {
+          setMaxScoresMessage(t("albums.maxScoresReached", { count: 20 }));
+          return Array.from(next);
+        }
+        next.add(sid);
+      }
       return Array.from(next);
     });
   };
@@ -95,17 +120,22 @@ const AlbumEditor = () => {
       (sid) => !selectedSet.has(sid)
     );
 
-    for (const sid of toAdd) {
-      await api.put(`/albums/${albumId}/scores/${sid}`);
-    }
     for (const sid of toRemove) {
       await api.delete(`/albums/${albumId}/scores/${sid}`);
+    }
+    for (const sid of toAdd) {
+      await api.put(`/albums/${albumId}/scores/${sid}`);
     }
   };
 
   const handleSave = async () => {
     if (!title.trim()) {
       alert(t("albums.titleRequired"));
+      return;
+    }
+
+    if ((selectedScoreIds || []).length > MAX_ALBUM_SCORES) {
+      alert(t("albums.maxScoresReached", { count: 20 }));
       return;
     }
 
@@ -135,7 +165,12 @@ const AlbumEditor = () => {
       navigate(`/album/${albumId}`);
     } catch (err) {
       console.error("Failed to save album", err);
-      alert(t("albums.saveFailed"));
+      const message = err?.response?.data?.message || "";
+      if (message.toLowerCase().includes("at most 20")) {
+        alert(t("albums.maxScoresReached", { count: 20 }));
+      } else {
+        alert(t("albums.saveFailed"));
+      }
     } finally {
       setSaving(false);
     }
@@ -195,22 +230,59 @@ const AlbumEditor = () => {
             </span>
           </div>
 
-          <div className="max-h-[420px] overflow-auto border rounded">
-            {myScores.length === 0 ? (
+          <div className="mb-2">
+            <input
+              type="text"
+              className="w-full border p-2 rounded"
+              value={scoresSearch}
+              onChange={(e) => {
+                setScoresSearch(e.target.value);
+                setScoresPage(1);
+              }}
+              placeholder={t("albums.scoreSearchPlaceholder")}
+            />
+          </div>
+
+          {maxScoresMessage ? (
+            <div className="mb-2 text-sm text-red-600">{maxScoresMessage}</div>
+          ) : null}
+
+          <div className="max-h-105 overflow-auto border rounded">
+            {scoresLoading ? (
               <div className="p-4 text-sm text-gray-500">
-                {t("albums.noMyScores")}
+                {t("common.loading")}
+              </div>
+            ) : availableScores.length === 0 ? (
+              <div className="p-4 text-sm text-gray-500">
+                {t("albums.noScores")}
               </div>
             ) : (
               <ul className="divide-y">
-                {myScores.map((s) => {
-                  const sid = s._id;
+                {availableScores.map((s) => {
+                  const sid = s?._id ? s._id.toString() : "";
+                  if (!sid) return null;
+
                   const checked = selectedSet.has(sid);
+                  const selectedCount = (selectedScoreIds || []).length;
+                  const disableAdd =
+                    !checked && selectedCount >= MAX_ALBUM_SCORES;
+
                   return (
                     <li key={sid} className="p-3 flex items-center gap-3">
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => toggleSelected(sid)}
+                        disabled={disableAdd}
+                        onChange={() => {
+                          if (disableAdd) {
+                            setMaxScoresMessage(
+                              t("albums.maxScoresReached", { count: 20 })
+                            );
+                            return;
+                          }
+                          setMaxScoresMessage("");
+                          toggleSelected(sid);
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-medium text-gray-900 truncate">
@@ -226,6 +298,12 @@ const AlbumEditor = () => {
               </ul>
             )}
           </div>
+
+          <Pagination
+            currentPage={scoresPage}
+            totalPages={scoresTotalPages}
+            onPageChange={(p) => setScoresPage(p)}
+          />
         </div>
 
         <button

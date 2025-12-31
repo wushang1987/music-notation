@@ -218,6 +218,12 @@ const addScoreToAlbum = async (req, res) => {
 
     if (!Array.isArray(album.scores)) album.scores = [];
     const already = album.scores.some((s) => s.toString() === scoreId);
+    if (!already && album.scores.length >= 20) {
+      return res
+        .status(400)
+        .json({ message: "Album can contain at most 20 scores" });
+    }
+
     if (!already) {
       album.scores.push(scoreId);
       await album.save();
