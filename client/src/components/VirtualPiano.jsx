@@ -108,7 +108,8 @@ const VirtualPiano = ({
       if (tag === "TEXTAREA" && !captureInTextarea) return;
 
       // Octave Shortcuts (0-8)
-      if (e.key >= "0" && e.key <= "8") {
+      // Disable shortcuts in text areas so users can type numbers (e.g. "E2" for duration)
+      if (tag !== "TEXTAREA" && e.key >= "0" && e.key <= "8") {
         setCenterOctave(parseInt(e.key));
         return;
       }
