@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { useTranslation } from "react-i18next";
+import VirtualPiano from "../components/VirtualPiano";
+import EditorToolbar from "../components/EditorToolbar";
 
 const ScoreEditor = () => {
   const { id } = useParams();
@@ -16,7 +18,30 @@ const ScoreEditor = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(isEdit);
+  const [noteDuration, setNoteDuration] = useState("");
+  const textareaRef = useRef(null);
   const navigate = useNavigate();
+
+  const insertText = (text) => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setContent((prev) => prev + text);
+      return;
+    }
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newContent =
+      content.substring(0, start) + text + content.substring(end);
+
+    setContent(newContent);
+
+    // Restore focus and cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + text.length, start + text.length);
+    }, 0);
+  };
 
   useEffect(() => {
     if (isEdit) {
@@ -123,6 +148,7 @@ const ScoreEditor = () => {
       }
       navigate(isEdit ? `/score/${id}` : "/");
     } catch (err) {
+      console.error(err);
       alert(t("score.saveFailed") || "Failed to save score");
     }
   };
@@ -147,11 +173,18 @@ const ScoreEditor = () => {
         </div>
         <div className="mb-4">
           <label className="block mb-1">{t("score.abcNotation")}</label>
+          <EditorToolbar
+            currentDuration={noteDuration}
+            onDurationChange={setNoteDuration}
+            onInsert={insertText}
+          />
           <textarea
-            className="w-full border p-2 rounded h-64 font-mono"
+            ref={textareaRef}
+            className="w-full border p-2 rounded-b h-64 font-mono border-t-0"
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
+          <VirtualPiano onNoteClick={insertText} duration={noteDuration} />
         </div>
         <div className="mb-4">
           <label className="inline-flex items-center">
