@@ -1,25 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import {
+  PIANO_KEYS,
+  KEYBOARD_MAP,
+  NOTES as LEGACY_NOTES,
+} from "../utils/pianoUtils";
+import PianoKey from "./PianoKey";
+import PianoControls from "./PianoControls";
 
-export const NOTES = [
-  { note: "C", type: "white", abc: "C", key: "a" },
-  { note: "C#", type: "black", abc: "^C", key: "w" },
-  { note: "D", type: "white", abc: "D", key: "s" },
-  { note: "D#", type: "black", abc: "^D", key: "e" },
-  { note: "E", type: "white", abc: "E", key: "d" },
-  { note: "F", type: "white", abc: "F", key: "f" },
-  { note: "F#", type: "black", abc: "^F", key: "t" },
-  { note: "G", type: "white", abc: "G", key: "g" },
-  { note: "G#", type: "black", abc: "^G", key: "y" },
-  { note: "A", type: "white", abc: "A", key: "h" },
-  { note: "A#", type: "black", abc: "^A", key: "u" },
-  { note: "B", type: "white", abc: "B", key: "j" },
-  { note: "c", type: "white", abc: "c", key: "k" }, // Next octave C
-  { note: "c#", type: "black", abc: "^c", key: "o" },
-  { note: "d", type: "white", abc: "d", key: "l" },
-  { note: "d#", type: "black", abc: "^d", key: "p" },
-  { note: "e", type: "white", abc: "e", key: ";" },
-  { note: "f", type: "white", abc: "f", key: "'" },
-];
+// Re-export for ScoreEditor compatibility
+export const NOTES = LEGACY_NOTES;
 
 const VirtualPiano = ({
   onNoteClick,
@@ -27,12 +16,28 @@ const VirtualPiano = ({
   initialKeyboardEnabled = false,
   captureInTextarea = false,
 }) => {
-  const [octave, setOctave] = useState(0);
+  const [centerOctave, setCenterOctave] = useState(4); // The octave mapped to 'a' key (C4 by default)
   const [isKeyboardEnabled, setIsKeyboardEnabled] = useState(
     initialKeyboardEnabled
   );
-  const [activeKeys, setActiveKeys] = useState(new Set());
+  const [activeMidiNotes, setActiveMidiNotes] = useState(new Set());
   const audioCtxRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+
+  // Scroll to Middle C on mount
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const middleC =
+        scrollContainerRef.current.querySelector('[data-note="C4"]');
+      if (middleC) {
+        middleC.scrollIntoView({
+          behavior: "auto",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, []);
 
   const ensureAudioContext = useCallback(() => {
     if (audioCtxRef.current) return audioCtxRef.current;
@@ -42,154 +47,98 @@ const VirtualPiano = ({
     return audioCtxRef.current;
   }, []);
 
-  const abcToFrequency = useCallback((abc) => {
-    if (!abc) return null;
-    // Strip duration parts like numbers or slashes
-    const clean = abc.replace(/[0-9/]/g, "");
-    // Accidentals
-    let accidental = 0;
-    let i = 0;
-    while (clean[i] === "^" || clean[i] === "_" || clean[i] === "=") {
-      if (clean[i] === "^") accidental += 1;
-      else if (clean[i] === "_") accidental -= 1;
-      // '=' keeps accidental at 0
-      i++;
-    }
-    const letter = clean[i];
-    if (!letter || !/[A-Ga-g]/.test(letter)) return null;
-    i++;
-    // Octave marks after the letter
-    let up = 0;
-    let down = 0;
-    for (; i < clean.length; i++) {
-      if (clean[i] === "'") up++;
-      else if (clean[i] === ",") down++;
-    }
-
-    // Base octave: uppercase = 4 (middle C octave), lowercase = 5
-    let octave = letter === letter.toLowerCase() ? 5 : 4;
-    octave += up - down;
-
-    // Semitone from C mapping
-    const base = letter.toUpperCase();
-    const SEMI_FROM_C = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    let n = SEMI_FROM_C[base];
-    if (n === undefined) return null;
-    n += accidental; // apply sharp/flat
-
-    // Convert to frequency relative to A4 = 440Hz
-    const semitoneFromA4 = n - 9 + 12 * (octave - 4);
-    const freq = 440 * Math.pow(2, semitoneFromA4 / 12);
-    return freq;
-  }, []);
-
-  const playAbcNote = useCallback(
-    (abc) => {
+  const playFreq = useCallback(
+    (freq) => {
       const ctx = ensureAudioContext();
       if (!ctx) return;
-      // Some browsers require user gesture; resume if suspended
-      if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
-      }
-      const freq = abcToFrequency(abc);
-      if (!freq) return;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = "triangle"; // softer than sine for piano-like feel
+      osc.type = "triangle";
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      // Simple ADSR envelope
       const now = ctx.currentTime;
       const attack = 0.01;
       const decay = 0.1;
       const sustain = 0.2;
-      const release = 0.15;
+      const release = 0.3;
 
       gain.gain.cancelScheduledValues(now);
-      gain.gain.setValueAtTime(0.0, now);
-      gain.gain.linearRampToValueAtTime(0.8, now + attack);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.6, now + attack);
       gain.gain.linearRampToValueAtTime(sustain, now + attack + decay);
       gain.gain.setValueAtTime(sustain, now + attack + decay);
-      gain.gain.linearRampToValueAtTime(0.0, now + attack + decay + release);
+      gain.gain.linearRampToValueAtTime(0, now + attack + decay + release);
 
       osc.start(now);
       osc.stop(now + attack + decay + release);
     },
-    [ensureAudioContext, abcToFrequency]
+    [ensureAudioContext]
   );
 
-  const getAbcNote = useCallback(
-    (baseAbc) => {
-      // Handle octave shifting
-      // Base mapping is Middle C octave (C D E F G A B)
-      // Octave 0: C D ...
-      // Octave 1: c d ...
-      // Octave -1: C, D, ...
-      // Octave 2: c' d' ...
-      // Octave -2: C,, D,, ...
-
-      let note = baseAbc;
-
-      // Special handling for notes that are already in the next octave (lowercase)
-      let currentOctave = octave;
-      if (/[a-z]/.test(baseAbc)) {
-        note = baseAbc.toUpperCase(); // Treat as base note for calculation, then add octave + 1
-        currentOctave += 1;
-      }
-
-      // Apply octave transformation to base 'C'...'B'
-      if (currentOctave > 0) {
-        note = note.toLowerCase();
-        if (currentOctave > 1) {
-          note += "'".repeat(currentOctave - 1);
-        }
-      } else if (currentOctave < 0) {
-        note += ",".repeat(Math.abs(currentOctave));
-      }
-
-      return note + duration;
+  const playNoteByMidi = useCallback(
+    (midiNumber) => {
+      const freq = 440 * Math.pow(2, (midiNumber - 69) / 12);
+      playFreq(freq);
     },
-    [octave, duration]
+    [playFreq]
   );
 
-  const handleNoteClick = useCallback(
-    (noteDef) => {
-      const abc = getAbcNote(noteDef.abc);
-      // Play sound locally
-      playAbcNote(abc);
-      onNoteClick(abc);
+  const handleKeyInteraction = useCallback(
+    (keyData) => {
+      playNoteByMidi(keyData.midi);
+      if (onNoteClick) {
+        onNoteClick(keyData.abc + duration);
+      }
     },
-    [getAbcNote, onNoteClick, playAbcNote]
+    [playNoteByMidi, onNoteClick, duration]
   );
 
+  // Computer Keyboard Handlers
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isKeyboardEnabled) return;
       if (e.repeat) return;
 
-      // Ignore typing inside inputs; textarea can be captured when desired
       const tag = e.target.tagName;
       if (tag === "INPUT") return;
       if (tag === "TEXTAREA" && !captureInTextarea) return;
 
-      const key = e.key.toLowerCase();
-      const noteDef = NOTES.find((n) => n.key === key);
-      if (noteDef) {
-        e.preventDefault(); // Prevent typing the character
-        handleNoteClick(noteDef);
-        setActiveKeys((prev) => new Set(prev).add(key));
+      // Octave Shortcuts (0-8)
+      if (e.key >= "0" && e.key <= "8") {
+        setCenterOctave(parseInt(e.key));
+        return;
+      }
+
+      const keyChar = e.key.toLowerCase();
+      if (KEYBOARD_MAP.hasOwnProperty(keyChar)) {
+        e.preventDefault();
+        const semitoneOffset = KEYBOARD_MAP[keyChar];
+        const baseMidi = (centerOctave + 1) * 12;
+        const targetMidi = baseMidi + semitoneOffset;
+
+        if (targetMidi >= 21 && targetMidi <= 108) {
+          setActiveMidiNotes((prev) => new Set(prev).add(targetMidi));
+          const keyData = PIANO_KEYS.find((k) => k.midi === targetMidi);
+          if (keyData) {
+            handleKeyInteraction(keyData);
+          }
+        }
       }
     };
 
     const handleKeyUp = (e) => {
-      const key = e.key.toLowerCase();
-      if (NOTES.find((n) => n.key === key)) {
-        setActiveKeys((prev) => {
+      const keyChar = e.key.toLowerCase();
+      if (KEYBOARD_MAP.hasOwnProperty(keyChar)) {
+        const semitoneOffset = KEYBOARD_MAP[keyChar];
+        const baseMidi = (centerOctave + 1) * 12;
+        const targetMidi = baseMidi + semitoneOffset;
+        setActiveMidiNotes((prev) => {
           const next = new Set(prev);
-          next.delete(key);
+          next.delete(targetMidi);
           return next;
         });
       }
@@ -201,77 +150,68 @@ const VirtualPiano = ({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [handleNoteClick, isKeyboardEnabled, captureInTextarea]);
+  }, [
+    isKeyboardEnabled,
+    captureInTextarea,
+    centerOctave,
+    handleKeyInteraction,
+  ]);
 
   return (
-    <div className="flex flex-col items-center p-4 bg-gray-100 rounded-lg shadow-md mt-4">
-      <div className="flex justify-between w-full mb-2 px-4">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-700">Virtual Piano</span>
-          <label className="flex items-center text-xs text-gray-600 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={isKeyboardEnabled}
-              onChange={(e) => setIsKeyboardEnabled(e.target.checked)}
-              className="mr-1"
-            />
-            Keyboard Mode
-          </label>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setOctave((o) => o - 1)}
-            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-          >
-            Octave -
-          </button>
-          <span className="px-2 py-1 bg-white rounded border min-w-7.5 text-center">
-            {octave}
-          </span>
-          <button
-            onClick={() => setOctave((o) => o + 1)}
-            className="px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
-          >
-            Octave +
-          </button>
+    <div className="flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl mt-6 border border-gray-700">
+      <PianoControls
+        isKeyboardEnabled={isKeyboardEnabled}
+        setIsKeyboardEnabled={setIsKeyboardEnabled}
+        centerOctave={centerOctave}
+        setCenterOctave={setCenterOctave}
+      />
+
+      {/* Piano Scroll Container */}
+      <div
+        ref={scrollContainerRef}
+        className="relative w-full overflow-x-auto pb-4 select-none no-scrollbar"
+        style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}
+      >
+        <style>{`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}</style>
+        <div className="inline-flex h-48 relative px-10 min-w-max bg-gray-900 pt-1">
+          {PIANO_KEYS.map((key, index) => {
+            if (key.type !== "white") return null;
+
+            const isActive = activeMidiNotes.has(key.midi);
+            const nextKey = PIANO_KEYS[index + 1];
+            const hasBlackKey = nextKey && nextKey.type === "black";
+            const blackKey = hasBlackKey ? nextKey : null;
+            const isBlackActive =
+              blackKey && activeMidiNotes.has(blackKey.midi);
+
+            return (
+              <PianoKey
+                key={key.midi}
+                keyData={key}
+                isActive={isActive}
+                blackKey={blackKey}
+                isBlackActive={isBlackActive}
+                onMouseDown={handleKeyInteraction}
+                isKeyboardEnabled={isKeyboardEnabled}
+                centerOctave={centerOctave}
+              />
+            );
+          })}
         </div>
       </div>
 
-      <div className="relative flex h-32 select-none">
-        {NOTES.map((n, i) => (
-          <div
-            key={i}
-            onClick={() => handleNoteClick(n)}
-            className={`
-              relative border border-gray-400 rounded-b-md cursor-pointer transition-colors
-              ${
-                n.type === "white"
-                  ? `w-10 h-32 ${
-                      activeKeys.has(n.key)
-                        ? "bg-yellow-200"
-                        : "bg-white hover:bg-gray-100"
-                    } z-0`
-                  : `w-6 h-20 ${
-                      activeKeys.has(n.key)
-                        ? "bg-yellow-600"
-                        : "bg-black hover:bg-gray-800"
-                    } z-10 -mx-3 text-white`
-              }
-              flex items-end justify-center pb-2
-            `}
-          >
-            <span
-              className={`text-xs ${
-                n.type === "black" ? "text-gray-300" : "text-gray-500"
-              }`}
-            >
-              {n.key.toUpperCase()}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 text-xs text-gray-500">
-        Use keyboard keys (A-') or click to play
+      <div className="mt-3 text-xs text-gray-400 flex gap-4">
+        <span>• Scroll to navigate full range</span>
+        <span>• Click or use keyboard to play</span>
+        <span>• Press 0-8 to switch octaves</span>
       </div>
     </div>
   );
