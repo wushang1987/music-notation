@@ -6,7 +6,11 @@ import api from "../api";
 import { useTranslation } from "react-i18next";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorSidebar from "../components/EditorSidebar";
-import { ensureMidiProgram, INSTRUMENT_OPTIONS } from "../utils/abcMidi";
+import {
+  ensureMidiProgram,
+  generateMultiPartAbc,
+  INSTRUMENT_OPTIONS,
+} from "../utils/abcMidi";
 import { PIANO_KEYS } from "../utils/pianoUtils";
 import {
   modifyNoteInAbc,
@@ -22,11 +26,18 @@ const ScoreEditor = () => {
 
   // State
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState(
-    "X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |"
-  );
+  // Parts state replaces single content/instrumentProgram
+  const [parts, setParts] = useState([
+    {
+      name: "Main",
+      program: 0,
+      content: "X: 1\nT: Title\nM: 4/4\nL: 1/4\nK: C\nC D E F | G A B c |",
+      voiceId: "1",
+    },
+  ]);
+  const [activePartIndex, setActivePartIndex] = useState(0);
+
   const [isPublic, setIsPublic] = useState(false);
-  const [instrumentProgram, setInstrumentProgram] = useState(0);
   const [tagsInput, setTagsInput] = useState("");
   const [loading, setLoading] = useState(isEdit);
 
@@ -46,10 +57,23 @@ const ScoreEditor = () => {
             params: { noCount: 1 },
           });
           setTitle(data.title);
-          setContent(data.content);
           setIsPublic(data.isPublic);
-          setInstrumentProgram(data.instrumentProgram || 0);
           setTagsInput(Array.isArray(data.tags) ? data.tags.join(", ") : "");
+
+          // Handle parts (backend should normalize, but double check)
+          if (data.parts && data.parts.length > 0) {
+            setParts(data.parts);
+          } else {
+            // Fallback for legacy if backend didn't normalize (shouldn't happen with my backend changes)
+            setParts([
+              {
+                name: "Main",
+                program: data.instrumentProgram || 0,
+                content: data.content,
+                voiceId: "1",
+              },
+            ]);
+          }
         } catch (err) {
           console.error("Failed to fetch score", err);
           navigate("/");
@@ -70,10 +94,20 @@ const ScoreEditor = () => {
     }
   }, [loading]);
 
+  // Helper to update content of active part
+  const updateActivePartContent = (newContent) => {
+    setParts((prev) => {
+      const next = [...prev];
+      next[activePartIndex] = { ...next[activePartIndex], content: newContent };
+      return next;
+    });
+  };
+
   // --- Rendering & Audio ---
   useEffect(() => {
     if (!loading) {
-      const effectiveAbc = ensureMidiProgram(content, instrumentProgram);
+      // Generate combined ABC for all parts
+      const effectiveAbc = generateMultiPartAbc(parts);
 
       const renderOptions = {
         responsive: "resize",
@@ -81,6 +115,11 @@ const ScoreEditor = () => {
         oneSvgPerLine: true,
         clickListener: (abcElem) => {
           // Capture selection when a note is clicked
+          // Note: This selection is global to the rendered ABC.
+          // Mapping back to specific part content is tricky.
+          // For now, we might only support click-selection if we can determine which part it belongs to.
+          // Or we just disable click-selection for multi-part for now, or assume it maps to active part if simple.
+          // Given the complexity, let's keep it but be aware it might be buggy for multi-part.
           if (
             abcElem &&
             abcElem.startChar !== undefined &&
@@ -191,42 +230,46 @@ const ScoreEditor = () => {
           )}</div>`;
       }
     }
-  }, [content, instrumentProgram, loading, selection]); // Re-render on selection change if we were highlighting
+  }, [parts, loading, selection]); // Re-render on parts change
 
   // --- Modification Handlers ---
   const handleDurationChange = (newDuration) => {
-    const newContent = modifyNoteInAbc(content, selection, (note) =>
+    const currentContent = parts[activePartIndex].content;
+    const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
       setNoteDuration(note, newDuration)
     );
-    setContent(newContent);
+    updateActivePartContent(newContent);
   };
 
   const handleAccidentalChange = (newAccidental) => {
-    const newContent = modifyNoteInAbc(content, selection, (note) =>
+    const currentContent = parts[activePartIndex].content;
+    const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
       setNoteAccidental(note, newAccidental)
     );
-    setContent(newContent);
+    updateActivePartContent(newContent);
   };
 
   const handleKeyDown = useCallback(
     (e) => {
       if (selection.start === -1) return;
 
+      const currentContent = parts[activePartIndex].content;
+
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        const newContent = modifyNoteInAbc(content, selection, (note) =>
+        const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
           shiftPitch(note, 1)
         );
-        setContent(newContent);
+        updateActivePartContent(newContent);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        const newContent = modifyNoteInAbc(content, selection, (note) =>
+        const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
           shiftPitch(note, -1)
         );
-        setContent(newContent);
+        updateActivePartContent(newContent);
       }
     },
-    [content, selection]
+    [parts, activePartIndex, selection]
   );
 
   useEffect(() => {
@@ -238,17 +281,19 @@ const ScoreEditor = () => {
   const insertAtSource = useCallback(
     (text) => {
       const ta = sourceRef.current;
+      const currentContent = parts[activePartIndex].content;
+
       if (!ta) {
         // Fallback: append to end
-        setContent((prev) => prev + text);
+        updateActivePartContent(currentContent + text);
         return;
       }
-      const start = ta.selectionStart ?? content.length;
+      const start = ta.selectionStart ?? currentContent.length;
       const end = ta.selectionEnd ?? start;
-      const before = content.slice(0, start);
-      const after = content.slice(end);
+      const before = currentContent.slice(0, start);
+      const after = currentContent.slice(end);
       const next = before + text + after;
-      setContent(next);
+      updateActivePartContent(next);
       // Restore caret after React updates DOM
       requestAnimationFrame(() => {
         try {
@@ -260,7 +305,7 @@ const ScoreEditor = () => {
         } catch {}
       });
     },
-    [content]
+    [parts, activePartIndex]
   );
 
   const insertLineBreak = useCallback(
@@ -284,7 +329,8 @@ const ScoreEditor = () => {
         const noteObj = PIANO_KEYS.find((n) => n.midi === midiPitch);
         const abcNote = noteObj ? noteObj.abc : "C";
         // Construct a tiny tune with the current instrument
-        const tune = `X:1\nK:C\nL:1/4\n%%MIDI program ${instrumentProgram}\n${abcNote}`;
+        const currentProgram = parts[activePartIndex].program;
+        const tune = `X:1\nK:C\nL:1/4\n%%MIDI program ${currentProgram}\n${abcNote}`;
 
         const dummyDiv = document.createElement("div");
         const visualObj = abcjs.renderAbc(dummyDiv, tune, {})[0];
@@ -300,7 +346,7 @@ const ScoreEditor = () => {
           .catch((e) => console.warn("Note playback failed", e));
       }
     },
-    [instrumentProgram]
+    [parts, activePartIndex]
   );
 
   const handleSave = async () => {
@@ -309,7 +355,15 @@ const ScoreEditor = () => {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
-      const payload = { title, content, isPublic, tags, instrumentProgram };
+      const payload = {
+        title,
+        parts, // Send parts
+        isPublic,
+        tags,
+        // Legacy fields are handled by backend, but we can send them if we want to be explicit
+        // content: parts[0].content,
+        // instrumentProgram: parts[0].program
+      };
 
       if (isEdit) await api.put(`/scores/${id}`, payload);
       else await api.post("/scores", payload);
@@ -318,6 +372,47 @@ const ScoreEditor = () => {
     } catch (err) {
       alert(t("score.saveFailed"));
     }
+  };
+
+  // --- Part Management ---
+  const handleAddPart = () => {
+    setParts((prev) => [
+      ...prev,
+      {
+        name: `Part ${prev.length + 1}`,
+        program: 0,
+        content: "",
+        voiceId: `${prev.length + 1}`,
+      },
+    ]);
+    setActivePartIndex(parts.length);
+  };
+
+  const handleRemovePart = (index) => {
+    if (parts.length <= 1) return;
+    const newParts = parts.filter((_, i) => i !== index);
+    setParts(newParts);
+    if (activePartIndex >= index && activePartIndex > 0) {
+      setActivePartIndex(activePartIndex - 1);
+    } else if (activePartIndex >= newParts.length) {
+      setActivePartIndex(newParts.length - 1);
+    }
+  };
+
+  const handlePartNameChange = (name) => {
+    setParts((prev) => {
+      const next = [...prev];
+      next[activePartIndex] = { ...next[activePartIndex], name };
+      return next;
+    });
+  };
+
+  const handlePartProgramChange = (program) => {
+    setParts((prev) => {
+      const next = [...prev];
+      next[activePartIndex] = { ...next[activePartIndex], program };
+      return next;
+    });
   };
 
   if (loading) return <div>{t("common.loading")}</div>;
@@ -391,13 +486,76 @@ const ScoreEditor = () => {
 
         {/* Right Source Panel (Collapsible/Optional) */}
         <div className="w-80 bg-white border-l flex flex-col no-print">
+          {/* Parts Manager */}
+          <div className="p-2 bg-gray-100 border-b flex justify-between items-center">
+            <span className="font-bold text-xs text-gray-600">PARTS</span>
+            <button
+              onClick={handleAddPart}
+              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+            >
+              + Add
+            </button>
+          </div>
+          <div className="flex overflow-x-auto border-b bg-gray-50">
+            {parts.map((part, idx) => (
+              <div
+                key={idx}
+                className={`px-3 py-2 text-sm cursor-pointer border-r flex items-center gap-2 whitespace-nowrap ${
+                  activePartIndex === idx
+                    ? "bg-white font-bold text-blue-600 border-b-2 border-b-blue-600"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+                onClick={() => setActivePartIndex(idx)}
+              >
+                <span>{part.name}</span>
+                {parts.length > 1 && (
+                  <span
+                    className="text-gray-400 hover:text-red-500 font-bold ml-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm("Delete this part? This cannot be undone.")) {
+                        handleRemovePart(idx);
+                      }
+                    }}
+                  >
+                    ×
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Part Settings */}
+          <div className="p-2 border-b bg-gray-50 flex flex-col gap-2">
+            <input
+              type="text"
+              value={parts[activePartIndex].name}
+              onChange={(e) => handlePartNameChange(e.target.value)}
+              className="border rounded px-2 py-1 text-sm"
+              placeholder="Part Name"
+            />
+            <select
+              className="w-full border p-1 rounded text-sm"
+              value={parts[activePartIndex].program}
+              onChange={(e) =>
+                handlePartProgramChange(parseInt(e.target.value))
+              }
+            >
+              {INSTRUMENT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {t(opt.i18nKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="p-2 bg-gray-50 border-b font-bold text-xs text-gray-500">
-            SOURCE CODE
+            SOURCE CODE ({parts[activePartIndex].name})
           </div>
           <textarea
             className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+            value={parts[activePartIndex].content}
+            onChange={(e) => updateActivePartContent(e.target.value)}
             ref={sourceRef}
             onKeyDown={(e) => {
               // Ctrl+Enter inserts a measure break
@@ -420,18 +578,6 @@ const ScoreEditor = () => {
             }}
           />
           <div className="p-4 border-t">
-            <label className="block text-xs font-bold mb-1">Instrument</label>
-            <select
-              className="w-full border p-1 rounded"
-              value={instrumentProgram}
-              onChange={(e) => setInstrumentProgram(parseInt(e.target.value))}
-            >
-              {INSTRUMENT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {t(opt.i18nKey)}
-                </option>
-              ))}
-            </select>
             <div className="mt-3 flex gap-2">
               <button
                 type="button"

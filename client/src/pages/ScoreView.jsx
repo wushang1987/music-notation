@@ -5,7 +5,11 @@ import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
-import { ensureMidiProgram, getInstrumentOption } from "../utils/abcMidi";
+import {
+  ensureMidiProgram,
+  getInstrumentOption,
+  generateMultiPartAbc,
+} from "../utils/abcMidi";
 
 const ScoreView = () => {
   const { id } = useParams();
@@ -166,12 +170,17 @@ const ScoreView = () => {
 
   useEffect(() => {
     if (score && activeTab === "notation") {
-      const effectiveAbc = ensureMidiProgram(
-        score.content,
-        typeof score.instrumentProgram === "number"
-          ? score.instrumentProgram
-          : 0
-      );
+      let effectiveAbc;
+      if (score.parts && score.parts.length > 0) {
+        effectiveAbc = generateMultiPartAbc(score.parts);
+      } else {
+        effectiveAbc = ensureMidiProgram(
+          score.content,
+          typeof score.instrumentProgram === "number"
+            ? score.instrumentProgram
+            : 0
+        );
+      }
 
       const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
         responsive: "resize",

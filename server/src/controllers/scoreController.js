@@ -9,6 +9,16 @@ const parseInstrumentProgram = (value) => {
   return n;
 };
 
+const normalizeParts = (parts) => {
+  if (!Array.isArray(parts)) return undefined;
+  return parts.map((p, i) => ({
+    name: p.name || `Part ${i + 1}`,
+    program: parseInstrumentProgram(p.program) || 0,
+    content: p.content || "",
+    voiceId: p.voiceId || `${i + 1}`,
+  }));
+};
+
 // Normalize tags from array or comma-separated string
 const normalizeTags = (tags) => {
   try {
@@ -28,7 +38,8 @@ const normalizeTags = (tags) => {
 
 const createScore = async (req, res) => {
   try {
-    const { title, content, isPublic, tags, instrumentProgram } = req.body;
+    const { title, content, isPublic, tags, instrumentProgram, parts } =
+      req.body;
     const parsedProgram = parseInstrumentProgram(instrumentProgram);
     if (parsedProgram === null) {
       return res.status(400).json({
@@ -37,15 +48,34 @@ const createScore = async (req, res) => {
       });
     }
 
+    let finalParts = normalizeParts(parts);
+    let finalContent = content;
+    let finalProgram = parsedProgram;
+
+    // If parts provided, sync back to legacy fields for compatibility
+    if (finalParts && finalParts.length > 0) {
+      finalContent = finalParts[0].content;
+      finalProgram = finalParts[0].program;
+    } else {
+      // If no parts, build from legacy
+      finalParts = [
+        {
+          name: "Main",
+          program: parsedProgram !== undefined ? parsedProgram : 0,
+          content: content || "",
+          voiceId: "1",
+        },
+      ];
+    }
+
     const score = new Score({
       title,
-      content,
+      content: finalContent,
       isPublic,
       owner: req.user.id,
       tags: normalizeTags(tags),
-      ...(parsedProgram !== undefined
-        ? { instrumentProgram: parsedProgram }
-        : {}),
+      instrumentProgram: finalProgram !== undefined ? finalProgram : 0,
+      parts: finalParts,
     });
     const savedScore = await score.save();
     res.status(201).json(savedScore);
@@ -367,7 +397,22 @@ const getScoreById = async (req, res) => {
       { new: true }
     ).populate("owner", "username");
 
-    return res.json(updated || score);
+    const resultDoc = updated || score;
+    const resultObj = resultDoc.toObject();
+
+    // Lazy migration: ensure parts exist
+    if (!resultObj.parts || resultObj.parts.length === 0) {
+      resultObj.parts = [
+        {
+          name: "Main",
+          program: resultObj.instrumentProgram || 0,
+          content: resultObj.content || "",
+          voiceId: "1",
+        },
+      ];
+    }
+
+    return res.json(resultObj);
   } catch (error) {
     res
       .status(500)
@@ -390,7 +435,8 @@ const updateScore = async (req, res) => {
         .json({ message: "Not authorized to edit this score" });
     }
 
-    const { title, content, isPublic, tags, instrumentProgram } = req.body;
+    const { title, content, isPublic, tags, instrumentProgram, parts } =
+      req.body;
     const parsedProgram = parseInstrumentProgram(instrumentProgram);
     if (parsedProgram === null) {
       return res.status(400).json({
@@ -400,13 +446,40 @@ const updateScore = async (req, res) => {
     }
 
     score.title = title || score.title;
-    score.content = content || score.content;
     score.isPublic = isPublic !== undefined ? isPublic : score.isPublic;
     if (tags !== undefined) {
       score.tags = normalizeTags(tags);
     }
-    if (parsedProgram !== undefined) {
-      score.instrumentProgram = parsedProgram;
+
+    // Handle parts update with backward compatibility
+    if (parts !== undefined) {
+      const normalized = normalizeParts(parts);
+      if (normalized && normalized.length > 0) {
+        score.parts = normalized;
+        // Sync back to legacy fields
+        score.content = normalized[0].content;
+        score.instrumentProgram = normalized[0].program;
+      }
+    } else {
+      // Legacy update path
+      if (content !== undefined) score.content = content;
+      if (parsedProgram !== undefined) score.instrumentProgram = parsedProgram;
+
+      // Sync forward to parts
+      if (!score.parts || score.parts.length === 0) {
+        score.parts = [
+          {
+            name: "Main",
+            program: score.instrumentProgram,
+            content: score.content,
+            voiceId: "1",
+          },
+        ];
+      } else {
+        // Update first part if it exists
+        if (content !== undefined) score.parts[0].content = content;
+        if (parsedProgram !== undefined) score.parts[0].program = parsedProgram;
+      }
     }
 
     const updatedScore = await score.save();
