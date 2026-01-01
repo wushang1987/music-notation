@@ -11,6 +11,7 @@ import {
   generateMultiPartAbc,
   INSTRUMENT_OPTIONS,
 } from "../utils/abcMidi";
+import { parsePianoAbc, generatePianoAbc } from "../utils/pianoHelpers";
 import { PIANO_KEYS } from "../utils/pianoUtils";
 import {
   modifyNoteInAbc,
@@ -44,6 +45,7 @@ const ScoreEditor = () => {
   // Selection State
   const [selection, setSelection] = useState({ start: -1, end: -1 });
   const sourceRef = useRef(null);
+  const [activeHand, setActiveHand] = useState("right");
   const [abcTypingEnabled, setAbcTypingEnabled] = useState(false);
 
   const navigate = useNavigate();
@@ -282,18 +284,36 @@ const ScoreEditor = () => {
     (text) => {
       const ta = sourceRef.current;
       const currentContent = parts[activePartIndex].content;
+      const isPiano = parts[activePartIndex].program === 0;
 
       if (!ta) {
         // Fallback: append to end
         updateActivePartContent(currentContent + text);
         return;
       }
-      const start = ta.selectionStart ?? currentContent.length;
+
+      // Get value from the textarea directly to ensure we are editing what the user sees
+      const taValue = ta.value;
+      const start = ta.selectionStart ?? taValue.length;
       const end = ta.selectionEnd ?? start;
-      const before = currentContent.slice(0, start);
-      const after = currentContent.slice(end);
-      const next = before + text + after;
-      updateActivePartContent(next);
+
+      const before = taValue.slice(0, start);
+      const after = taValue.slice(end);
+      const nextVal = before + text + after;
+
+      if (isPiano) {
+        const { headers, rightHand, leftHand } = parsePianoAbc(currentContent);
+        if (activeHand === "right") {
+          updateActivePartContent(generatePianoAbc(headers, nextVal, leftHand));
+        } else {
+          updateActivePartContent(
+            generatePianoAbc(headers, rightHand, nextVal)
+          );
+        }
+      } else {
+        updateActivePartContent(nextVal);
+      }
+
       // Restore caret after React updates DOM
       requestAnimationFrame(() => {
         try {
@@ -305,7 +325,7 @@ const ScoreEditor = () => {
         } catch {}
       });
     },
-    [parts, activePartIndex]
+    [parts, activePartIndex, activeHand]
   );
 
   const insertLineBreak = useCallback(
@@ -322,6 +342,26 @@ const ScoreEditor = () => {
     acc[curr.key] = curr.abc;
     return acc;
   }, {});
+
+  const handleTextareaKeyDown = (e) => {
+    // Ctrl+Enter inserts a measure break
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      insertBarLineBreak();
+      return;
+    }
+    // ABC typing: map letter keys to notes when enabled
+    if (abcTypingEnabled && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const k = e.key.toLowerCase();
+      const abc = KEY_TO_ABC[k];
+      if (abc) {
+        e.preventDefault();
+        insertAtSource(abc);
+        return;
+      }
+    }
+  };
 
   const handlePlayNote = useCallback(
     (midiPitch) => {
@@ -552,31 +592,74 @@ const ScoreEditor = () => {
           <div className="p-2 bg-gray-50 border-b font-bold text-xs text-gray-500">
             SOURCE CODE ({parts[activePartIndex].name})
           </div>
-          <textarea
-            className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
-            value={parts[activePartIndex].content}
-            onChange={(e) => updateActivePartContent(e.target.value)}
-            ref={sourceRef}
-            onKeyDown={(e) => {
-              // Ctrl+Enter inserts a measure break
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                e.stopPropagation();
-                insertBarLineBreak();
-                return;
-              }
-              // ABC typing: map letter keys to notes when enabled
-              if (abcTypingEnabled && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                const k = e.key.toLowerCase();
-                const abc = KEY_TO_ABC[k];
-                if (abc) {
-                  e.preventDefault();
-                  insertAtSource(abc);
-                  return;
-                }
-              }
-            }}
-          />
+
+          {parts[activePartIndex].program === 0 ? (
+            (() => {
+              const { headers, rightHand, leftHand } = parsePianoAbc(
+                parts[activePartIndex].content
+              );
+              return (
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="flex-1 flex flex-col border-b">
+                    <div className="px-2 py-1 text-xs text-gray-500 bg-gray-100 font-bold">
+                      Right Hand (Treble)
+                    </div>
+                    <textarea
+                      className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
+                      value={rightHand}
+                      onChange={(e) =>
+                        updateActivePartContent(
+                          generatePianoAbc(headers, e.target.value, leftHand)
+                        )
+                      }
+                      onFocus={(e) => {
+                        setActiveHand("right");
+                        sourceRef.current = e.target;
+                      }}
+                      ref={(el) => {
+                        if (activeHand === "right") sourceRef.current = el;
+                      }}
+                      onKeyDown={handleTextareaKeyDown}
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <div className="px-2 py-1 text-xs text-gray-500 bg-gray-100 font-bold">
+                      Left Hand (Bass)
+                    </div>
+                    <textarea
+                      className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
+                      value={leftHand}
+                      onChange={(e) =>
+                        updateActivePartContent(
+                          generatePianoAbc(headers, rightHand, e.target.value)
+                        )
+                      }
+                      onFocus={(e) => {
+                        setActiveHand("left");
+                        sourceRef.current = e.target;
+                      }}
+                      ref={(el) => {
+                        if (activeHand === "left") sourceRef.current = el;
+                      }}
+                      onKeyDown={handleTextareaKeyDown}
+                    />
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            <textarea
+              className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
+              value={parts[activePartIndex].content}
+              onChange={(e) => updateActivePartContent(e.target.value)}
+              ref={sourceRef}
+              onFocus={(e) => {
+                setActiveHand("right");
+                sourceRef.current = e.target;
+              }}
+              onKeyDown={handleTextareaKeyDown}
+            />
+          )}
           <div className="p-4 border-t">
             <div className="mt-3 flex gap-2">
               <button
