@@ -69,10 +69,14 @@ export const generateMultiPartAbc = (parts) => {
   let combined = "";
 
   parts.forEach((part, index) => {
-    const programDirective = `%%MIDI program ${part.program}`;
+    const program = normalizeProgram(part.program);
+    const programDirective = `%%MIDI program ${program}`;
     // Ensure voiceId is valid, default to index+1
     const voiceId = part.voiceId || `${index + 1}`;
-    const voiceDirective = `V:${voiceId} name="${part.name}"`;
+    const voiceDirective = `V:${voiceId} name="${part.name}" subname="${part.name}"`;
+
+    // Check if it's a piano part (program 0) which manages its own voices (V1, V2)
+    const isPiano = program === 0;
 
     if (index === 0) {
       // For first part, try to insert V:1 after headers
@@ -83,12 +87,43 @@ export const generateMultiPartAbc = (parts) => {
       const before = lines.slice(0, headerEnd + 1);
       const after = lines.slice(headerEnd + 1);
 
-      combined += [...before, voiceDirective, programDirective, ...after].join(
-        "\n"
-      );
+      const directives = [];
+      if (!isPiano) {
+        directives.push(voiceDirective);
+      } else {
+        // For piano, we inject the name into the existing V:V1 line in headers
+        // instead of adding a new directive which might be misplaced or overridden
+        const v1Index = before.findIndex((line) =>
+          line.trim().startsWith("V:V1 clef=treble")
+        );
+        if (v1Index !== -1) {
+          // Replace the line, preserving any other potential attributes if we were using regex,
+          // but here we know it comes from our generator mostly.
+          // We use replace to be safe if there are other attrs.
+          before[v1Index] = before[v1Index].replace(
+            "V:V1 clef=treble",
+            `V:V1 clef=treble name="${part.name}" subname="${part.name}"`
+          );
+        } else {
+          // Fallback: if V:V1 line not found in headers, add it as directive
+          directives.push(`V:V1 name="${part.name}" subname="${part.name}"`);
+        }
+      }
+      directives.push(programDirective);
+
+      combined += [...before, ...directives, ...after].join("\n");
     } else {
       // For other parts, just append
-      combined += `\n${voiceDirective}\n${programDirective}\n${part.content}`;
+      if (isPiano) {
+        let content = part.content;
+        content = content.replace(
+          "V:V1 clef=treble",
+          `V:V1 clef=treble name="${part.name}" subname="${part.name}"`
+        );
+        combined += `\n${programDirective}\n${content}`;
+      } else {
+        combined += `\n${voiceDirective}\n${programDirective}\n${part.content}`;
+      }
     }
   });
 
