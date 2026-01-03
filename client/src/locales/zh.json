@@ -1,4 +1,7 @@
 {
+  "brand": {
+    "name": "谱绘网"
+  },
   "common": {
     "home": "首页",
     "create": "创建新乐谱",

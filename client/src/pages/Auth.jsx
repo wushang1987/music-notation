@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import BrandLogo from "../components/BrandLogo";
 
 const Auth = () => {
   const { login, register, user } = useContext(AuthContext);
@@ -51,9 +52,12 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
       <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-10 transform transition-all duration-500">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic mb-2">
-            Score Canvas
-          </h1>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <BrandLogo className="w-10 h-10 text-blue-600 drop-shadow-sm" />
+            <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic tracking-tight">
+              {t("brand.name")}
+            </h1>
+          </div>
           <p className="text-gray-500 font-medium">
             {isLogin ? t("auth.welcomeBack") : t("auth.startJourney")}
           </p>

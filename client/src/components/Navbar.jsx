@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import BrandLogo from "./BrandLogo";
 
 const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
   const { user, logout } = useContext(AuthContext);
@@ -73,9 +74,12 @@ const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
 
           <Link
             to="/"
-            className="text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic"
+            className="inline-flex items-center gap-2 group shrink-0"
           >
-            Score Canvas
+            <BrandLogo className="w-8 h-8 text-blue-600 group-hover:text-indigo-600 transition-colors drop-shadow-sm" />
+            <span className="text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic tracking-tight">
+              {t("brand.name")}
+            </span>
           </Link>
         </div>
         <div className="flex items-center gap-3 sm:gap-6 flex-nowrap justify-end min-w-0">

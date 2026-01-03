@@ -18,6 +18,7 @@ import AlbumEditor from "./pages/AlbumEditor";
 import AlbumView from "./pages/AlbumView";
 import AdminDashboard from "./pages/AdminDashboard";
 import VerifyEmail from "./pages/VerifyEmail";
+import { useTranslation } from "react-i18next";
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -36,11 +37,16 @@ const AdminRoute = ({ children }) => {
 const AppContent = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
+  const { t, i18n } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [useHamburgerNav, setUseHamburgerNav] = useState(false);
   const isAuthPage =
     ["/auth", "/login", "/register"].includes(location.pathname) ||
     location.pathname.startsWith("/verify/");
+
+  useEffect(() => {
+    document.title = t("brand.name");
+  }, [t, i18n.resolvedLanguage, i18n.language]);
 
   useEffect(() => {
     const id = window.setTimeout(() => setSidebarOpen(false), 0);

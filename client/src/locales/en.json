@@ -1,4 +1,7 @@
 {
+  "brand": {
+    "name": "Score Canvas"
+  },
   "common": {
     "home": "Home",
     "create": "Create New",
