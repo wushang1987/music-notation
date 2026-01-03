@@ -37,22 +37,58 @@ const AppContent = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [useHamburgerNav, setUseHamburgerNav] = useState(false);
   const isAuthPage =
     ["/auth", "/login", "/register"].includes(location.pathname) ||
     location.pathname.startsWith("/verify/");
 
   useEffect(() => {
-    setSidebarOpen(false);
+    const id = window.setTimeout(() => setSidebarOpen(false), 0);
+    return () => window.clearTimeout(id);
   }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+
+    // Use hamburger nav on:
+    // - small screens (portrait/any)
+    // - small-device landscape (avoid desktop-style sidebar on phones/tablets in landscape)
+    const mediaQuery = window.matchMedia(
+      "(max-width: 767px), (orientation: landscape) and (max-width: 1024px) and (max-height: 600px)"
+    );
+
+    const handleChange = () => {
+      setUseHamburgerNav(mediaQuery.matches);
+      setSidebarOpen(false);
+    };
+
+    handleChange();
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    // Safari < 14
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
+  }, []);
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {!isAuthPage && (
-        <Navbar onOpenSidebar={user ? () => setSidebarOpen(true) : undefined} />
+        <Navbar
+          onOpenSidebar={user ? () => setSidebarOpen(true) : undefined}
+          useHamburgerNav={useHamburgerNav}
+        />
       )}
       <div className="flex flex-1 overflow-hidden">
         {!isAuthPage && user && (
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            useHamburgerNav={useHamburgerNav}
+          />
         )}
         <main
           className={`flex-1 overflow-y-auto bg-white ${

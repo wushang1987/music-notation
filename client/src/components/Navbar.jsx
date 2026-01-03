@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 
-const Navbar = ({ onOpenSidebar }) => {
+const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
   const { user, logout } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
 
@@ -48,11 +48,11 @@ const Navbar = ({ onOpenSidebar }) => {
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm isolate">
       <div className="container mx-auto px-4 sm:px-6 py-3 flex flex-row justify-between items-center gap-3 w-full max-w-none">
         <div className="flex items-center gap-3 shrink-0">
-          {user && onOpenSidebar ? (
+          {user && onOpenSidebar && useHamburgerNav ? (
             <button
               type="button"
               onClick={onOpenSidebar}
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
               aria-label="Open navigation"
             >
               <svg
