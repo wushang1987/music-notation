@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api";
 import AlbumCard from "../components/AlbumCard";
 import Pagination from "../components/Pagination";
@@ -61,6 +62,25 @@ const Albums = () => {
         </h1>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
+          <Link
+            to="/albums/create"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 whitespace-nowrap inline-flex items-center gap-2"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            {t("nav.newAlbum")}
+          </Link>
           <div className="relative w-full md:w-96">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
