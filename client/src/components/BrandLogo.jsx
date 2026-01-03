@@ -7,35 +7,17 @@ const BrandLogo = ({ className = "w-7 h-7", title = "Score Canvas" }) => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
       aria-label={title}
     >
       <title>{title}</title>
-      <rect x="3" y="3" width="18" height="18" rx="5" strokeWidth="1.75" />
-      <path
-        d="M8 8.5h8"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.7"
-      />
-      <path
-        d="M8 11.5h6"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
-      <path d="M14.5 8.7v7.2" strokeWidth="1.75" strokeLinecap="round" />
-      <path
-        d="M14.5 10.2c1.5-0.5 2.8-0.9 4.2-1.1"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.7 16.9c0 1.1-0.9 2-2 2s-2-0.9-2-2 0.9-2 2-2 2 0.9 2 2Z"
-        strokeWidth="1.75"
-      />
+      <path d="M9 18V5l12-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="18" cy="16" r="3" />
     </svg>
   );
 };

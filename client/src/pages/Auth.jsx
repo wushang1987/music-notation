@@ -53,7 +53,7 @@ const Auth = () => {
       <div className="max-w-md w-full bg-white rounded-xl shadow-2xl p-10 transform transition-all duration-500">
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <BrandLogo className="w-10 h-10 text-blue-600 drop-shadow-sm" />
+            <BrandLogo className="w-10 h-10 text-blue-600" />
             <h1 className="text-4xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic tracking-tight">
               {t("brand.name")}
             </h1>
