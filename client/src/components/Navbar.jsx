@@ -46,7 +46,7 @@ const Navbar = ({ onOpenSidebar }) => {
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm isolate">
-      <div className="container mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 w-full max-w-none">
+      <div className="container mx-auto px-4 sm:px-6 py-3 flex flex-row justify-between items-center gap-3 w-full max-w-none">
         <div className="flex items-center gap-3 shrink-0">
           {user && onOpenSidebar ? (
             <button
@@ -78,14 +78,14 @@ const Navbar = ({ onOpenSidebar }) => {
             Score Canvas
           </Link>
         </div>
-        <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-end min-w-0">
+        <div className="flex items-center gap-3 sm:gap-6 flex-nowrap justify-end min-w-0">
           {!user
             ? renderLanguageSelect(
                 "text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
               )
             : null}
           {user ? (
-            <div className="flex gap-2 sm:gap-4 items-center flex-wrap min-w-0 justify-end">
+            <div className="flex gap-2 sm:gap-4 items-center flex-nowrap min-w-0 justify-end">
               <div className="relative" ref={userMenuRef}>
                 <button
                   type="button"
