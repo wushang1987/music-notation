@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -7,9 +7,28 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
 
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
   };
+
+  useEffect(() => {
+    const handlePointerDown = (event) => {
+      if (!userMenuRef.current) return;
+      if (!userMenuRef.current.contains(event.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, []);
 
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm isolate">
@@ -31,34 +50,49 @@ const Navbar = () => {
           </select>
           {user ? (
             <div className="flex gap-2 sm:gap-4 items-center flex-wrap min-w-0 justify-end">
-              <span className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full max-w-[10rem] truncate">
-                {t("nav.greeting", { name: user.username })}
-              </span>
-              <Link
-                to="/create"
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-md shadow-blue-100 whitespace-nowrap"
-              >
-                {t("nav.newScore")}
-              </Link>
-              <button
-                onClick={logout}
-                className="text-gray-500 hover:text-red-500 transition-colors"
-                title={t("common.logout")}
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen((open) => !open)}
+                  className="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full max-w-40 truncate inline-flex items-center gap-1 hover:bg-gray-200 transition-colors"
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                  />
-                </svg>
-              </button>
+                  {t("nav.greeting", { name: user.username })}
+                  <svg
+                    className="w-4 h-4 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {userMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setUserMenuOpen(false);
+                        logout();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {t("common.logout")}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : (
             <div className="flex gap-4 items-center">
