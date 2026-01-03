@@ -315,8 +315,8 @@ const ScoreView = () => {
   const instrumentOption = getInstrumentOption(score.instrumentProgram);
 
   return (
-    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
-      <div className="w-full md:w-2/3">
+    <div className="container mx-auto p-4 flex flex-col gap-6">
+      <div className="w-full">
         <div className="bg-white  overflow-hidden mb-6">
           <div className="p-4 sm:p-6 border-b border-gray-100 no-print">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
@@ -582,8 +582,8 @@ const ScoreView = () => {
           </div>
         </div>
 
-        {/* Mobile Details (shown before comments) */}
-        <div className="md:hidden w-full no-print">
+        {/* Details (shown under score, above comments) */}
+        <div className="w-full no-print">
           <div className="bg-white p-4 shadow rounded">
             <h3 className="font-bold mb-2">{t("score.details")}</h3>
             <p>
@@ -612,6 +612,76 @@ const ScoreView = () => {
                 </div>
               </div>
             )}
+
+            {user ? (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="font-semibold mb-2">
+                  {t("albums.addToAlbum")}
+                </div>
+
+                {albumsLoading ? (
+                  <div className="text-sm text-gray-500">
+                    {t("common.loading")}
+                  </div>
+                ) : myAlbums.length === 0 ? (
+                  <div className="text-sm text-gray-600">
+                    <div className="mb-2">{t("albums.noMyAlbums")}</div>
+                    <Link
+                      to="/albums/create"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {t("nav.newAlbum")}
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <select
+                      className="w-full border p-2 rounded"
+                      value={selectedAlbumId}
+                      onChange={(e) => {
+                        setSelectedAlbumId(e.target.value);
+                        setAlbumActionStatus({ type: "", message: "" });
+                      }}
+                    >
+                      {myAlbums.map((a) => {
+                        const ids = Array.isArray(a?.scores) ? a.scores : [];
+                        const already = ids.some((x) => x?.toString?.() === id);
+                        const full = !already && ids.length >= 20;
+                        const suffix = full
+                          ? ` (${t("albums.albumFull", { count: 20 })})`
+                          : "";
+                        return (
+                          <option key={a._id} value={a._id} disabled={full}>
+                            {a.title} ({ids.length}/20){suffix}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={handleAddToAlbum}
+                      disabled={!selectedAlbumId || albumsLoading}
+                      className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-60"
+                    >
+                      {t("albums.add")}
+                    </button>
+
+                    {albumActionStatus.message ? (
+                      <div
+                        className={
+                          albumActionStatus.type === "success"
+                            ? "text-sm text-green-600"
+                            : "text-sm text-red-600"
+                        }
+                      >
+                        {albumActionStatus.message}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -650,107 +720,6 @@ const ScoreView = () => {
               <p className="text-gray-500 italic">{t("score.noComments")}</p>
             )}
           </div>
-        </div>
-      </div>
-
-      <div className="hidden md:block w-full md:w-1/3 no-print">
-        {/* Sidebar for additional info or actions could go here */}
-        <div className="bg-white p-4 shadow rounded">
-          <h3 className="font-bold mb-2">{t("score.details")}</h3>
-          <p>
-            {t("score.created")}:{" "}
-            {new Date(score.createdAt).toLocaleDateString()}
-          </p>
-          <p>
-            {t("score.visibility")}:{" "}
-            {score.isPublic ? t("score.public") : t("score.private")}
-          </p>
-          <p>
-            {t("score.views")}: {score.views || 0}
-          </p>
-          {Array.isArray(score.tags) && score.tags.length > 0 && (
-            <div className="mt-2">
-              <p className="mb-2">{t("score.tags")}</p>
-              <div className="flex flex-wrap gap-2">
-                {score.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 rounded"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {user ? (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="font-semibold mb-2">{t("albums.addToAlbum")}</div>
-
-              {albumsLoading ? (
-                <div className="text-sm text-gray-500">
-                  {t("common.loading")}
-                </div>
-              ) : myAlbums.length === 0 ? (
-                <div className="text-sm text-gray-600">
-                  <div className="mb-2">{t("albums.noMyAlbums")}</div>
-                  <Link
-                    to="/albums/create"
-                    className="text-blue-600 hover:underline"
-                  >
-                    {t("nav.newAlbum")}
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <select
-                    className="w-full border p-2 rounded"
-                    value={selectedAlbumId}
-                    onChange={(e) => {
-                      setSelectedAlbumId(e.target.value);
-                      setAlbumActionStatus({ type: "", message: "" });
-                    }}
-                  >
-                    {myAlbums.map((a) => {
-                      const ids = Array.isArray(a?.scores) ? a.scores : [];
-                      const already = ids.some((x) => x?.toString?.() === id);
-                      const full = !already && ids.length >= 20;
-                      const suffix = full
-                        ? ` (${t("albums.albumFull", { count: 20 })})`
-                        : "";
-                      return (
-                        <option key={a._id} value={a._id} disabled={full}>
-                          {a.title} ({ids.length}/20){suffix}
-                        </option>
-                      );
-                    })}
-                  </select>
-
-                  <button
-                    type="button"
-                    onClick={handleAddToAlbum}
-                    disabled={!selectedAlbumId || albumsLoading}
-                    className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 disabled:opacity-60"
-                  >
-                    {t("albums.add")}
-                  </button>
-
-                  {albumActionStatus.message ? (
-                    <div
-                      className={
-                        albumActionStatus.type === "success"
-                          ? "text-sm text-green-600"
-                          : "text-sm text-red-600"
-                      }
-                    >
-                      {albumActionStatus.message}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          ) : null}
         </div>
       </div>
     </div>
