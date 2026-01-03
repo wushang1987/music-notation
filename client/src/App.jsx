@@ -6,7 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { AuthProvider, AuthContext } from "./context/AuthContext";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
@@ -36,15 +36,24 @@ const AdminRoute = ({ children }) => {
 const AppContent = () => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const isAuthPage =
     ["/auth", "/login", "/register"].includes(location.pathname) ||
     location.pathname.startsWith("/verify/");
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname, location.hash]);
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {!isAuthPage && <Navbar />}
+      {!isAuthPage && (
+        <Navbar onOpenSidebar={user ? () => setSidebarOpen(true) : undefined} />
+      )}
       <div className="flex flex-1 overflow-hidden">
-        {!isAuthPage && user && <Sidebar />}
+        {!isAuthPage && user && (
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        )}
         <main
           className={`flex-1 overflow-y-auto bg-white ${
             !isAuthPage ? "shadow-inner" : ""

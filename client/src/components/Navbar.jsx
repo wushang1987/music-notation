@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 
-const Navbar = () => {
+const Navbar = ({ onOpenSidebar }) => {
   const { user, logout } = useContext(AuthContext);
   const { t, i18n } = useTranslation();
 
@@ -33,12 +33,37 @@ const Navbar = () => {
   return (
     <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm isolate">
       <div className="container mx-auto px-4 sm:px-6 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 w-full max-w-none">
-        <Link
-          to="/"
-          className="text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic shrink-0"
-        >
-          Score Canvas
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          {user && onOpenSidebar ? (
+            <button
+              type="button"
+              onClick={onOpenSidebar}
+              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+              aria-label="Open navigation"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          ) : null}
+
+          <Link
+            to="/"
+            className="text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic"
+          >
+            Score Canvas
+          </Link>
+        </div>
         <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-end min-w-0">
           <select
             onChange={(e) => changeLanguage(e.target.value)}
