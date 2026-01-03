@@ -147,7 +147,7 @@ const Home = ({ title, endpoint = "/scores" }) => {
             {displayTitle}
           </h1>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
             <div className="relative w-full md:w-96">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg
@@ -256,34 +256,36 @@ const Home = ({ title, endpoint = "/scores" }) => {
                 )}
               </div>
             </div>
-            <label className="sr-only">{t("home.sortBy")}</label>
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value);
-                setPage(1);
-              }}
-              className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
-              title={t("home.sortBy")}
-            >
-              <option value="date">{t("home.sort.date")}</option>
-              <option value="likes">{t("home.sort.likes")}</option>
-              <option value="views">{t("home.sort.views")}</option>
-              <option value="rating">{t("home.sort.rating")}</option>
-            </select>
-            <label className="sr-only">{t("home.order")}</label>
-            <select
-              value={order}
-              onChange={(e) => {
-                setOrder(e.target.value);
-                setPage(1);
-              }}
-              className="pl-3 pr-8 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
-              title={t("home.order")}
-            >
-              <option value="desc">{t("home.orderLabels.desc")}</option>
-              <option value="asc">{t("home.orderLabels.asc")}</option>
-            </select>
+            <div className="grid grid-cols-2 gap-3 w-full md:flex md:w-auto">
+              <label className="sr-only">{t("home.sortBy")}</label>
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full md:w-auto pl-3 pr-8 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+                title={t("home.sortBy")}
+              >
+                <option value="date">{t("home.sort.date")}</option>
+                <option value="likes">{t("home.sort.likes")}</option>
+                <option value="views">{t("home.sort.views")}</option>
+                <option value="rating">{t("home.sort.rating")}</option>
+              </select>
+              <label className="sr-only">{t("home.order")}</label>
+              <select
+                value={order}
+                onChange={(e) => {
+                  setOrder(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full md:w-auto pl-3 pr-8 py-2 border border-gray-300 rounded-lg leading-5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+                title={t("home.order")}
+              >
+                <option value="desc">{t("home.orderLabels.desc")}</option>
+                <option value="asc">{t("home.orderLabels.asc")}</option>
+              </select>
+            </div>
           </div>
         </div>
 
