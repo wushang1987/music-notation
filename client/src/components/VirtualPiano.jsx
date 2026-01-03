@@ -120,7 +120,7 @@ const VirtualPiano = ({
       }
 
       const keyChar = e.key.toLowerCase();
-      if (KEYBOARD_MAP.hasOwnProperty(keyChar)) {
+      if (Object.prototype.hasOwnProperty.call(KEYBOARD_MAP, keyChar)) {
         e.preventDefault();
         const semitoneOffset = KEYBOARD_MAP[keyChar];
         const baseMidi = (centerOctave + 1) * 12;
@@ -138,7 +138,7 @@ const VirtualPiano = ({
 
     const handleKeyUp = (e) => {
       const keyChar = e.key.toLowerCase();
-      if (KEYBOARD_MAP.hasOwnProperty(keyChar)) {
+      if (Object.prototype.hasOwnProperty.call(KEYBOARD_MAP, keyChar)) {
         const semitoneOffset = KEYBOARD_MAP[keyChar];
         const baseMidi = (centerOctave + 1) * 12;
         const targetMidi = baseMidi + semitoneOffset;
@@ -164,7 +164,7 @@ const VirtualPiano = ({
   ]);
 
   return (
-    <div className="flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl mt-6 border border-gray-700">
+    <div className="virtual-piano flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl mt-6 border border-gray-700">
       <PianoControls
         isKeyboardEnabled={isKeyboardEnabled}
         setIsKeyboardEnabled={setIsKeyboardEnabled}
@@ -175,7 +175,7 @@ const VirtualPiano = ({
       {/* Piano Scroll Container */}
       <div
         ref={scrollContainerRef}
-        className="relative w-full overflow-x-auto pb-4 select-none no-scrollbar"
+        className="virtual-piano__scroll relative w-full overflow-x-auto pb-4 select-none no-scrollbar"
         style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}
       >
         <style>{`
@@ -187,7 +187,7 @@ const VirtualPiano = ({
             scrollbar-width: none;
           }
         `}</style>
-        <div className="inline-flex h-48 relative px-10 min-w-max bg-gray-900 pt-1">
+        <div className="virtual-piano__keys inline-flex h-48 relative px-10 min-w-max bg-gray-900 pt-1">
           {PIANO_KEYS.map((key, index) => {
             if (key.type !== "white") return null;
 
@@ -214,7 +214,7 @@ const VirtualPiano = ({
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-gray-400 flex gap-4">
+      <div className="virtual-piano__help mt-3 text-xs text-gray-400 flex gap-4">
         <span>• Scroll to navigate full range</span>
         <span>• Click or use keyboard to play</span>
         <span>• Press 0-8 to switch octaves</span>

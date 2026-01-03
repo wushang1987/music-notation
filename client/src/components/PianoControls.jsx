@@ -7,9 +7,9 @@ const PianoControls = ({
   setCenterOctave,
 }) => {
   return (
-    <div className="flex justify-between w-full mb-4 px-2 text-gray-200">
+    <div className="virtual-piano__controls flex justify-between w-full mb-4 px-2 text-gray-200">
       <div className="flex items-center gap-4">
-        <h3 className="font-bold text-lg tracking-wide text-white">
+        <h3 className="virtual-piano__title font-bold text-lg tracking-wide text-white">
           88-Key Piano
         </h3>
         <label className="flex items-center text-sm cursor-pointer select-none hover:text-white transition-colors">
@@ -24,7 +24,7 @@ const PianoControls = ({
       </div>
 
       <div className="flex items-center gap-3 bg-gray-900 p-1 rounded-lg border border-gray-700">
-        <span className="text-xs text-gray-400 px-2 uppercase tracking-wider hidden sm:inline">
+        <span className="virtual-piano__octave-label text-xs text-gray-400 px-2 uppercase tracking-wider hidden sm:inline">
           Keyboard Octave (0-8)
         </span>
         <button

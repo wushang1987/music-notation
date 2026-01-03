@@ -178,3 +178,36 @@ body {
     display: none !important;
   }
 }
+
+/* Mobile landscape: keep virtual piano at bottom but compact so editor content stays visible */
+@media (orientation: landscape) and (max-height: 520px) and (max-width: 1024px) {
+  .virtual-piano {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+  }
+
+  .virtual-piano__controls {
+    margin-bottom: 0.25rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .virtual-piano__title {
+    font-size: 0.95rem;
+  }
+
+  .virtual-piano__scroll {
+    padding-bottom: 0.25rem;
+  }
+
+  .virtual-piano__keys {
+    height: 6.5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .virtual-piano__help {
+    display: none;
+  }
+}
