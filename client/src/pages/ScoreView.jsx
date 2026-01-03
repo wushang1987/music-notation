@@ -318,10 +318,10 @@ const ScoreView = () => {
     <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
       <div className="w-full md:w-2/3">
         <div className="bg-white  overflow-hidden mb-6">
-          <div className="p-6 border-b border-gray-100 no-print">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+          <div className="p-4 sm:p-6 border-b border-gray-100 no-print">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3 mb-3 sm:mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 leading-tight">
                   {score.title}
                 </h1>
                 <p className="text-gray-500 flex items-center">
@@ -344,136 +344,170 @@ const ScoreView = () => {
                   </span>
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
-                {/* Rating control */}
-                <div
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 shadow-sm"
-                  title={t("score.rating")}
-                >
-                  <div className="flex items-center">
-                    {[1, 2, 3, 4, 5].map((n) =>
-                      (() => {
-                        const isOn = (hoverRating || myRating) >= n;
-                        return (
-                          <button
-                            key={n}
-                            type="button"
-                            className="p-0.5"
-                            onMouseEnter={() => setHoverRating(n)}
-                            onMouseLeave={() => setHoverRating(0)}
-                            onClick={() => handleRate(n)}
-                          >
-                            <svg
-                              className={`w-4 h-4 ${
-                                isOn ? "text-amber-500" : "text-gray-300"
-                              }`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                              aria-hidden="true"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.809c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          </button>
-                        );
-                      })()
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700">
-                    {avgRating ? avgRating.toFixed(1) : "0.0"}
-                  </span>
-                </div>
-                <span
-                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 shadow-sm"
-                  title={t("score.views")}
-                >
-                  <svg
-                    className="w-4 h-4 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
+              <div className="flex flex-col gap-2 w-full sm:w-auto sm:items-end">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  {/* Rating control (non-button style container) */}
+                  <div
+                    className="flex items-center gap-2 text-gray-600"
+                    title={t("score.rating")}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <span className="font-bold">{score.views || 0}</span>
-                </span>
-                {user &&
-                  (user.role === "admin" ||
-                    (score.owner &&
-                      ((typeof score.owner === "object" &&
-                        (score.owner._id === user.id ||
-                          score.owner._id === user._id)) ||
-                        (typeof score.owner === "string" &&
-                          (score.owner === user.id ||
-                            score.owner === user._id))))) && (
-                    <Link
-                      to={`/edit/${id}`}
-                      className="flex items-center gap-2 px-4 py-2 rounded-md border border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100 transition-all duration-200 shadow-sm"
-                      title={t("common.edit")}
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((n) =>
+                        (() => {
+                          const isOn = (hoverRating || myRating) >= n;
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              className="p-0.5"
+                              onMouseEnter={() => setHoverRating(n)}
+                              onMouseLeave={() => setHoverRating(0)}
+                              onClick={() => handleRate(n)}
+                            >
+                              <svg
+                                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
+                                  isOn ? "text-amber-500" : "text-gray-300"
+                                }`}
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                                aria-hidden="true"
+                              >
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.809c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                              </svg>
+                            </button>
+                          );
+                        })()
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      {avgRating ? avgRating.toFixed(1) : "0.0"}
+                    </span>
+                  </div>
+
+                  <div
+                    className="flex items-center gap-1.5 text-gray-600"
+                    title={t("score.views")}
+                  >
+                    <svg
+                      className="w-4 h-4 text-blue-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                    <span className="font-semibold">{score.views || 0}</span>
+                  </div>
+
+                  <button
+                    onClick={handleLike}
+                    className={`flex items-center gap-1.5 transition-colors ${
+                      hasLiked
+                        ? "text-red-500"
+                        : "text-gray-600 hover:text-red-500"
+                    }`}
+                    title={hasLiked ? "Unlike" : "Like"}
+                  >
+                    {hasLiked ? (
                       <svg
-                        className="w-5 h-5"
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                        aria-hidden="true"
+                      >
+                        <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
+                        aria-hidden="true"
                       >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                         />
                       </svg>
-                      <span className="font-semibold text-sm">
-                        {t("common.edit")}
-                      </span>
-                    </Link>
-                  )}
-                <button
-                  onClick={() => window.print()}
-                  className="flex items-center gap-2 px-4 py-2 rounded-md border bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm transition-all duration-200"
-                  title={t("common.print") || "Print"}
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                    )}
+                    <span className="font-semibold">
+                      {score.likes?.length || 0}
+                    </span>
+                  </button>
+
+                  {user &&
+                    (user.role === "admin" ||
+                      (score.owner &&
+                        ((typeof score.owner === "object" &&
+                          (score.owner._id === user.id ||
+                            score.owner._id === user._id)) ||
+                          (typeof score.owner === "string" &&
+                            (score.owner === user.id ||
+                              score.owner === user._id))))) && (
+                      <Link
+                        to={`/edit/${id}`}
+                        className="flex items-center gap-1.5 text-amber-600 hover:text-amber-700 transition-colors"
+                        title={t("common.edit")}
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                        <span className="text-sm font-semibold">
+                          {t("common.edit")}
+                        </span>
+                      </Link>
+                    )}
+                </div>
+
+                <div className="w-full sm:w-auto">
+                  <button
+                    onClick={() => window.print()}
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md border bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm transition-all duration-200"
+                    title={t("common.print") || "Print"}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                    />
-                  </svg>
-                  <span className="font-semibold text-sm">
-                    {t("common.print") || "Print"}
-                  </span>
-                </button>
-                <button
-                  onClick={handleLike}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md border transition-all duration-200 ${
-                    hasLiked
-                      ? "bg-red-50 border-red-200 text-red-500 shadow-sm"
-                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
-                  title={hasLiked ? "Unlike" : "Like"}
-                >
-                  <span className="text-lg">{hasLiked ? "❤️" : "🤍"}</span>
-                  <span className="font-bold">{score.likes?.length || 0}</span>
-                </button>
+                    <svg
+                      className="w-4 h-4 sm:w-5 sm:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                      />
+                    </svg>
+                    <span className="font-semibold text-sm">
+                      {t("common.print") || "Print"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -548,6 +582,39 @@ const ScoreView = () => {
           </div>
         </div>
 
+        {/* Mobile Details (shown before comments) */}
+        <div className="md:hidden w-full no-print">
+          <div className="bg-white p-4 shadow rounded">
+            <h3 className="font-bold mb-2">{t("score.details")}</h3>
+            <p>
+              {t("score.created")}:{" "}
+              {new Date(score.createdAt).toLocaleDateString()}
+            </p>
+            <p>
+              {t("score.visibility")}:{" "}
+              {score.isPublic ? t("score.public") : t("score.private")}
+            </p>
+            <p>
+              {t("score.views")}: {score.views || 0}
+            </p>
+            {Array.isArray(score.tags) && score.tags.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-2">{t("score.tags")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {score.tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2 py-0.5 text-xs bg-blue-50 text-blue-600 border border-blue-100 rounded"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className="bg-gray-50 p-4 rounded no-print">
           <h3 className="text-xl font-bold mb-4">{t("score.comments")}</h3>
           {user ? (
@@ -586,7 +653,7 @@ const ScoreView = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-1/3 no-print">
+      <div className="hidden md:block w-full md:w-1/3 no-print">
         {/* Sidebar for additional info or actions could go here */}
         <div className="bg-white p-4 shadow rounded">
           <h3 className="font-bold mb-2">{t("score.details")}</h3>
