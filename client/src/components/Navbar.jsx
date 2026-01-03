@@ -14,6 +14,20 @@ const Navbar = ({ onOpenSidebar }) => {
     i18n.changeLanguage(lng);
   };
 
+  const resolvedLanguage = i18n.resolvedLanguage || i18n.language;
+  const languageValue = resolvedLanguage?.startsWith("zh") ? "zh" : "en";
+
+  const renderLanguageSelect = (className) => (
+    <select
+      onChange={(e) => changeLanguage(e.target.value)}
+      value={languageValue}
+      className={className}
+    >
+      <option value="en">English</option>
+      <option value="zh">中文</option>
+    </select>
+  );
+
   useEffect(() => {
     const handlePointerDown = (event) => {
       if (!userMenuRef.current) return;
@@ -65,14 +79,11 @@ const Navbar = ({ onOpenSidebar }) => {
           </Link>
         </div>
         <div className="flex items-center gap-3 sm:gap-6 flex-wrap justify-end min-w-0">
-          <select
-            onChange={(e) => changeLanguage(e.target.value)}
-            value={i18n.language}
-            className="text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="en">English</option>
-            <option value="zh">中文</option>
-          </select>
+          {!user
+            ? renderLanguageSelect(
+                "text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              )
+            : null}
           {user ? (
             <div className="flex gap-2 sm:gap-4 items-center flex-wrap min-w-0 justify-end">
               <div className="relative" ref={userMenuRef}>
@@ -104,6 +115,11 @@ const Navbar = ({ onOpenSidebar }) => {
                     role="menu"
                     className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
                   >
+                    <div className="px-4 py-2">
+                      {renderLanguageSelect(
+                        "w-full text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      )}
+                    </div>
                     <button
                       type="button"
                       role="menuitem"
