@@ -18,7 +18,7 @@ const Navbar = () => {
           to="/"
           className="text-2xl font-black bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent italic"
         >
-          MusicNotation
+          Score Canvas
         </Link>
         <div className="flex items-center gap-6">
           <select
