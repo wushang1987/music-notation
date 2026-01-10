@@ -1,103 +1,105 @@
 import React, { useState } from "react";
-
-const SECTIONS = [
-    {
-        id: "notes",
-        title: "Notes",
-        groups: [
-            {
-                label: "Duration",
-                items: [
-                    { label: "Whole", value: "4", icon: "𝅝", action: "duration" },
-                    { label: "Half", value: "2", icon: "𝅗𝅥", action: "duration" },
-                    { label: "Quarter", value: "", icon: "𝅘𝅥", action: "duration" },
-                    { label: "Eighth", value: "/2", icon: "𝅘𝅥𝅮", action: "duration" },
-                    { label: "Sixteenth", value: "/4", icon: "𝅘𝅥𝅯", action: "duration" },
-                ],
-            },
-            {
-                label: "Rests",
-                items: [
-                    { label: "Whole Rest", value: "z4", icon: "𝄻", action: "insert" },
-                    { label: "Half Rest", value: "z2", icon: "𝄼", action: "insert" },
-                    { label: "Quarter Rest", value: "z", icon: "𝄽", action: "insert" },
-                    { label: "Eighth Rest", value: "z/2", icon: "𝄾", action: "insert" },
-                    { label: "Sixteenth Rest", value: "z/4", icon: "𝄿", action: "insert" },
-                ],
-            },
-            {
-                label: "Accidentals",
-                items: [
-                    { label: "Sharp", value: "^", icon: "♯", action: "accidental" },
-                    { label: "Flat", value: "_", icon: "♭", action: "accidental" },
-                    { label: "Natural", value: "=", icon: "♮", action: "accidental" },
-                    { label: "None", value: "", icon: "○", action: "accidental" },
-                ],
-            },
-            {
-                label: "Octave",
-                items: [
-                    { label: "Up", value: "up", icon: "↑", action: "octave" },
-                    { label: "Down", value: "down", icon: "↓", action: "octave" },
-                ]
-            }
-        ],
-    },
-    {
-        id: "measures",
-        title: "Measures",
-        groups: [
-            {
-                label: "Bar Lines",
-                items: [
-                    { label: "Single Bar", value: "|", icon: "|", action: "insert_spaced" },
-                    { label: "Double Bar", value: "||", icon: "||", action: "insert_spaced" },
-                    { label: "Repeat Start", value: "|:", icon: "|:", action: "insert_spaced" },
-                    { label: "Repeat End", value: ":|", icon: ":|", action: "insert_spaced" },
-                    { label: "Final Bar", value: "|]", icon: "|]", action: "insert_spaced" },
-                ],
-            },
-        ],
-    },
-    {
-        id: "dynamics",
-        title: "Dynamics",
-        groups: [
-            {
-                label: "Dynamics",
-                items: [
-                    { label: "ppp", value: "!ppp!", icon: "ppp", action: "insert" },
-                    { label: "pp", value: "!pp!", icon: "pp", action: "insert" },
-                    { label: "p", value: "!p!", icon: "p", action: "insert" },
-                    { label: "mp", value: "!mp!", icon: "mp", action: "insert" },
-                    { label: "mf", value: "!mf!", icon: "mf", action: "insert" },
-                    { label: "f", value: "!f!", icon: "f", action: "insert" },
-                    { label: "ff", value: "!ff!", icon: "ff", action: "insert" },
-                    { label: "fff", value: "!fff!", icon: "fff", action: "insert" },
-                ],
-            },
-        ],
-    },
-    {
-        id: "articulations",
-        title: "Articulations",
-        groups: [
-            {
-                label: "Decorations",
-                items: [
-                    { label: "Staccato", value: ".", icon: "•", action: "insert" },
-                    { label: "Trill", value: "!trill!", icon: "tr", action: "insert" },
-                    { label: "Fermata", value: "!fermata!", icon: "𝄐", action: "insert" },
-                    { label: "Accent", value: ">", icon: ">", action: "insert" },
-                    { label: "Tenuto", value: "!tenuto!", icon: "-", action: "insert" },
-                ],
-            },
-        ],
-    },
-];
+import { useTranslation } from "react-i18next";
 
 const EditorRibbon = ({ onDurationChange, onAccidentalChange, onInsert, onOctaveShift }) => {
     const [activeTab, setActiveTab] = useState("notes");
+    const { t } = useTranslation();
+
+    const SECTIONS = [
+        {
+            id: "notes",
+            titleKey: "editor.ribbon.notes",
+            groups: [
+                {
+                    label: "Duration",
+                    items: [
+                        { label: "Whole", value: "4", icon: "𝅝", action: "duration" },
+                        { label: "Half", value: "2", icon: "𝅗𝅥", action: "duration" },
+                        { label: "Quarter", value: "", icon: "𝅘𝅥", action: "duration" },
+                        { label: "Eighth", value: "/2", icon: "𝅘𝅥𝅮", action: "duration" },
+                        { label: "Sixteenth", value: "/4", icon: "𝅘𝅥𝅯", action: "duration" },
+                    ],
+                },
+                {
+                    label: "Rests",
+                    items: [
+                        { label: "Whole Rest", value: "z4", icon: "𝄻", action: "insert" },
+                        { label: "Half Rest", value: "z2", icon: "𝄼", action: "insert" },
+                        { label: "Quarter Rest", value: "z", icon: "𝄽", action: "insert" },
+                        { label: "Eighth Rest", value: "z/2", icon: "𝄾", action: "insert" },
+                        { label: "Sixteenth Rest", value: "z/4", icon: "𝄿", action: "insert" },
+                    ],
+                },
+                {
+                    label: "Accidentals",
+                    items: [
+                        { label: "Sharp", value: "^", icon: "♯", action: "accidental" },
+                        { label: "Flat", value: "_", icon: "♭", action: "accidental" },
+                        { label: "Natural", value: "=", icon: "♮", action: "accidental" },
+                        { label: "None", value: "", icon: "○", action: "accidental" },
+                    ],
+                },
+                {
+                    label: "Octave",
+                    items: [
+                        { label: "Up", value: "up", icon: "↑", action: "octave" },
+                        { label: "Down", value: "down", icon: "↓", action: "octave" },
+                    ]
+                }
+            ],
+        },
+        {
+            id: "measures",
+            titleKey: "editor.ribbon.measures",
+            groups: [
+                {
+                    label: "Bar Lines",
+                    items: [
+                        { label: "Single Bar", value: "|", icon: "|", action: "insert_spaced" },
+                        { label: "Double Bar", value: "||", icon: "||", action: "insert_spaced" },
+                        { label: "Repeat Start", value: "|:", icon: "|:", action: "insert_spaced" },
+                        { label: "Repeat End", value: ":|", icon: ":|", action: "insert_spaced" },
+                        { label: "Final Bar", value: "|]", icon: "|]", action: "insert_spaced" },
+                    ],
+                },
+            ],
+        },
+        {
+            id: "dynamics",
+            titleKey: "editor.ribbon.dynamics",
+            groups: [
+                {
+                    label: "Dynamics",
+                    items: [
+                        { label: "ppp", value: "!ppp!", icon: "ppp", action: "insert" },
+                        { label: "pp", value: "!pp!", icon: "pp", action: "insert" },
+                        { label: "p", value: "!p!", icon: "p", action: "insert" },
+                        { label: "mp", value: "!mp!", icon: "mp", action: "insert" },
+                        { label: "mf", value: "!mf!", icon: "mf", action: "insert" },
+                        { label: "f", value: "!f!", icon: "f", action: "insert" },
+                        { label: "ff", value: "!ff!", icon: "ff", action: "insert" },
+                        { label: "fff", value: "!fff!", icon: "fff", action: "insert" },
+                    ],
+                },
+            ],
+        },
+        {
+            id: "articulations",
+            titleKey: "editor.ribbon.articulations",
+            groups: [
+                {
+                    label: "Decorations",
+                    items: [
+                        { label: "Staccato", value: ".", icon: "•", action: "insert" },
+                        { label: "Trill", value: "!trill!", icon: "tr", action: "insert" },
+                        { label: "Fermata", value: "!fermata!", icon: "𝄐", action: "insert" },
+                        { label: "Accent", value: ">", icon: ">", action: "insert" },
+                        { label: "Tenuto", value: "!tenuto!", icon: "-", action: "insert" },
+                    ],
+                },
+            ],
+        },
+    ];
 
     const handleClick = (item) => {
         switch (item.action) {
@@ -139,7 +141,7 @@ const EditorRibbon = ({ onDurationChange, onAccidentalChange, onInsert, onOctave
                             }
                         `}
                     >
-                        {section.title}
+                        {t(section.titleKey)}
                         {activeTab === section.id && (
                             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
                         )}

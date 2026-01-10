@@ -161,6 +161,46 @@
     "loginToRate": "请登录后进行评分。",
     "rateFailed": "评分提交失败",
     "staff": "五线谱",
-    "jianpu": "简谱"
+    "jianpu": "简谱",
+    "saveFailed": "保存乐谱失败"
+  },
+  "editor": {
+    "ribbon": {
+      "notes": "音符",
+      "measures": "小节",
+      "dynamics": "力度",
+      "articulations": "演奏法"
+    },
+    "parts": {
+      "label": "声部",
+      "new": "新建",
+      "delete": "删除",
+      "deleteConfirm": "删除此声部？",
+      "name": "名称",
+      "instrument": "乐器"
+    },
+    "sourceCode": {
+      "title": "源代码",
+      "pianoMode": "钢琴模式",
+      "treble": "高音谱",
+      "bass": "低音谱",
+      "viewRaw": "查看原始ABC",
+      "editParts": "编辑声部",
+      "rawNotice": "只读：这里显示发送给渲染器的合并ABC记谱法。您可以复制此内容用于调试或分享。"
+    },
+    "actions": {
+      "insertLine": "插入换行",
+      "insertBar": "插入小节线",
+      "typeAbc": "ABC输入",
+      "edit": "编辑",
+      "raw": "原始"
+    },
+    "piano": {
+      "title": "虚拟钢琴",
+      "keyboardMode": "键盘模式",
+      "octave": "八度",
+      "shiftDown": "降低",
+      "shiftUp": "升高"
+    }
   }
 }

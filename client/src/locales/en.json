@@ -81,7 +81,10 @@
       "views": "Views",
       "rating": "Rating"
     },
-    "orderLabels": { "asc": "Ascending", "desc": "Descending" },
+    "orderLabels": {
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
     "filter": {
       "tags": "Tags",
       "tagsPlaceholder": "Filter by tags (comma-separated)",
@@ -158,6 +161,46 @@
     "loginToRate": "Please login to rate this score.",
     "rateFailed": "Failed to submit rating",
     "staff": "Staff",
-    "jianpu": "Numbered"
+    "jianpu": "Numbered",
+    "saveFailed": "Failed to save score"
+  },
+  "editor": {
+    "ribbon": {
+      "notes": "Notes",
+      "measures": "Measures",
+      "dynamics": "Dynamics",
+      "articulations": "Articulations"
+    },
+    "parts": {
+      "label": "Part",
+      "new": "New",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this part?",
+      "name": "Name",
+      "instrument": "Instrument"
+    },
+    "sourceCode": {
+      "title": "Source Code",
+      "pianoMode": "Piano Mode",
+      "treble": "Treble",
+      "bass": "Bass",
+      "viewRaw": "View Raw ABC",
+      "editParts": "Edit Parts",
+      "rawNotice": "Read-only: This shows the combined ABC notation sent to the renderer. Copy this to debug or share."
+    },
+    "actions": {
+      "insertLine": "Insert Line",
+      "insertBar": "Insert Bar",
+      "typeAbc": "Type ABC",
+      "edit": "Edit",
+      "raw": "Raw"
+    },
+    "piano": {
+      "title": "Virtual Piano",
+      "keyboardMode": "Keyboard Mode",
+      "octave": "Octave",
+      "shiftDown": "Shift Down",
+      "shiftUp": "Shift Up"
+    }
   }
 }

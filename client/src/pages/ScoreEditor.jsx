@@ -561,7 +561,7 @@ const ScoreEditor = () => {
             {/* Parts Header with Dropdown */}
             <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
               <div className="flex items-center gap-3 flex-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Part:</label>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('editor.parts.label')}:</label>
                 <select
                   value={activePartIndex}
                   onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
@@ -578,7 +578,7 @@ const ScoreEditor = () => {
                 onClick={handleAddPart}
                 className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
               >
-                + New
+                + {t('editor.parts.new')}
               </button>
             </div>
 
@@ -586,7 +586,7 @@ const ScoreEditor = () => {
             <div className="p-4 bg-gray-50 border-b space-y-3">
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Name</label>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.name')}</label>
                   <input
                     type="text"
                     value={parts[activePartIndex].name}
@@ -597,17 +597,17 @@ const ScoreEditor = () => {
                 {parts.length > 1 && (
                   <button
                     onClick={() => {
-                      if (confirm("Delete this part?")) handleRemovePart(activePartIndex);
+                      if (confirm(t('editor.parts.deleteConfirm'))) handleRemovePart(activePartIndex);
                     }}
                     className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
                     title="Delete Part"
                   >
-                    Delete
+                    {t('editor.parts.delete')}
                   </button>
                 )}
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Instrument</label>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.instrument')}</label>
                 <select
                   className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   value={parts[activePartIndex].program}
@@ -623,10 +623,10 @@ const ScoreEditor = () => {
             {/* Source Code Editor - Light Theme */}
             <div className="flex-1 flex flex-col min-h-0 bg-white">
               <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
-                <span>Source Code</span>
+                <span>{t('editor.sourceCode.title')}</span>
                 <div className="flex items-center gap-2">
                   {parts[activePartIndex].program === 0 && !showRawAbc && (
-                    <span className="text-xs normal-case opacity-70 font-normal">Piano Mode</span>
+                    <span className="text-xs normal-case opacity-70 font-normal">{t('editor.sourceCode.pianoMode')}</span>
                   )}
                   <button
                     onClick={() => setShowRawAbc(!showRawAbc)}
@@ -634,14 +634,14 @@ const ScoreEditor = () => {
                       ? 'bg-blue-500 text-white hover:bg-blue-600'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                       }`}
-                    title={showRawAbc ? "Edit Parts" : "View Raw ABC"}
+                    title={showRawAbc ? t('editor.sourceCode.editParts') : t('editor.sourceCode.viewRaw')}
                   >
                     {showRawAbc ? (
                       <>
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
-                        Edit
+                        {t('editor.actions.edit')}
                       </>
                     ) : (
                       <>
@@ -649,7 +649,7 @@ const ScoreEditor = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        Raw
+                        {t('editor.actions.raw')}
                       </>
                     )}
                   </button>
@@ -660,7 +660,7 @@ const ScoreEditor = () => {
                 // Raw ABC View - Read-only for inspection and copying
                 <div className="flex-1 flex flex-col min-h-0">
                   <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200 text-xs text-yellow-800">
-                    <strong>Read-only:</strong> This shows the combined ABC notation sent to the renderer. Copy this to debug or share.
+                    {t('editor.sourceCode.rawNotice')}
                   </div>
                   <textarea
                     className="flex-1 w-full p-3 font-mono text-xs bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
@@ -679,7 +679,7 @@ const ScoreEditor = () => {
                         <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
                           {/* Right Hand */}
                           <div className="flex-1 flex flex-col relative group">
-                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Treble</div>
+                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.treble')}</div>
                             <textarea
                               className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
                               value={rightHand}
@@ -692,7 +692,7 @@ const ScoreEditor = () => {
                           </div>
                           {/* Left Hand */}
                           <div className="flex-1 flex flex-col relative group">
-                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Bass</div>
+                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.bass')}</div>
                             <textarea
                               className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
                               value={leftHand}
@@ -722,11 +722,11 @@ const ScoreEditor = () => {
             </div>
 
             <div className="p-2 bg-gray-50 border-t flex gap-2 overflow-x-auto no-scrollbar">
-              <button onClick={insertLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">Insert Line</button>
-              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">Insert Bar</button>
+              <button onClick={insertLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertLine')}</button>
+              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertBar')}</button>
               <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
                 <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
-                <span>Type ABC</span>
+                <span>{t('editor.actions.typeAbc')}</span>
               </label>
             </div>
           </div>
