@@ -417,13 +417,14 @@ const ScoreEditor = () => {
 
   // --- Part Management ---
   const handleAddPart = () => {
+    const newPartNumber = parts.length + 1;
     setParts((prev) => [
       ...prev,
       {
-        name: `Part ${prev.length + 1}`,
+        name: `Part ${newPartNumber}`,
         program: 0,
-        content: "",
-        voiceId: `${prev.length + 1}`,
+        content: `C D E F | G A B c |`, // Default content so it shows on score
+        voiceId: `${newPartNumber}`,
       },
     ]);
     setActivePartIndex(parts.length);

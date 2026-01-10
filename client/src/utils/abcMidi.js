@@ -52,78 +52,146 @@ export const ensureMidiProgram = (abcText, program) => {
 export const generateMultiPartAbc = (parts) => {
   if (!parts || parts.length === 0) return "";
 
-  // Helper to find where headers end
-  const findHeaderEnd = (text) => {
-    const lines = text.split(/\r?\n/);
-    let lastHeaderIndex = -1;
-    for (let i = 0; i < lines.length; i++) {
-      if (/^\s*[A-Za-z]:/.test(lines[i]) || /^\s*%%/.test(lines[i])) {
-        lastHeaderIndex = i;
-      } else {
+  // If only one part, return its content with MIDI program
+  if (parts.length === 1) {
+    const part = parts[0];
+    const content = part.content || "X:1\nT:Untitled\nM:4/4\nL:1/4\nK:C\nz4|";
+    return ensureMidiProgram(content, part.program);
+  }
+
+  // Multiple parts - need to combine them properly
+  const firstPart = parts[0];
+  const firstContent = firstPart.content || "X:1\nT:Untitled\nM:4/4\nL:1/4\nK:C\nz4|";
+
+  // Extract headers from first part (X:, T:, M:, L:, K:, etc.)
+  const lines = firstContent.split(/\r?\n/);
+  const headers = [];
+  let foundKey = false;
+
+  for (const line of lines) {
+    if (/^[A-Za-z]:/.test(line) || /^%%/.test(line)) {
+      headers.push(line);
+      if (/^K:/.test(line)) {
+        foundKey = true;
         break;
       }
     }
-    return lastHeaderIndex;
-  };
+  }
 
-  let combined = "";
+  // Build the %%score directive to group voices
+  // Piano parts need {V1 V2} grouping, single-staff parts just V3, V4, etc.
+  let scoreDirective = "%%score ";
+  const voiceGroups = [];
+  let currentVoiceNum = 1;
+
+  parts.forEach((part, index) => {
+    const isPiano = normalizeProgram(part.program) === 0;
+    if (isPiano) {
+      // Piano gets two voices in a brace
+      voiceGroups.push(`{V${currentVoiceNum} V${currentVoiceNum + 1}}`);
+      currentVoiceNum += 2;
+    } else {
+      // Single staff instrument
+      voiceGroups.push(`V${currentVoiceNum}`);
+      currentVoiceNum += 1;
+    }
+  });
+
+  scoreDirective += voiceGroups.join(" ");
+
+  // Start building combined ABC
+  let combined = headers.join("\n") + "\n";
+  combined += scoreDirective + "\n";
+
+  // Now add each part's voice definitions and content
+  currentVoiceNum = 1;
 
   parts.forEach((part, index) => {
     const program = normalizeProgram(part.program);
-    const programDirective = `%%MIDI program ${program}`;
-    // Ensure voiceId is valid, default to index+1
-    const voiceId = part.voiceId || `${index + 1}`;
-    const voiceDirective = `V:${voiceId} name="${part.name}" subname="${part.name}"`;
-
-    // Check if it's a piano part (program 0) which manages its own voices (V1, V2)
     const isPiano = program === 0;
+    const programDirective = `%%MIDI program ${program}`;
 
-    if (index === 0) {
-      // For first part, try to insert V:1 after headers
-      const headerEnd = findHeaderEnd(part.content);
-      const lines = part.content.split(/\r?\n/);
+    let partContent = part.content;
+    if (!partContent || partContent.trim() === "") {
+      partContent = "z4|";
+    }
 
-      // Insert directives after headers
-      const before = lines.slice(0, headerEnd + 1);
-      const after = lines.slice(headerEnd + 1);
+    if (isPiano) {
+      // Piano part - extract V:V1 and V:V2 sections
+      const partLines = partContent.split(/\r?\n/);
+      let v1Lines = [];
+      let v2Lines = [];
+      let currentVoice = null;
+      let inBody = false;
 
-      const directives = [];
-      if (!isPiano) {
-        directives.push(voiceDirective);
-      } else {
-        // For piano, we inject the name into the existing V:V1 line in headers
-        // instead of adding a new directive which might be misplaced or overridden
-        const v1Index = before.findIndex((line) =>
-          line.trim().startsWith("V:V1 clef=treble")
-        );
-        if (v1Index !== -1) {
-          // Replace the line, preserving any other potential attributes if we were using regex,
-          // but here we know it comes from our generator mostly.
-          // We use replace to be safe if there are other attrs.
-          before[v1Index] = before[v1Index].replace(
-            "V:V1 clef=treble",
-            `V:V1 clef=treble name="${part.name}" subname="${part.name}"`
-          );
-        } else {
-          // Fallback: if V:V1 line not found in headers, add it as directive
-          directives.push(`V:V1 name="${part.name}" subname="${part.name}"`);
+      for (const line of partLines) {
+        // Skip headers
+        if (!inBody && /^[A-Za-z]:/.test(line) && !/^V:/.test(line)) {
+          continue;
+        }
+
+        inBody = true;
+
+        if (line.includes("V:V1") || line.includes("clef=treble")) {
+          currentVoice = "v1";
+          // Add renamed voice declaration
+          combined += `V:V${currentVoiceNum} clef=treble name="${part.name}"\n`;
+          combined += programDirective + "\n";
+          continue;
+        } else if (line.includes("V:V2") || line.includes("clef=bass")) {
+          currentVoice = "v2";
+          combined += `V:V${currentVoiceNum + 1} clef=bass\n`;
+          combined += programDirective + "\n";
+          continue;
+        }
+
+        // Add content to current voice
+        if (currentVoice === "v1") {
+          v1Lines.push(line);
+        } else if (currentVoice === "v2") {
+          v2Lines.push(line);
         }
       }
-      directives.push(programDirective);
 
-      combined += [...before, ...directives, ...after].join("\n");
-    } else {
-      // For other parts, just append
-      if (isPiano) {
-        let content = part.content;
-        content = content.replace(
-          "V:V1 clef=treble",
-          `V:V1 clef=treble name="${part.name}" subname="${part.name}"`
-        );
-        combined += `\n${programDirective}\n${content}`;
+      // Write V1 content
+      if (v1Lines.length > 0) {
+        combined += v1Lines.join("\n") + "\n";
       } else {
-        combined += `\n${voiceDirective}\n${programDirective}\n${part.content}`;
+        combined += "z4|\n";
       }
+
+      // Write V2 content  
+      if (v2Lines.length > 0) {
+        combined += v2Lines.join("\n") + "\n";
+      } else {
+        combined += "z4|\n";
+      }
+
+      currentVoiceNum += 2;
+    } else {
+      // Single-staff instrument
+      // Extract only the body content (skip headers)
+      const partLines = partContent.split(/\r?\n/);
+      const body = [];
+      let foundBody = false;
+
+      for (const line of partLines) {
+        if (foundBody || !/^[A-Za-z]:/.test(line)) {
+          foundBody = true;
+          if (line.trim() && !/^V:/.test(line)) {
+            body.push(line);
+          }
+        }
+      }
+
+      const bodyContent = body.length > 0 ? body.join("\n") : "z4|";
+
+      // Add voice declaration
+      combined += `V:V${currentVoiceNum} clef=treble name="${part.name}"\n`;
+      combined += programDirective + "\n";
+      combined += bodyContent + "\n";
+
+      currentVoiceNum += 1;
     }
   });
 
