@@ -1,19 +1,28 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import api from "../api";
 
 import VerovioService from "../services/VerovioService";
-import { Save, ArrowLeft, Printer, ZoomIn, ZoomOut, FileCode, Eye, Settings, Terminal, PanelLeft, PanelRight, Layout, Music } from "lucide-react";
-import SnippetPanel from "../components/Verovio/SnippetPanel";
+import { Save, ArrowLeft, Printer, ZoomIn, ZoomOut, FileCode, Settings, Terminal, Layout } from "lucide-react";
+
+
+
+import RibbonPalette from "../components/Verovio/RibbonPalette";
 
 import MetadataPanel from "../components/Verovio/MetadataPanel";
+
 import ScoreViewer from "../components/Verovio/ScoreViewer";
 import FloatingToolbar from "../components/Verovio/FloatingToolbar";
 import { Button } from "../components/ui/button";
 import { useEditorStore } from "../store/editorStore";
 import { cn } from "../lib/utils";
+import { usePaletteState } from "../hooks/usePaletteState";
+import { SNIPPET_GROUPS, getSnippetById } from "../services/snippetCatalog";
+import { applySnippetInsert } from "../controllers/insertController";
+
 
 
 
@@ -61,12 +70,20 @@ const VerovioEditor = () => {
   const isEdit = !!id;
 
   const {
-    selectedId, setSelectedId,
-    zoom, setZoom,
-    viewMode, setViewMode,
-    rendering, setRendering,
-    content, setContent
+    selectedId,
+    setSelectedId,
+    zoom,
+    setZoom,
+    viewMode,
+    setViewMode,
+    rendering,
+    setRendering,
+    content,
+    setContent,
+    activeTool,
+    setActiveTool,
   } = useEditorStore();
+
 
   const [title, setTitle] = useState("Untitled Score");
   const [loading, setLoading] = useState(isEdit);
@@ -75,49 +92,31 @@ const VerovioEditor = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [tagsInput, setTagsInput] = useState("");
   const [showMetadata, setShowMetadata] = useState(false);
-  const [showSnippets, setShowSnippets] = useState(false);
   const [showSource, setShowSource] = useState(false);
 
+  const paletteState = usePaletteState(SNIPPET_GROUPS);
+  const [ribbonFeedback, setRibbonFeedback] = useState(null);
+  const [historyStack, setHistoryStack] = useState({ past: [], future: [] });
+
+  const {
+    groups,
+    activeGroup,
+    setActiveGroup,
+    pinned,
+    togglePinned,
+    searchValue,
+    setSearchValue,
+    snippets: paletteSnippets = [],
+    recentIds,
+    markRecent,
+  } = paletteState;
+
+
   const monaco = useMonaco();
+
   const editorRef = useRef(null);
   const renderTimeoutRef = useRef(null);
-
-
-
-  useEffect(() => {
-    const initVerovio = async () => {
-      try {
-        await VerovioService.init();
-        renderScore(content);
-      } catch (err) {
-        console.error("Verovio initialization failed", err);
-      }
-    };
-
-    if (isEdit) {
-      const fetchScore = async () => {
-        try {
-          const { data } = await api.get(`/scores/${id}`);
-          setTitle(data.title);
-          setContent(data.content);
-          setIsPublic(data.isPublic);
-          setTagsInput(data.tags?.join(", ") || "");
-          setLoading(false);
-          initVerovio();
-        } catch (err) {
-          console.error("Failed to fetch score", err);
-          setLoading(false);
-        }
-      };
-      fetchScore();
-    } else {
-      initVerovio();
-    }
-    
-    return () => {
-      if (renderTimeoutRef.current) clearTimeout(renderTimeoutRef.current);
-    };
-  }, [id, isEdit]);
+  const contentRef = useRef("");
 
   const renderScore = useCallback((mei) => {
     setRendering(true);
@@ -133,7 +132,45 @@ const VerovioEditor = () => {
         setRendering(false);
       }
     }, 300); // Debounce rendering
-  }, [zoom]);
+  }, [zoom, setRendering]);
+
+  useEffect(() => {
+    const initVerovio = async (initialMei) => {
+      try {
+        await VerovioService.init();
+        const baseMei = initialMei ?? contentRef.current ?? DEFAULT_MEI;
+        renderScore(baseMei);
+      } catch (err) {
+        console.error("Verovio initialization failed", err);
+      }
+    };
+
+    if (isEdit) {
+      const fetchScore = async () => {
+        try {
+          const { data } = await api.get(`/scores/${id}`);
+          setTitle(data.title);
+          setContent(data.content);
+          setIsPublic(data.isPublic);
+          setTagsInput(data.tags?.join(", ") || "");
+          setLoading(false);
+          initVerovio(data.content);
+        } catch (err) {
+          console.error("Failed to fetch score", err);
+          setLoading(false);
+        }
+      };
+      fetchScore();
+    } else {
+      setContent(DEFAULT_MEI);
+      setLoading(false);
+      initVerovio(DEFAULT_MEI);
+    }
+    
+    return () => {
+      if (renderTimeoutRef.current) clearTimeout(renderTimeoutRef.current);
+    };
+  }, [id, isEdit, renderScore, setContent]);
 
   useEffect(() => {
     if (!loading) {
@@ -141,14 +178,31 @@ const VerovioEditor = () => {
     }
   }, [content, loading, renderScore]);
 
+  useEffect(() => {
+    contentRef.current = content || "";
+  }, [content]);
+
+  useEffect(() => {
+    if (!ribbonFeedback || typeof window === "undefined") return undefined;
+    const timer = window.setTimeout(() => setRibbonFeedback(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [ribbonFeedback]);
+
+
   const handleEditorDidMount = (editor) => {
+
     editorRef.current = editor;
   };
 
   const insertSnippet = (snippet) => {
     if (editorRef.current && monaco) {
       const selection = editorRef.current.getSelection();
-      const range = new monaco.Range(selection.startLineNumber, selection.startColumn, selection.endLineNumber, selection.endColumn);
+      const range = new monaco.Range(
+        selection.startLineNumber,
+        selection.startColumn,
+        selection.endLineNumber,
+        selection.endColumn
+      );
       const id = { major: 1, minor: 1 };
       const text = snippet;
       const op = { identifier: id, range: range, text: text, forceMoveMarkers: true };
@@ -157,8 +211,73 @@ const VerovioEditor = () => {
     }
   };
 
+  const pushSnapshot = useCallback((snapshot) => {
+    if (!snapshot) return;
+    setHistoryStack((prev) => ({
+      past: [...prev.past, snapshot].slice(-15),
+      future: [],
+    }));
+  }, []);
+
+  const handleUndo = useCallback(() => {
+    setHistoryStack((prev) => {
+      if (!prev.past.length) return prev;
+      const previous = prev.past[prev.past.length - 1];
+      setContent(previous);
+      setRibbonFeedback({ type: "info", message: "已撤销上一步" });
+      return {
+        past: prev.past.slice(0, -1),
+        future: [contentRef.current || DEFAULT_MEI, ...prev.future].slice(0, 15),
+      };
+    });
+  }, [setContent]);
+
+  const handleRedo = useCallback(() => {
+    setHistoryStack((prev) => {
+      if (!prev.future.length) return prev;
+      const next = prev.future[0];
+      setContent(next);
+      setRibbonFeedback({ type: "info", message: "已恢复插入" });
+      return {
+        past: [...prev.past, contentRef.current || DEFAULT_MEI].slice(-15),
+        future: prev.future.slice(1),
+      };
+    });
+  }, [setContent]);
+
+  const handleSnippetCommand = (snippetId) => {
+    const snippet = getSnippetById(snippetId);
+    if (!snippet) {
+      setRibbonFeedback({ type: "error", message: "片段不存在" });
+      return;
+    }
+
+    const baseMei = contentRef.current?.trim() ? contentRef.current : DEFAULT_MEI;
+    const result = applySnippetInsert(baseMei, snippet);
+    if (!result.success) {
+      setRibbonFeedback({ type: "error", message: result.error });
+      return;
+    }
+
+    pushSnapshot(baseMei);
+    setContent(result.mei);
+    setRibbonFeedback({ type: "success", message: `已添加 ${snippet.label}` });
+    markRecent(snippet.id);
+    setActiveTool(snippet.id);
+  };
+
+  const recentSnippets = useMemo(
+    () => recentIds.map((id) => getSnippetById(id)).filter(Boolean),
+    [recentIds]
+  );
+
+  const historySummary = useMemo(
+    () => ({ undo: historyStack.past.length, redo: historyStack.future.length }),
+    [historyStack]
+  );
 
   const handleVisualEdit = (command) => {
+
     setRendering(true);
     // Verovio toolkit edit commands expect a specific format
     const newMei = VerovioService.edit(command);
@@ -256,13 +375,31 @@ const VerovioEditor = () => {
         </div>
       </header>
 
+      <RibbonPalette
+        groups={groups}
+        activeGroup={activeGroup}
+        onGroupChange={setActiveGroup}
+        pinned={pinned}
+        onTogglePin={togglePinned}
+        searchValue={searchValue}
+        onSearchChange={setSearchValue}
+        snippets={paletteSnippets}
+        onSnippetSelect={handleSnippetCommand}
+        activeTool={activeTool}
+        recentSnippets={recentSnippets}
+        feedback={ribbonFeedback}
+        historySummary={historySummary}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={historySummary.undo > 0}
+        canRedo={historySummary.redo > 0}
+      />
+
       {/* Main Container */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Side: Snippets */}
-        {showSnippets && <SnippetPanel onInsert={insertSnippet} />}
-
         {/* Content Area */}
         <main className="flex-1 flex overflow-hidden relative">
+
           {/* Source Editor (Monaco) - Always mounted but toggleable visibility */}
           <div className={cn(
             "h-full border-r border-slate-800/50 flex flex-col bg-slate-950 transition-all duration-500",
@@ -303,8 +440,7 @@ const VerovioEditor = () => {
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setZoom(Math.min(100, zoom + 5))}><ZoomIn className="w-4 h-4" /></Button>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => window.print()}><Printer className="w-4 h-4" /></Button>
-                <div className="w-px h-4 bg-slate-200 mx-1" />
-                <Button variant="ghost" size="icon" className={cn("h-8 w-8 rounded-xl", showSnippets && "bg-slate-100")} onClick={() => setShowSnippets(!showSnippets)}><Music className="w-4 h-4" /></Button>
+
              </div>
 
              <ScoreViewer svg={svg} rendering={rendering} onEdit={handleVisualEdit} />
