@@ -48,6 +48,7 @@ const ScoreEditor = () => {
   const [activeHand, setActiveHand] = useState("right");
   const [abcTypingEnabled, setAbcTypingEnabled] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(320); // Resizable sidebar width
+  const [showRawAbc, setShowRawAbc] = useState(false); // Toggle for viewing raw ABC
 
   const navigate = useNavigate();
 
@@ -575,7 +576,7 @@ const ScoreEditor = () => {
               </div>
               <button
                 onClick={handleAddPart}
-                className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-500 text-gray-600 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2"
+                className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
               >
                 + New
               </button>
@@ -598,7 +599,7 @@ const ScoreEditor = () => {
                     onClick={() => {
                       if (confirm("Delete this part?")) handleRemovePart(activePartIndex);
                     }}
-                    className="self-end text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors"
+                    className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
                     title="Delete Part"
                   >
                     Delete
@@ -623,60 +624,106 @@ const ScoreEditor = () => {
             <div className="flex-1 flex flex-col min-h-0 bg-white">
               <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
                 <span>Source Code</span>
-                {parts[activePartIndex].program === 0 && <span className="text-xs normal-case opacity-70 font-normal">Piano Mode</span>}
+                <div className="flex items-center gap-2">
+                  {parts[activePartIndex].program === 0 && !showRawAbc && (
+                    <span className="text-xs normal-case opacity-70 font-normal">Piano Mode</span>
+                  )}
+                  <button
+                    onClick={() => setShowRawAbc(!showRawAbc)}
+                    className={`text-xs px-2 py-1 rounded transition-colors font-medium flex items-center gap-1 ${showRawAbc
+                      ? 'bg-blue-500 text-white hover:bg-blue-600'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    title={showRawAbc ? "Edit Parts" : "View Raw ABC"}
+                  >
+                    {showRawAbc ? (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Raw
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
-              {parts[activePartIndex].program === 0 ? (
-                (() => {
-                  const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
-                  return (
-                    <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
-                      {/* Right Hand */}
-                      <div className="flex-1 flex flex-col relative group">
-                        <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Treble</div>
-                        <textarea
-                          className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                          value={rightHand}
-                          spellCheck="false"
-                          onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
-                          onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                          ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
-                          onKeyDown={handleTextareaKeyDown}
-                        />
-                      </div>
-                      {/* Left Hand */}
-                      <div className="flex-1 flex flex-col relative group">
-                        <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Bass</div>
-                        <textarea
-                          className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                          value={leftHand}
-                          spellCheck="false"
-                          onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
-                          onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
-                          ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
-                          onKeyDown={handleTextareaKeyDown}
-                        />
-                      </div>
-                    </div>
-                  );
-                })()
+              {showRawAbc ? (
+                // Raw ABC View - Read-only for inspection and copying
+                <div className="flex-1 flex flex-col min-h-0">
+                  <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200 text-xs text-yellow-800">
+                    <strong>Read-only:</strong> This shows the combined ABC notation sent to the renderer. Copy this to debug or share.
+                  </div>
+                  <textarea
+                    className="flex-1 w-full p-3 font-mono text-xs bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
+                    value={generateMultiPartAbc(parts)}
+                    readOnly
+                    spellCheck="false"
+                  />
+                </div>
               ) : (
-                <textarea
-                  className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                  value={parts[activePartIndex].content}
-                  spellCheck="false"
-                  onChange={(e) => updateActivePartContent(e.target.value)}
-                  ref={sourceRef}
-                  onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                  onKeyDown={handleTextareaKeyDown}
-                />
+                // Normal Part Editing View
+                <>
+                  {parts[activePartIndex].program === 0 ? (
+                    (() => {
+                      const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
+                      return (
+                        <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
+                          {/* Right Hand */}
+                          <div className="flex-1 flex flex-col relative group">
+                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Treble</div>
+                            <textarea
+                              className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                              value={rightHand}
+                              spellCheck="false"
+                              onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
+                              onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                              ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
+                              onKeyDown={handleTextareaKeyDown}
+                            />
+                          </div>
+                          {/* Left Hand */}
+                          <div className="flex-1 flex flex-col relative group">
+                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Bass</div>
+                            <textarea
+                              className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                              value={leftHand}
+                              spellCheck="false"
+                              onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
+                              onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
+                              ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
+                              onKeyDown={handleTextareaKeyDown}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <textarea
+                      className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                      value={parts[activePartIndex].content}
+                      spellCheck="false"
+                      onChange={(e) => updateActivePartContent(e.target.value)}
+                      ref={sourceRef}
+                      onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                      onKeyDown={handleTextareaKeyDown}
+                    />
+                  )}
+                </>
               )}
             </div>
 
-            {/* Quick Actions */}
             <div className="p-2 bg-gray-50 border-t flex gap-2 overflow-x-auto no-scrollbar">
-              <button onClick={insertLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Line</button>
-              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Bar</button>
+              <button onClick={insertLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">Insert Line</button>
+              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">Insert Bar</button>
               <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
                 <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
                 <span>Type ABC</span>
