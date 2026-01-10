@@ -47,6 +47,7 @@ const ScoreEditor = () => {
   const sourceRef = useRef(null);
   const [activeHand, setActiveHand] = useState("right");
   const [abcTypingEnabled, setAbcTypingEnabled] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(320); // Resizable sidebar width
 
   const navigate = useNavigate();
 
@@ -523,136 +524,164 @@ const ScoreEditor = () => {
           ></div>
         </div>
 
-        {/* Right Source Panel */}
-        <div className="w-80 bg-white border-l shadow-xl z-20 flex flex-col font-sans no-print">
+        {/* Right Source Panel - Resizable */}
+        <div
+          className="bg-white border-l shadow-xl z-20 flex no-print relative"
+          style={{ width: `${sidebarWidth}px`, minWidth: '280px', maxWidth: '600px' }}
+        >
+          {/* Resize Handle */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors z-30 group"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = sidebarWidth;
 
-          {/* Parts Header */}
-          <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parts</h3>
-            <button
-              onClick={handleAddPart}
-              className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-500 text-gray-600 px-2 py-1 rounded transition-colors"
-            >
-              + New Part
-            </button>
+              const handleMouseMove = (moveEvent) => {
+                const delta = startX - moveEvent.clientX;
+                const newWidth = Math.min(Math.max(startWidth + delta, 280), 600);
+                setSidebarWidth(newWidth);
+              };
+
+              const handleMouseUp = () => {
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+              };
+
+              document.addEventListener('mousemove', handleMouseMove);
+              document.addEventListener('mouseup', handleMouseUp);
+            }}
+          >
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-blue-400 rounded-r transition-colors"></div>
           </div>
 
-          {/* Part List */}
-          <div className="flex flex-col max-h-40 overflow-y-auto border-b">
-            {parts.map((part, idx) => (
-              <div
-                key={idx}
-                onClick={() => setActivePartIndex(idx)}
-                className={`px-4 py-3 cursor-pointer text-sm border-l-4 transition-colors flex justify-between items-center group ${activePartIndex === idx
-                  ? "border-l-blue-500 bg-blue-50 text-blue-700 font-medium"
-                  : "border-l-transparent hover:bg-gray-50 text-gray-600"
-                  }`}
+          <div className="flex-1 flex flex-col font-sans ml-1">
+            {/* Parts Header with Dropdown */}
+            <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
+              <div className="flex items-center gap-3 flex-1">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Part:</label>
+                <select
+                  value={activePartIndex}
+                  onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
+                  className="flex-1 text-sm border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+                >
+                  {parts.map((part, idx) => (
+                    <option key={idx} value={idx}>
+                      {part.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleAddPart}
+                className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-500 text-gray-600 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2"
               >
-                <div className="truncate pr-2">{part.name}</div>
+                + New
+              </button>
+            </div>
+
+            {/* Active Part Config */}
+            <div className="p-4 bg-gray-50 border-b space-y-3">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={parts[activePartIndex].name}
+                    onChange={(e) => handlePartNameChange(e.target.value)}
+                    className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
                 {parts.length > 1 && (
                   <button
-                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (confirm("Delete this part?")) handleRemovePart(idx);
+                    onClick={() => {
+                      if (confirm("Delete this part?")) handleRemovePart(activePartIndex);
                     }}
+                    className="self-end text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1 rounded text-xs font-medium transition-colors"
+                    title="Delete Part"
                   >
-                    ×
+                    Delete
                   </button>
                 )}
               </div>
-            ))}
-          </div>
-
-          {/* Active Part Config */}
-          <div className="p-4 bg-gray-50 border-b space-y-3">
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Name</label>
-              <input
-                type="text"
-                value={parts[activePartIndex].name}
-                onChange={(e) => handlePartNameChange(e.target.value)}
-                className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Instrument</label>
-              <select
-                className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                value={parts[activePartIndex].program}
-                onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
-              >
-                {INSTRUMENT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Source Code Editor */}
-          <div className="flex-1 flex flex-col min-h-0 bg-gray-900 text-gray-300">
-            <div className="px-4 py-2 bg-gray-800 text-[10px] font-bold text-gray-400 uppercase border-b border-gray-700 flex justify-between items-center">
-              <span>Source Code</span>
-              {parts[activePartIndex].program === 0 && <span className="text-xs normal-case opacity-70">Piano Mode</span>}
+              <div>
+                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Instrument</label>
+                <select
+                  className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  value={parts[activePartIndex].program}
+                  onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
+                >
+                  {INSTRUMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {parts[activePartIndex].program === 0 ? (
-              (() => {
-                const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
-                return (
-                  <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-700">
-                    {/* Right Hand */}
-                    <div className="flex-1 flex flex-col relative group">
-                      <div className="absolute top-0 right-0 px-2 py-0.5 text-[9px] bg-gray-700 text-gray-400 rounded-bl opacity-50 group-hover:opacity-100 pointer-events-none">Treble</div>
-                      <textarea
-                        className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
-                        value={rightHand}
-                        spellCheck="false"
-                        onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
-                        onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                        ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
-                        onKeyDown={handleTextareaKeyDown}
-                      />
+            {/* Source Code Editor - Light Theme */}
+            <div className="flex-1 flex flex-col min-h-0 bg-white">
+              <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
+                <span>Source Code</span>
+                {parts[activePartIndex].program === 0 && <span className="text-xs normal-case opacity-70 font-normal">Piano Mode</span>}
+              </div>
+
+              {parts[activePartIndex].program === 0 ? (
+                (() => {
+                  const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
+                  return (
+                    <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
+                      {/* Right Hand */}
+                      <div className="flex-1 flex flex-col relative group">
+                        <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Treble</div>
+                        <textarea
+                          className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                          value={rightHand}
+                          spellCheck="false"
+                          onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
+                          onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                          ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
+                          onKeyDown={handleTextareaKeyDown}
+                        />
+                      </div>
+                      {/* Left Hand */}
+                      <div className="flex-1 flex flex-col relative group">
+                        <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">Bass</div>
+                        <textarea
+                          className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                          value={leftHand}
+                          spellCheck="false"
+                          onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
+                          onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
+                          ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
+                          onKeyDown={handleTextareaKeyDown}
+                        />
+                      </div>
                     </div>
-                    {/* Left Hand */}
-                    <div className="flex-1 flex flex-col relative group">
-                      <div className="absolute top-0 right-0 px-2 py-0.5 text-[9px] bg-gray-700 text-gray-400 rounded-bl opacity-50 group-hover:opacity-100 pointer-events-none">Bass</div>
-                      <textarea
-                        className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
-                        value={leftHand}
-                        spellCheck="false"
-                        onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
-                        onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
-                        ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
-                        onKeyDown={handleTextareaKeyDown}
-                      />
-                    </div>
-                  </div>
-                );
-              })()
-            ) : (
-              <textarea
-                className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
-                value={parts[activePartIndex].content}
-                spellCheck="false"
-                onChange={(e) => updateActivePartContent(e.target.value)}
-                ref={sourceRef}
-                onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                onKeyDown={handleTextareaKeyDown}
-              />
-            )}
-          </div>
+                  );
+                })()
+              ) : (
+                <textarea
+                  className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                  value={parts[activePartIndex].content}
+                  spellCheck="false"
+                  onChange={(e) => updateActivePartContent(e.target.value)}
+                  ref={sourceRef}
+                  onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                  onKeyDown={handleTextareaKeyDown}
+                />
+              )}
+            </div>
 
-          {/* Quick Actions */}
-          <div className="p-2 bg-gray-100 border-t flex gap-2 overflow-x-auto no-scrollbar">
-            <button onClick={insertLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Line</button>
-            <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Bar</button>
-            <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
-              <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
-              <span>Type ABC</span>
-            </label>
+            {/* Quick Actions */}
+            <div className="p-2 bg-gray-50 border-t flex gap-2 overflow-x-auto no-scrollbar">
+              <button onClick={insertLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Line</button>
+              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Bar</button>
+              <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
+                <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
+                <span>Type ABC</span>
+              </label>
+            </div>
           </div>
-
         </div>
       </div>
 
