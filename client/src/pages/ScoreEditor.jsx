@@ -322,7 +322,7 @@ const ScoreEditor = () => {
           ta.selectionStart = pos;
           ta.selectionEnd = pos;
           ta.scrollTop = ta.scrollTop; // keep scroll position
-        } catch {}
+        } catch { }
       });
     },
     [parts, activePartIndex, activeHand]
@@ -508,6 +508,7 @@ const ScoreEditor = () => {
           <EditorSidebar
             onDurationChange={handleDurationChange}
             onAccidentalChange={handleAccidentalChange}
+            onInsert={insertAtSource}
           />
         </div>
 
@@ -540,11 +541,10 @@ const ScoreEditor = () => {
             {parts.map((part, idx) => (
               <div
                 key={idx}
-                className={`px-3 py-2 text-sm cursor-pointer border-r flex items-center gap-2 whitespace-nowrap ${
-                  activePartIndex === idx
+                className={`px-3 py-2 text-sm cursor-pointer border-r flex items-center gap-2 whitespace-nowrap ${activePartIndex === idx
                     ? "bg-white font-bold text-blue-600 border-b-2 border-b-blue-600"
                     : "text-gray-500 hover:bg-gray-100"
-                }`}
+                  }`}
                 onClick={() => setActivePartIndex(idx)}
               >
                 <span>{part.name}</span>
