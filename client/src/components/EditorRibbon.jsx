@@ -9,10 +9,10 @@ const SECTIONS = [
                 label: "Duration",
                 items: [
                     { label: "Whole", value: "4", icon: "𝅝", action: "duration" },
-                    { label: "Half", value: "2", icon: "𝅗𝅥", action: "duration" },
-                    { label: "Quarter", value: "", icon: "𝅘𝅥", action: "duration" },
-                    { label: "Eighth", value: "/2", icon: "𝅘𝅥𝅮", action: "duration" },
-                    { label: "Sixteenth", value: "/4", icon: "𝅘𝅥𝅯", action: "duration" },
+                    { label: "Half", value: "2", icon: "𝅗𝅥", action: "duration" },
+                    { label: "Quarter", value: "", icon: "𝅘𝅥", action: "duration" },
+                    { label: "Eighth", value: "/2", icon: "𝅘𝅥𝅮", action: "duration" },
+                    { label: "Sixteenth", value: "/4", icon: "𝅘𝅥𝅯", action: "duration" },
                 ],
             },
             {
@@ -124,45 +124,48 @@ const EditorRibbon = ({ onDurationChange, onAccidentalChange, onInsert, onOctave
     const activeSection = SECTIONS.find((s) => s.id === activeTab);
 
     return (
-        <div className="flex flex-col bg-white border-b shadow-sm w-full z-20">
-            {/* Tabs Row */}
-            <div className="flex px-4 border-b bg-gray-50 overflow-x-auto no-scrollbar">
+        <div className="flex flex-col bg-white border-b border-gray-200 w-full z-20">
+            {/* Tabs Row - Compact */}
+            <div className="flex px-3 bg-gray-50/50 overflow-x-auto no-scrollbar border-b border-gray-100">
                 {SECTIONS.map((section) => (
                     <button
                         key={section.id}
                         onClick={() => setActiveTab(section.id)}
                         className={`
-              px-6 py-2 text-sm font-medium whitespace-nowrap transition-colors relative
-              ${activeTab === section.id
-                                ? "text-blue-600 bg-white border-t-2 border-t-blue-600 border-x border-b-white -mb-px rounded-t"
-                                : "text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+                            px-4 py-1.5 text-xs font-medium whitespace-nowrap transition-all relative
+                            ${activeTab === section.id
+                                ? "text-blue-600 bg-white/80"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-white/40"
                             }
-            `}
+                        `}
                     >
                         {section.title}
+                        {activeTab === section.id && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+                        )}
                     </button>
                 ))}
             </div>
 
-            {/* Toolbar Content */}
-            <div className="p-2 h-16 flex items-center gap-6 overflow-x-auto no-scrollbar bg-white">
+            {/* Toolbar Content - Compact */}
+            <div className="px-3 py-1.5 h-12 flex items-center gap-4 overflow-x-auto no-scrollbar bg-white">
                 {activeSection &&
                     activeSection.groups.map((group, gIdx) => (
-                        <div key={gIdx} className="flex items-center gap-3 border-r pr-6 last:border-0">
-                            <div className="flex gap-1">
+                        <div key={gIdx} className="flex items-center gap-2 border-r border-gray-100 pr-4 last:border-0">
+                            <div className="flex gap-0.5">
                                 {group.items.map((item) => (
                                     <button
                                         key={item.label}
                                         onClick={() => handleClick(item)}
                                         className={`
-                      flex flex-col items-center justify-center w-10 h-10 rounded 
-                      hover:bg-blue-50 hover:text-blue-600 text-gray-700 transition-all
-                      border border-transparent hover:border-blue-200
-                    `}
+                                            flex flex-col items-center justify-center w-8 h-8 rounded 
+                                            hover:bg-blue-50 hover:text-blue-600 text-gray-600 transition-all
+                                            border border-transparent hover:border-blue-100
+                                        `}
                                         title={item.label}
                                     >
                                         <span
-                                            className={`leading-none ${item.icon.length > 2 ? "font-serif italic font-bold text-lg" : "text-2xl"
+                                            className={`leading-none ${item.icon.length > 2 ? "font-serif italic font-bold text-base" : "text-xl"
                                                 }`}
                                         >
                                             {item.icon}
