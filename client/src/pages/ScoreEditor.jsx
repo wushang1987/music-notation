@@ -238,42 +238,99 @@ const ScoreEditor = () => {
 
   // --- Modification Handlers ---
   const handleDurationChange = (newDuration) => {
-    const currentContent = parts[activePartIndex].content;
-    const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
-      setNoteDuration(note, newDuration)
-    );
-    updateActivePartContent(newContent);
+    const currentPart = parts[activePartIndex];
+    const isPiano = currentPart.program === 0;
+
+    if (isPiano) {
+      const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
+      const targetContent = activeHand === "left" ? leftHand : rightHand;
+
+      const newTargetContent = modifyNoteInAbc(targetContent, selection, (note) =>
+        setNoteDuration(note, newDuration)
+      );
+
+      const newFullContent = activeHand === "left"
+        ? generatePianoAbc(headers, rightHand, newTargetContent)
+        : generatePianoAbc(headers, newTargetContent, leftHand);
+
+      updateActivePartContent(newFullContent);
+    } else {
+      const newContent = modifyNoteInAbc(currentPart.content, selection, (note) =>
+        setNoteDuration(note, newDuration)
+      );
+      updateActivePartContent(newContent);
+    }
   };
 
   const handleAccidentalChange = (newAccidental) => {
-    const currentContent = parts[activePartIndex].content;
-    const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
-      setNoteAccidental(note, newAccidental)
-    );
-    updateActivePartContent(newContent);
+    const currentPart = parts[activePartIndex];
+    const isPiano = currentPart.program === 0;
+
+    if (isPiano) {
+      const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
+      const targetContent = activeHand === "left" ? leftHand : rightHand;
+
+      const newTargetContent = modifyNoteInAbc(targetContent, selection, (note) =>
+        setNoteAccidental(note, newAccidental)
+      );
+
+      const newFullContent = activeHand === "left"
+        ? generatePianoAbc(headers, rightHand, newTargetContent)
+        : generatePianoAbc(headers, newTargetContent, leftHand);
+
+      updateActivePartContent(newFullContent);
+    } else {
+      const newContent = modifyNoteInAbc(currentPart.content, selection, (note) =>
+        setNoteAccidental(note, newAccidental)
+      );
+      updateActivePartContent(newContent);
+    }
   };
 
   const handleKeyDown = useCallback(
     (e) => {
       if (selection.start === -1) return;
 
-      const currentContent = parts[activePartIndex].content;
+      const currentPart = parts[activePartIndex];
+      const isPiano = currentPart.program === 0;
+      let newContent;
+
+      // Helper to apply shift
+      const applyShift = (content, steps) => {
+        return modifyNoteInAbc(content, selection, (note) =>
+          shiftPitch(note, steps)
+        );
+      };
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
-          shiftPitch(note, 1)
-        );
+        if (isPiano) {
+          const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
+          const targetContent = activeHand === "left" ? leftHand : rightHand;
+          const newTarget = applyShift(targetContent, 1);
+          newContent = activeHand === "left"
+            ? generatePianoAbc(headers, rightHand, newTarget)
+            : generatePianoAbc(headers, newTarget, leftHand);
+        } else {
+          newContent = applyShift(currentPart.content, 1);
+        }
         updateActivePartContent(newContent);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        const newContent = modifyNoteInAbc(currentContent, selection, (note) =>
-          shiftPitch(note, -1)
-        );
+        if (isPiano) {
+          const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
+          const targetContent = activeHand === "left" ? leftHand : rightHand;
+          const newTarget = applyShift(targetContent, -1);
+          newContent = activeHand === "left"
+            ? generatePianoAbc(headers, rightHand, newTarget)
+            : generatePianoAbc(headers, newTarget, leftHand);
+        } else {
+          newContent = applyShift(currentPart.content, -1);
+        }
         updateActivePartContent(newContent);
       }
     },
-    [parts, activePartIndex, selection]
+    [parts, activePartIndex, selection, activeHand]
   );
 
   useEffect(() => {
@@ -667,6 +724,9 @@ const ScoreEditor = () => {
                     value={generateMultiPartAbc(parts)}
                     readOnly
                     spellCheck="false"
+                    onSelect={(e) => {
+                      setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                    }}
                   />
                 </div>
               ) : (
@@ -686,6 +746,9 @@ const ScoreEditor = () => {
                               spellCheck="false"
                               onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
                               onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                              onSelect={(e) => {
+                                setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                              }}
                               ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
                               onKeyDown={handleTextareaKeyDown}
                             />
@@ -699,6 +762,9 @@ const ScoreEditor = () => {
                               spellCheck="false"
                               onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
                               onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
+                              onSelect={(e) => {
+                                setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                              }}
                               ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
                               onKeyDown={handleTextareaKeyDown}
                             />
@@ -714,6 +780,9 @@ const ScoreEditor = () => {
                       onChange={(e) => updateActivePartContent(e.target.value)}
                       ref={sourceRef}
                       onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                      onSelect={(e) => {
+                        setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                      }}
                       onKeyDown={handleTextareaKeyDown}
                     />
                   )}
