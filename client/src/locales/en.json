@@ -156,6 +156,8 @@
     "tags": "Tags",
     "tagsPlaceholder": "Add tags (comma-separated)",
     "loginToRate": "Please login to rate this score.",
-    "rateFailed": "Failed to submit rating"
+    "rateFailed": "Failed to submit rating",
+    "staff": "Staff",
+    "jianpu": "Numbered"
   }
 }

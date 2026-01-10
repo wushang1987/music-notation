@@ -81,7 +81,10 @@
       "views": "浏览",
       "rating": "评分"
     },
-    "orderLabels": { "asc": "升序", "desc": "降序" },
+    "orderLabels": {
+      "asc": "升序",
+      "desc": "降序"
+    },
     "filter": {
       "tags": "标签",
       "tagsPlaceholder": "按标签筛选（用逗号分隔）",
@@ -156,6 +159,8 @@
     "tags": "标签",
     "tagsPlaceholder": "添加标签（用逗号分隔）",
     "loginToRate": "请登录后进行评分。",
-    "rateFailed": "评分提交失败"
+    "rateFailed": "评分提交失败",
+    "staff": "五线谱",
+    "jianpu": "简谱"
   }
 }

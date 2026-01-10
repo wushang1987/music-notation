@@ -10,6 +10,7 @@ import {
   getInstrumentOption,
   generateMultiPartAbc,
 } from "../utils/abcMidi";
+import JianpuRenderer from "../components/JianpuRenderer";
 
 const ScoreView = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const ScoreView = () => {
   const { user } = useContext(AuthContext);
   const [hoverRating, setHoverRating] = useState(0);
   const [myRating, setMyRating] = useState(0);
+  const [notationMode, setNotationMode] = useState("staff"); // 'staff' or 'jianpu'
 
   const [myAlbums, setMyAlbums] = useState([]);
   const [albumsLoading, setAlbumsLoading] = useState(false);
@@ -169,7 +171,7 @@ const ScoreView = () => {
   const [activeTab, setActiveTab] = useState("notation");
 
   useEffect(() => {
-    if (score && activeTab === "notation") {
+    if (score && activeTab === "notation" && notationMode === "staff") {
       let effectiveAbc;
       if (score.parts && score.parts.length > 0) {
         effectiveAbc = generateMultiPartAbc(score.parts);
@@ -181,6 +183,9 @@ const ScoreView = () => {
             : 0
         );
       }
+
+      // Ensure element exists before rendering
+      if (!document.getElementById("paper")) return;
 
       const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
         responsive: "resize",
@@ -251,7 +256,7 @@ const ScoreView = () => {
           )}</div>`;
       }
     }
-  }, [score, activeTab, t]);
+  }, [score, activeTab, t, notationMode]);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
@@ -365,9 +370,8 @@ const ScoreView = () => {
                               onClick={() => handleRate(n)}
                             >
                               <svg
-                                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${
-                                  isOn ? "text-amber-500" : "text-gray-300"
-                                }`}
+                                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isOn ? "text-amber-500" : "text-gray-300"
+                                  }`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                                 aria-hidden="true"
@@ -413,11 +417,10 @@ const ScoreView = () => {
 
                   <button
                     onClick={handleLike}
-                    className={`flex items-center gap-1.5 transition-colors ${
-                      hasLiked
-                        ? "text-red-500"
-                        : "text-gray-600 hover:text-red-500"
-                    }`}
+                    className={`flex items-center gap-1.5 transition-colors ${hasLiked
+                      ? "text-red-500"
+                      : "text-gray-600 hover:text-red-500"
+                      }`}
                     title={hasLiked ? "Unlike" : "Like"}
                   >
                     {hasLiked ? (
@@ -528,11 +531,10 @@ const ScoreView = () => {
             <div className="flex border-b border-gray-100 -mb-6 mt-4 no-print">
               <button
                 onClick={() => setActiveTab("notation")}
-                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${
-                  activeTab === "notation"
-                    ? "text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === "notation"
+                  ? "text-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {t("score.musicalNotation")}
                 {activeTab === "notation" && (
@@ -541,11 +543,10 @@ const ScoreView = () => {
               </button>
               <button
                 onClick={() => setActiveTab("abc")}
-                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${
-                  activeTab === "abc"
-                    ? "text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                className={`px-6 py-3 text-sm font-semibold transition-colors relative ${activeTab === "abc"
+                  ? "text-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
+                  }`}
               >
                 {t("score.abcSource")}
                 {activeTab === "abc" && (
@@ -560,10 +561,43 @@ const ScoreView = () => {
             <div
               className={activeTab === "notation" ? "animate-fadeIn" : "hidden"}
             >
-              <div
-                id="paper"
-                className="w-full overflow-x-auto min-h-100 md:rounded-md md:shadow-sm md:border md:border-gray-100"
-              ></div>
+              <div className="flex justify-end mb-2 px-4 md:px-0 no-print">
+                <div className="inline-flex rounded-md shadow-sm" role="group">
+                  <button
+                    type="button"
+                    onClick={() => setNotationMode("staff")}
+                    className={`px-4 py-2 text-sm font-medium border rounded-l-lg ${notationMode === "staff"
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                      }`}
+                  >
+                    {t("score.staff") || "Staff"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotationMode("jianpu")}
+                    className={`px-4 py-2 text-sm font-medium border rounded-r-lg ${notationMode === "jianpu"
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                      }`}
+                  >
+                    {t("score.jianpu") || "Numbered"}
+                  </button>
+                </div>
+              </div>
+
+              {notationMode === "staff" ? (
+                <div
+                  id="paper"
+                  className="w-full overflow-x-auto min-h-100 md:rounded-md md:shadow-sm md:border md:border-gray-100"
+                ></div>
+              ) : (
+                <JianpuRenderer abcNotation={
+                  score.parts && score.parts.length > 0
+                    ? generateMultiPartAbc(score.parts)
+                    : ensureMidiProgram(score.content, typeof score.instrumentProgram === "number" ? score.instrumentProgram : 0)
+                } />
+              )}
             </div>
 
             {/* ABC Tab Content */}
