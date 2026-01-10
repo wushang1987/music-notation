@@ -201,6 +201,24 @@
       "octave": "八度",
       "shiftDown": "降低",
       "shiftUp": "升高"
+    },
+    "selection": {
+      "title": "您想如何开始创作？",
+      "subtitle": "选择最适合您音乐项目的引擎。两者都支持实时预览和导出。",
+      "start": "开始创作",
+      "footer": "您可以稍后将乐谱导出为其他格式。"
+    },
+    "abcjs": {
+      "description": "简单易用的 ABC 记谱法。非常适合单旋律乐谱和简单的民谣。",
+      "feature1": "轻量且快速",
+      "feature2": "实时 ABC 渲染",
+      "feature3": "内置钢琴输入"
+    },
+    "verovio": {
+      "description": "专业的 MEI/MusicXML 引擎。为复杂的古典乐谱提供高级排版。",
+      "feature1": "WASM 卓越性能",
+      "feature2": "支持 MEI 和 MusicXML",
+      "feature3": "高质量乐谱排版"
     }
   }
 }

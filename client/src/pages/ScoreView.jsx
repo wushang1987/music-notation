@@ -11,6 +11,7 @@ import {
   generateMultiPartAbc,
 } from "../utils/abcMidi";
 import JianpuRenderer from "../components/JianpuRenderer";
+import VerovioService from "../services/VerovioService";
 
 const ScoreView = () => {
   const { id } = useParams();
@@ -22,8 +23,10 @@ const ScoreView = () => {
   const [hoverRating, setHoverRating] = useState(0);
   const [myRating, setMyRating] = useState(0);
   const [notationMode, setNotationMode] = useState("staff"); // 'staff' or 'jianpu'
+  const [verovioSvg, setVerovioSvg] = useState("");
 
   const [myAlbums, setMyAlbums] = useState([]);
+
   const [albumsLoading, setAlbumsLoading] = useState(false);
   const [selectedAlbumId, setSelectedAlbumId] = useState("");
   const [albumActionStatus, setAlbumActionStatus] = useState({
@@ -172,6 +175,23 @@ const ScoreView = () => {
 
   useEffect(() => {
     if (score && activeTab === "notation" && notationMode === "staff") {
+      if (score.notationType === "verovio") {
+        const renderVerovio = async () => {
+          try {
+            await VerovioService.init();
+            const svg = VerovioService.render(score.content, {
+              scale: 40,
+              pageWidth: 1500,
+            });
+            setVerovioSvg(svg);
+          } catch (err) {
+            console.error("Verovio render failed", err);
+          }
+        };
+        renderVerovio();
+        return;
+      }
+
       let effectiveAbc;
       if (score.parts && score.parts.length > 0) {
         effectiveAbc = generateMultiPartAbc(score.parts);
@@ -188,6 +208,7 @@ const ScoreView = () => {
       if (!document.getElementById("paper")) return;
 
       const visualObj = abcjs.renderAbc("paper", effectiveAbc, {
+
         responsive: "resize",
         oneSvgPerLine: true,
         paddingtop: 20,
@@ -515,17 +536,22 @@ const ScoreView = () => {
             </div>
 
             {/* Audio Player - Moved to top */}
-            <div
-              id="audio"
-              className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm no-print"
-            ></div>
+            {score.notationType !== "verovio" && (
+              <div
+                id="audio"
+                className="mt-6 mb-4 bg-white p-5 rounded-lg border border-gray-200 shadow-sm no-print"
+              ></div>
+            )}
 
-            <div className="-mt-2 mb-4 text-sm text-gray-600 no-print">
-              <span className="font-semibold text-gray-700">
-                {t("score.instrument")}:
-              </span>
-              <span>{t(instrumentOption.i18nKey)}</span>
-            </div>
+            {score.notationType !== "verovio" && (
+              <div className="-mt-2 mb-4 text-sm text-gray-600 no-print">
+                <span className="font-semibold text-gray-700">
+                  {t("score.instrument")}:
+                </span>
+                <span>{t(instrumentOption.i18nKey)}</span>
+              </div>
+            )}
+
 
             {/* Tabs Navigation */}
             <div className="flex border-b border-gray-100 -mb-6 mt-4 no-print">
@@ -561,37 +587,48 @@ const ScoreView = () => {
             <div
               className={activeTab === "notation" ? "animate-fadeIn" : "hidden"}
             >
-              <div className="flex justify-end mb-2 px-4 md:px-0 no-print">
-                <div className="inline-flex rounded-md shadow-sm" role="group">
-                  <button
-                    type="button"
-                    onClick={() => setNotationMode("staff")}
-                    className={`px-4 py-2 text-sm font-medium border rounded-l-lg ${notationMode === "staff"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                      }`}
-                  >
-                    {t("score.staff") || "Staff"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNotationMode("jianpu")}
-                    className={`px-4 py-2 text-sm font-medium border rounded-r-lg ${notationMode === "jianpu"
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                      }`}
-                  >
-                    {t("score.jianpu") || "Numbered"}
-                  </button>
+              {score.notationType !== "verovio" && (
+                <div className="flex justify-end mb-2 px-4 md:px-0 no-print">
+                  <div className="inline-flex rounded-md shadow-sm" role="group">
+                    <button
+                      type="button"
+                      onClick={() => setNotationMode("staff")}
+                      className={`px-4 py-2 text-sm font-medium border rounded-l-lg ${notationMode === "staff"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                        }`}
+                    >
+                      {t("score.staff") || "Staff"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNotationMode("jianpu")}
+                      className={`px-4 py-2 text-sm font-medium border rounded-r-lg ${notationMode === "jianpu"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                        }`}
+                    >
+                      {t("score.jianpu") || "Numbered"}
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
+
 
               {notationMode === "staff" ? (
-                <div
-                  id="paper"
-                  className="w-full overflow-x-auto min-h-100 md:rounded-md md:shadow-sm md:border md:border-gray-100"
-                ></div>
+                score.notationType === "verovio" ? (
+                  <div
+                    className="w-full overflow-x-auto min-h-100 bg-white p-8 md:rounded-md md:shadow-sm md:border md:border-gray-100 flex justify-center"
+                    dangerouslySetInnerHTML={{ __html: verovioSvg }}
+                  />
+                ) : (
+                  <div
+                    id="paper"
+                    className="w-full overflow-x-auto min-h-100 md:rounded-md md:shadow-sm md:border md:border-gray-100"
+                  ></div>
+                )
               ) : (
+
                 <JianpuRenderer abcNotation={
                   score.parts && score.parts.length > 0
                     ? generateMultiPartAbc(score.parts)

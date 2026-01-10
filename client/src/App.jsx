@@ -11,8 +11,14 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import ScoreCreationHub from "./pages/ScoreCreationHub";
 import ScoreEditor from "./pages/ScoreEditor";
+import VerovioEditor from "./pages/VerovioEditor";
+import ScoreEditorWrapper from "./components/ScoreEditorWrapper";
 import ScoreView from "./pages/ScoreView";
+
+
+
 import Albums from "./pages/Albums";
 import AlbumEditor from "./pages/AlbumEditor";
 import AlbumView from "./pages/AlbumView";
@@ -45,8 +51,9 @@ const AppContent = () => {
     location.pathname.startsWith("/verify/");
 
   const isEditorPage =
-    location.pathname === "/create" ||
+    location.pathname.startsWith("/create") ||
     location.pathname.startsWith("/edit/");
+
 
   useEffect(() => {
     document.title = t("brand.name");
@@ -117,7 +124,23 @@ const AppContent = () => {
               path="/create"
               element={
                 <PrivateRoute>
+                  <ScoreCreationHub />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/create/abcjs"
+              element={
+                <PrivateRoute>
                   <ScoreEditor />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/create/verovio"
+              element={
+                <PrivateRoute>
+                  <VerovioEditor />
                 </PrivateRoute>
               }
             />
@@ -125,10 +148,12 @@ const AppContent = () => {
               path="/edit/:id"
               element={
                 <PrivateRoute>
-                  <ScoreEditor />
+                  <ScoreEditorWrapper />
                 </PrivateRoute>
               }
             />
+
+
             <Route
               path="/created"
               element={

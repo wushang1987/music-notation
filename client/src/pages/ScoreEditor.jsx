@@ -459,7 +459,9 @@ const ScoreEditor = () => {
         parts, // Send parts
         isPublic,
         tags,
+        notationType: "abcjs",
         // Legacy fields are handled by backend, but we can send them if we want to be explicit
+
         // content: parts[0].content,
         // instrumentProgram: parts[0].program
       };

@@ -38,8 +38,15 @@ const normalizeTags = (tags) => {
 
 const createScore = async (req, res) => {
   try {
-    const { title, content, isPublic, tags, instrumentProgram, parts } =
-      req.body;
+    const {
+      title,
+      content,
+      isPublic,
+      tags,
+      instrumentProgram,
+      parts,
+      notationType,
+    } = req.body;
     const parsedProgram = parseInstrumentProgram(instrumentProgram);
     if (parsedProgram === null) {
       return res.status(400).json({
@@ -76,6 +83,7 @@ const createScore = async (req, res) => {
       tags: normalizeTags(tags),
       instrumentProgram: finalProgram !== undefined ? finalProgram : 0,
       parts: finalParts,
+      notationType: notationType || "abcjs",
     });
     const savedScore = await score.save();
     res.status(201).json(savedScore);
@@ -85,6 +93,7 @@ const createScore = async (req, res) => {
       .json({ message: "Error creating score", error: error.message });
   }
 };
+
 
 const getScores = async (req, res) => {
   try {
@@ -435,8 +444,15 @@ const updateScore = async (req, res) => {
         .json({ message: "Not authorized to edit this score" });
     }
 
-    const { title, content, isPublic, tags, instrumentProgram, parts } =
-      req.body;
+    const {
+      title,
+      content,
+      isPublic,
+      tags,
+      instrumentProgram,
+      parts,
+      notationType,
+    } = req.body;
     const parsedProgram = parseInstrumentProgram(instrumentProgram);
     if (parsedProgram === null) {
       return res.status(400).json({
@@ -447,9 +463,11 @@ const updateScore = async (req, res) => {
 
     score.title = title || score.title;
     score.isPublic = isPublic !== undefined ? isPublic : score.isPublic;
+    score.notationType = notationType || score.notationType;
     if (tags !== undefined) {
       score.tags = normalizeTags(tags);
     }
+
 
     // Handle parts update with backward compatibility
     if (parts !== undefined) {

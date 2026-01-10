@@ -201,6 +201,24 @@
       "octave": "Octave",
       "shiftDown": "Shift Down",
       "shiftUp": "Shift Up"
+    },
+    "selection": {
+      "title": "How would you like to create?",
+      "subtitle": "Choose the engine that best fits your musical project. Both support real-time preview and export.",
+      "start": "Start Creating",
+      "footer": "You can always export your scores to other formats later."
+    },
+    "abcjs": {
+      "description": "Easy-to-use ABC notation. Perfect for lead sheets and simple folk tunes.",
+      "feature1": "Lightweight & Fast",
+      "feature2": "Real-time ABC Rendering",
+      "feature3": "Built-in Piano Input"
+    },
+    "verovio": {
+      "description": "Professional MEI/MusicXML engine. Advanced engraving for complex classical scores.",
+      "feature1": "WASM Performance",
+      "feature2": "MEI & MusicXML Support",
+      "feature3": "High-quality Engraving"
     }
   }
 }

@@ -3,8 +3,14 @@ const mongoose = require("mongoose");
 const scoreSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    content: { type: String, required: true }, // ABC notation content
+    content: { type: String, required: true }, // ABC or MEI/XML content
+    notationType: {
+      type: String,
+      enum: ["abcjs", "verovio"],
+      default: "abcjs",
+    },
     // General MIDI program number (0-127). Used for playback timbre.
+
     instrumentProgram: { type: Number, min: 0, max: 127, default: 0 },
     parts: [
       {

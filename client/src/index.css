@@ -221,3 +221,13 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+.verovio-preview svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.verovio-preview {
+  font-family: 'Times New Roman', serif;
+}

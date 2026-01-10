@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import abcjs from "abcjs";
 import { useTranslation } from "react-i18next";
+import VerovioService from "../services/VerovioService";
 
 const ScoreCard = ({ score, user, onDelete }) => {
   const { t } = useTranslation();
@@ -10,22 +11,39 @@ const ScoreCard = ({ score, user, onDelete }) => {
 
   useEffect(() => {
     if (paperRef.current && score.content) {
-      try {
-        abcjs.renderAbc(paperRef.current, score.content, {
-          responsive: "resize",
-          scale: 1,
-          paddingtop: 10,
-          paddingbottom: 10,
-          paddingright: 10,
-          paddingleft: 10,
-          staffwidth: 400,
-          add_classes: true,
-        });
-      } catch (err) {
-        console.error("Failed to render notation preview", err);
-      }
+      const renderPreview = async () => {
+        try {
+          if (score.notationType === "verovio") {
+            await VerovioService.init();
+            const svg = VerovioService.render(score.content, {
+              scale: 15,
+              pageWidth: 1000,
+              pageHeight: 1500,
+              adjustPageHeight: true,
+            });
+            if (paperRef.current) {
+              paperRef.current.innerHTML = svg;
+            }
+          } else {
+            abcjs.renderAbc(paperRef.current, score.content, {
+              responsive: "resize",
+              scale: 1,
+              paddingtop: 10,
+              paddingbottom: 10,
+              paddingright: 10,
+              paddingleft: 10,
+              staffwidth: 400,
+              add_classes: true,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to render notation preview", err);
+        }
+      };
+      renderPreview();
     }
-  }, [score.content]);
+  }, [score.content, score.notationType]);
+
 
   const isOwnerOrAdmin =
     user &&
