@@ -5,7 +5,7 @@ import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { useTranslation } from "react-i18next";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
-import EditorSidebar from "../components/EditorSidebar";
+import EditorRibbon from "../components/EditorRibbon";
 import {
   ensureMidiProgram,
   generateMultiPartAbc,
@@ -458,241 +458,206 @@ const ScoreEditor = () => {
   if (loading) return <div>{t("common.loading")}</div>;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Top Toolbar */}
-      <div className="bg-white border-b p-2 flex justify-between items-center shadow-sm z-10 no-print">
-        <div className="flex gap-4 items-center">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 text-slate-800">
+      {/* Header */}
+      <div className="bg-white border-b px-4 h-14 flex justify-between items-center shadow-sm z-30 no-print">
+        <div className="flex gap-4 items-center flex-1">
+          <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="border rounded px-2 py-1 font-bold"
-            placeholder="Score Title"
+            className="border-none text-lg font-bold bg-transparent focus:ring-0 placeholder-gray-400"
+            placeholder="Untitled Score"
           />
-          <div id="audio" className="flex-1"></div>
+          <div id="audio" className="flex-1 max-w-md ml-4"></div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <button
             onClick={() => window.print()}
-            className="bg-gray-100 text-gray-700 px-4 py-1 rounded hover:bg-gray-200 border border-gray-300 flex items-center gap-2"
-            title={t("common.print") || "Print"}
+            className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-              />
-            </svg>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
             {t("common.print") || "Print"}
           </button>
           <button
             onClick={handleSave}
-            className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
+            className="bg-blue-600 text-white px-5 py-1.5 rounded-full font-medium text-sm hover:bg-blue-700 shadow-md transition-all active:scale-95"
           >
             {t("common.save")}
           </button>
         </div>
       </div>
 
+      {/* Ribbon Toolbar */}
+      <div className="shrink-0 z-20 no-print">
+        <EditorRibbon
+          onDurationChange={handleDurationChange}
+          onAccidentalChange={handleAccidentalChange}
+          onInsert={insertAtSource}
+          onOctaveShift={(shift) => {
+            const currentContent = parts[activePartIndex].content;
+            const newContent = modifyNoteInAbc(currentContent, selection, (note) => shiftPitch(note, shift * 7)); // Shift by octave (7 steps)
+            updateActivePartContent(newContent);
+          }}
+        />
+      </div>
+
       {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar Palette */}
-        <div className="no-print">
-          <EditorSidebar
-            onDurationChange={handleDurationChange}
-            onAccidentalChange={handleAccidentalChange}
-            onInsert={insertAtSource}
-          />
-        </div>
+      <div className="flex flex-1 overflow-hidden relative">
 
         {/* Center Canvas */}
-        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex flex-col items-center">
+        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex flex-col items-center shadow-inner">
           <div
             id="paper-container"
-            className="w-full max-w-4xl flex flex-col gap-8 pb-8"
+            className="w-full max-w-[850px] flex flex-col gap-8 pb-32 transition-all duration-300"
           ></div>
-          {/* Staging area for pagination calculation */}
+          {/* Staging area */}
           <div
             id="abc-staging"
-            className="absolute opacity-0 pointer-events-none w-[896px]"
+            className="absolute opacity-0 pointer-events-none w-[850px]"
           ></div>
         </div>
 
-        {/* Right Source Panel (Collapsible/Optional) */}
-        <div className="w-80 bg-white border-l flex flex-col no-print">
-          {/* Parts Manager */}
-          <div className="p-2 bg-gray-100 border-b flex justify-between items-center">
-            <span className="font-bold text-xs text-gray-600">PARTS</span>
+        {/* Right Source Panel */}
+        <div className="w-80 bg-white border-l shadow-xl z-20 flex flex-col font-sans no-print">
+
+          {/* Parts Header */}
+          <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
+            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Parts</h3>
             <button
               onClick={handleAddPart}
-              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+              className="text-xs bg-white border border-gray-300 hover:border-blue-400 hover:text-blue-500 text-gray-600 px-2 py-1 rounded transition-colors"
             >
-              + Add
+              + New Part
             </button>
           </div>
-          <div className="flex overflow-x-auto border-b bg-gray-50">
+
+          {/* Part List */}
+          <div className="flex flex-col max-h-40 overflow-y-auto border-b">
             {parts.map((part, idx) => (
               <div
                 key={idx}
-                className={`px-3 py-2 text-sm cursor-pointer border-r flex items-center gap-2 whitespace-nowrap ${activePartIndex === idx
-                    ? "bg-white font-bold text-blue-600 border-b-2 border-b-blue-600"
-                    : "text-gray-500 hover:bg-gray-100"
-                  }`}
                 onClick={() => setActivePartIndex(idx)}
+                className={`px-4 py-3 cursor-pointer text-sm border-l-4 transition-colors flex justify-between items-center group ${activePartIndex === idx
+                  ? "border-l-blue-500 bg-blue-50 text-blue-700 font-medium"
+                  : "border-l-transparent hover:bg-gray-50 text-gray-600"
+                  }`}
               >
-                <span>{part.name}</span>
+                <div className="truncate pr-2">{part.name}</div>
                 {parts.length > 1 && (
-                  <span
-                    className="text-gray-400 hover:text-red-500 font-bold ml-1"
+                  <button
+                    className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (confirm("Delete this part? This cannot be undone.")) {
-                        handleRemovePart(idx);
-                      }
+                      if (confirm("Delete this part?")) handleRemovePart(idx);
                     }}
                   >
                     ×
-                  </span>
+                  </button>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Part Settings */}
-          <div className="p-2 border-b bg-gray-50 flex flex-col gap-2">
-            <input
-              type="text"
-              value={parts[activePartIndex].name}
-              onChange={(e) => handlePartNameChange(e.target.value)}
-              className="border rounded px-2 py-1 text-sm"
-              placeholder="Part Name"
-            />
-            <select
-              className="w-full border p-1 rounded text-sm"
-              value={parts[activePartIndex].program}
-              onChange={(e) =>
-                handlePartProgramChange(parseInt(e.target.value))
-              }
-            >
-              {INSTRUMENT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {t(opt.i18nKey)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="p-2 bg-gray-50 border-b font-bold text-xs text-gray-500">
-            SOURCE CODE ({parts[activePartIndex].name})
-          </div>
-
-          {parts[activePartIndex].program === 0 ? (
-            (() => {
-              const { headers, rightHand, leftHand } = parsePianoAbc(
-                parts[activePartIndex].content
-              );
-              return (
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="flex-1 flex flex-col border-b">
-                    <div className="px-2 py-1 text-xs text-gray-500 bg-gray-100 font-bold">
-                      Right Hand (Treble)
-                    </div>
-                    <textarea
-                      className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
-                      value={rightHand}
-                      onChange={(e) =>
-                        updateActivePartContent(
-                          generatePianoAbc(headers, e.target.value, leftHand)
-                        )
-                      }
-                      onFocus={(e) => {
-                        setActiveHand("right");
-                        sourceRef.current = e.target;
-                      }}
-                      ref={(el) => {
-                        if (activeHand === "right") sourceRef.current = el;
-                      }}
-                      onKeyDown={handleTextareaKeyDown}
-                    />
-                  </div>
-                  <div className="flex-1 flex flex-col">
-                    <div className="px-2 py-1 text-xs text-gray-500 bg-gray-100 font-bold">
-                      Left Hand (Bass)
-                    </div>
-                    <textarea
-                      className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
-                      value={leftHand}
-                      onChange={(e) =>
-                        updateActivePartContent(
-                          generatePianoAbc(headers, rightHand, e.target.value)
-                        )
-                      }
-                      onFocus={(e) => {
-                        setActiveHand("left");
-                        sourceRef.current = e.target;
-                      }}
-                      ref={(el) => {
-                        if (activeHand === "left") sourceRef.current = el;
-                      }}
-                      onKeyDown={handleTextareaKeyDown}
-                    />
-                  </div>
-                </div>
-              );
-            })()
-          ) : (
-            <textarea
-              className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none"
-              value={parts[activePartIndex].content}
-              onChange={(e) => updateActivePartContent(e.target.value)}
-              ref={sourceRef}
-              onFocus={(e) => {
-                setActiveHand("right");
-                sourceRef.current = e.target;
-              }}
-              onKeyDown={handleTextareaKeyDown}
-            />
-          )}
-          <div className="p-4 border-t">
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                className="px-3 py-1 rounded border bg-white hover:bg-gray-50 text-gray-700"
-                onClick={insertLineBreak}
-                title="在光标处插入换行"
+          {/* Active Part Config */}
+          <div className="p-4 bg-gray-50 border-b space-y-3">
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Name</label>
+              <input
+                type="text"
+                value={parts[activePartIndex].name}
+                onChange={(e) => handlePartNameChange(e.target.value)}
+                className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Instrument</label>
+              <select
+                className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                value={parts[activePartIndex].program}
+                onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
               >
-                换行
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1 rounded border bg-white hover:bg-gray-50 text-gray-700"
-                onClick={insertBarLineBreak}
-                title="在光标处插入小节线 (Ctrl+Enter)"
-              >
-                小节线
-              </button>
-              <label className="ml-auto flex items-center gap-2 text-xs text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={abcTypingEnabled}
-                  onChange={(e) => setAbcTypingEnabled(e.target.checked)}
-                />
-                ABC键盘输入（默认虚拟键盘）
-              </label>
+                {INSTRUMENT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
+                ))}
+              </select>
             </div>
           </div>
+
+          {/* Source Code Editor */}
+          <div className="flex-1 flex flex-col min-h-0 bg-gray-900 text-gray-300">
+            <div className="px-4 py-2 bg-gray-800 text-[10px] font-bold text-gray-400 uppercase border-b border-gray-700 flex justify-between items-center">
+              <span>Source Code</span>
+              {parts[activePartIndex].program === 0 && <span className="text-xs normal-case opacity-70">Piano Mode</span>}
+            </div>
+
+            {parts[activePartIndex].program === 0 ? (
+              (() => {
+                const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
+                return (
+                  <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-700">
+                    {/* Right Hand */}
+                    <div className="flex-1 flex flex-col relative group">
+                      <div className="absolute top-0 right-0 px-2 py-0.5 text-[9px] bg-gray-700 text-gray-400 rounded-bl opacity-50 group-hover:opacity-100 pointer-events-none">Treble</div>
+                      <textarea
+                        className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
+                        value={rightHand}
+                        spellCheck="false"
+                        onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
+                        onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                        ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
+                        onKeyDown={handleTextareaKeyDown}
+                      />
+                    </div>
+                    {/* Left Hand */}
+                    <div className="flex-1 flex flex-col relative group">
+                      <div className="absolute top-0 right-0 px-2 py-0.5 text-[9px] bg-gray-700 text-gray-400 rounded-bl opacity-50 group-hover:opacity-100 pointer-events-none">Bass</div>
+                      <textarea
+                        className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
+                        value={leftHand}
+                        spellCheck="false"
+                        onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
+                        onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
+                        ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
+                        onKeyDown={handleTextareaKeyDown}
+                      />
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <textarea
+                className="flex-1 w-full p-3 font-mono text-sm bg-transparent resize-none focus:outline-none focus:bg-gray-800 transition-colors"
+                value={parts[activePartIndex].content}
+                spellCheck="false"
+                onChange={(e) => updateActivePartContent(e.target.value)}
+                ref={sourceRef}
+                onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                onKeyDown={handleTextareaKeyDown}
+              />
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="p-2 bg-gray-100 border-t flex gap-2 overflow-x-auto no-scrollbar">
+            <button onClick={insertLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Line</button>
+            <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 whitespace-nowrap">Insert Bar</button>
+            <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
+              <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
+              <span>Type ABC</span>
+            </label>
+          </div>
+
         </div>
       </div>
 
-      {/* Bottom: Virtual Piano (Optional, can be toggled) */}
-      <div className="border-t bg-white">
+      {/* Piano (Fixed Bottom) */}
+      <div className="shrink-0 z-30 no-print">
         <VirtualPiano
           initialKeyboardEnabled={true}
           captureInTextarea={!abcTypingEnabled}

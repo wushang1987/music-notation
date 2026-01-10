@@ -16,9 +16,8 @@ const KeyHint = ({ midi, centerOctave, isBlack }) => {
 
   return (
     <span
-      className={`absolute ${
-        isBlack ? "bottom-2 text-gray-400" : "bottom-8 text-blue-400"
-      } text-[10px] font-mono uppercase pointer-events-none select-none`}
+      className={`absolute ${isBlack ? "bottom-2 text-gray-400" : "bottom-8 text-blue-400"
+        } text-[10px] font-mono uppercase pointer-events-none select-none`}
     >
       {char}
     </span>
@@ -43,13 +42,12 @@ const PianoKey = ({
       <div
         onMouseDown={() => onMouseDown(keyData)}
         className={`
-          relative w-12 h-48 border-l border-b border-r border-gray-400 rounded-b-md cursor-pointer
+          relative w-12 h-full border-l border-b border-r border-gray-400 rounded-b-md cursor-pointer
           flex items-end justify-center pb-2 z-0
           transition-all duration-75 active:scale-[0.99] origin-top
-          ${
-            isActive
-              ? "bg-gradient-to-b from-yellow-100 to-yellow-300 shadow-inner"
-              : "bg-gradient-to-b from-white to-gray-200 hover:to-gray-100"
+          ${isActive
+            ? "bg-gradient-to-b from-yellow-100 to-yellow-300 shadow-inner"
+            : "bg-gradient-to-b from-white to-gray-200 hover:to-gray-100"
           }
         `}
         style={{
@@ -75,13 +73,12 @@ const PianoKey = ({
             onMouseDown(blackKey);
           }}
           className={`
-            absolute top-0 -right-4 w-8 h-32 rounded-b-lg cursor-pointer z-20
+            absolute top-0 -right-4 w-8 h-[65%] rounded-b-lg cursor-pointer z-20
             border-l border-b border-r border-black
             transition-all duration-75 active:scale-[0.99] origin-top
-            ${
-              isBlackActive
-                ? "bg-gradient-to-b from-yellow-600 to-yellow-800 shadow-inner"
-                : "bg-gradient-to-b from-gray-800 to-black hover:from-gray-700"
+            ${isBlackActive
+              ? "bg-gradient-to-b from-yellow-600 to-yellow-800 shadow-inner"
+              : "bg-gradient-to-b from-gray-800 to-black hover:from-gray-700"
             }
           `}
           style={{

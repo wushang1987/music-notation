@@ -52,7 +52,7 @@ const VirtualPiano = ({
     (freq) => {
       const ctx = ensureAudioContext();
       if (!ctx) return;
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      if (ctx.state === "suspended") ctx.resume().catch(() => { });
 
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -163,19 +163,38 @@ const VirtualPiano = ({
     handleKeyInteraction,
   ]);
 
+
+  const [isVisible, setIsVisible] = useState(true);
+
   return (
-    <div className="virtual-piano flex flex-col items-center p-4 bg-gray-800 rounded-xl shadow-2xl mt-6 border border-gray-700">
-      <PianoControls
-        isKeyboardEnabled={isKeyboardEnabled}
-        setIsKeyboardEnabled={setIsKeyboardEnabled}
-        centerOctave={centerOctave}
-        setCenterOctave={setCenterOctave}
-      />
+    <div className={`virtual-piano flex flex-col items-center bg-gray-800 shadow-2xl border-t border-gray-700 transition-all duration-300 ${isVisible ? 'h-auto pb-4' : 'h-10 overflow-hidden'}`}>
+
+      {/* Toggle Header */}
+      <div
+        className="w-full flex justify-between items-center px-4 py-2 bg-gray-900 cursor-pointer hover:bg-gray-850"
+        onClick={() => setIsVisible(!isVisible)}
+      >
+        <div className="flex items-center gap-4">
+          <span className="text-white font-bold text-sm tracking-wider">PIANO</span>
+          <div onClick={e => e.stopPropagation()}>
+            <PianoControls
+              isKeyboardEnabled={isKeyboardEnabled}
+              setIsKeyboardEnabled={setIsKeyboardEnabled}
+              centerOctave={centerOctave}
+              setCenterOctave={setCenterOctave}
+              compact={true}
+            />
+          </div>
+        </div>
+        <button className="text-gray-400 hover:text-white">
+          {isVisible ? '▼' : '▲'}
+        </button>
+      </div>
 
       {/* Piano Scroll Container */}
       <div
         ref={scrollContainerRef}
-        className="virtual-piano__scroll relative w-full overflow-x-auto pb-4 select-none no-scrollbar"
+        className={`virtual-piano__scroll relative w-full overflow-x-auto select-none no-scrollbar transition-opacity duration-300 ${isVisible ? 'opacity-100 mt-2' : 'opacity-0'}`}
         style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}
       >
         <style>{`
@@ -187,7 +206,7 @@ const VirtualPiano = ({
             scrollbar-width: none;
           }
         `}</style>
-        <div className="virtual-piano__keys inline-flex h-48 relative px-10 min-w-max bg-gray-900 pt-1">
+        <div className="virtual-piano__keys inline-flex h-32 relative px-10 min-w-max bg-gray-800 pt-1">
           {PIANO_KEYS.map((key, index) => {
             if (key.type !== "white") return null;
 
@@ -212,12 +231,6 @@ const VirtualPiano = ({
             );
           })}
         </div>
-      </div>
-
-      <div className="virtual-piano__help mt-3 text-xs text-gray-400 flex gap-4">
-        <span>• Scroll to navigate full range</span>
-        <span>• Click or use keyboard to play</span>
-        <span>• Press 0-8 to switch octaves</span>
       </div>
     </div>
   );
