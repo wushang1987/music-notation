@@ -167,35 +167,35 @@ const VirtualPiano = ({
   const [isVisible, setIsVisible] = useState(true);
 
   return (
-    <div className={`virtual-piano flex flex-col items-center bg-gray-800 shadow-2xl border-t border-gray-700 transition-all duration-300 ${isVisible ? 'h-auto pb-4' : 'h-10 overflow-hidden'}`}>
+    <div className={`virtual-piano flex flex-col items-center bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-gray-200 transition-all duration-300 ${isVisible ? 'h-auto pb-4' : 'h-8 overflow-hidden'}`}>
 
       {/* Toggle Header */}
       <div
-        className="w-full flex justify-between items-center px-4 py-2 bg-gray-900 cursor-pointer hover:bg-gray-850"
+        className="w-full flex justify-between items-center px-4 py-1 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100"
         onClick={() => setIsVisible(!isVisible)}
       >
-        <div className="flex items-center gap-4">
-          <span className="text-white font-bold text-sm tracking-wider">PIANO</span>
-          <div onClick={e => e.stopPropagation()}>
-            <PianoControls
-              isKeyboardEnabled={isKeyboardEnabled}
-              setIsKeyboardEnabled={setIsKeyboardEnabled}
-              centerOctave={centerOctave}
-              setCenterOctave={setCenterOctave}
-              compact={true}
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <button className="text-gray-400 hover:text-gray-600 focus:outline-none">
+            {isVisible ? '▼' : '▲'}
+          </button>
+          <span className="text-gray-500 font-bold text-xs uppercase tracking-wider">Virtual Piano</span>
         </div>
-        <button className="text-gray-400 hover:text-white">
-          {isVisible ? '▼' : '▲'}
-        </button>
+
+        <div onClick={e => e.stopPropagation()}>
+          <PianoControls
+            isKeyboardEnabled={isKeyboardEnabled}
+            setIsKeyboardEnabled={setIsKeyboardEnabled}
+            centerOctave={centerOctave}
+            setCenterOctave={setCenterOctave}
+          />
+        </div>
       </div>
 
       {/* Piano Scroll Container */}
       <div
         ref={scrollContainerRef}
         className={`virtual-piano__scroll relative w-full overflow-x-auto select-none no-scrollbar transition-opacity duration-300 ${isVisible ? 'opacity-100 mt-2' : 'opacity-0'}`}
-        style={{ boxShadow: "inset 0 0 20px rgba(0,0,0,0.5)" }}
+        style={{ boxShadow: "inset 0 0 10px rgba(0,0,0,0.05)" }}
       >
         <style>{`
           .no-scrollbar::-webkit-scrollbar {
@@ -206,7 +206,7 @@ const VirtualPiano = ({
             scrollbar-width: none;
           }
         `}</style>
-        <div className="virtual-piano__keys inline-flex h-32 relative px-10 min-w-max bg-gray-800 pt-1">
+        <div className="virtual-piano__keys inline-flex h-28 relative px-10 min-w-max bg-gray-100 pt-1 border-t border-gray-300">
           {PIANO_KEYS.map((key, index) => {
             if (key.type !== "white") return null;
 
