@@ -44,6 +44,10 @@ const AppContent = () => {
     ["/auth", "/login", "/register"].includes(location.pathname) ||
     location.pathname.startsWith("/verify/");
 
+  const isEditorPage =
+    location.pathname === "/create" ||
+    location.pathname.startsWith("/edit/");
+
   useEffect(() => {
     document.title = t("brand.name");
   }, [t, i18n.resolvedLanguage, i18n.language]);
@@ -82,14 +86,14 @@ const AppContent = () => {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-      {!isAuthPage && (
+      {!isAuthPage && !isEditorPage && (
         <Navbar
           onOpenSidebar={user ? () => setSidebarOpen(true) : undefined}
           useHamburgerNav={useHamburgerNav}
         />
       )}
       <div className="flex flex-1 overflow-hidden">
-        {!isAuthPage && user && (
+        {!isAuthPage && !isEditorPage && user && (
           <Sidebar
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
@@ -97,9 +101,8 @@ const AppContent = () => {
           />
         )}
         <main
-          className={`flex-1 overflow-y-auto bg-white ${
-            !isAuthPage ? "shadow-inner" : ""
-          }`}
+          className={`flex-1 overflow-y-auto bg-white ${!isAuthPage && !isEditorPage ? "shadow-inner" : ""
+            }`}
         >
           <Routes>
             <Route
