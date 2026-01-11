@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { sendVerificationEmail } = require("../utils/email");
+const { sendVerificationEmail, sendResetPasswordEmail } = require("../utils/email");
 
 const register = async (req, res) => {
   try {
@@ -100,4 +100,58 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login, verifyEmail };
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User with this email does not exist" });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    try {
+      await sendResetPasswordEmail(email, resetToken);
+      res.json({ message: "Password reset link sent to your email" });
+    } catch (emailError) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      console.error("Reset email failed:", emailError);
+      res.status(500).json({ message: "Error sending reset email. Please try again later." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired reset token" });
+    }
+
+    user.password = password; // Will be hashed by pre-save hook
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Password reset successful! You can now log in with your new password." });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+module.exports = { register, login, verifyEmail, forgotPassword, resetPassword };

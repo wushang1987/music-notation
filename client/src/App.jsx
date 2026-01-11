@@ -11,6 +11,8 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ScoreCreationHub from "./pages/ScoreCreationHub";
 import ScoreEditor from "./pages/ScoreEditor";
 import VerovioEditor from "./pages/VerovioEditor";
@@ -47,8 +49,9 @@ const AppContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [useHamburgerNav, setUseHamburgerNav] = useState(false);
   const isAuthPage =
-    ["/auth", "/login", "/register"].includes(location.pathname) ||
-    location.pathname.startsWith("/verify/");
+    ["/auth", "/login", "/register", "/forgot-password"].includes(location.pathname) ||
+    location.pathname.startsWith("/verify/") ||
+    location.pathname.startsWith("/reset-password/");
 
   const isEditorPage =
     location.pathname.startsWith("/create") ||
@@ -117,6 +120,8 @@ const AppContent = () => {
               element={<Home title="home.allScores" endpoint="/scores" />}
             />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/verify/:token" element={<VerifyEmail />} />
             <Route path="/login" element={<Navigate to="/auth" />} />
             <Route path="/register" element={<Navigate to="/auth" />} />

@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import BrandLogo from "../components/BrandLogo";
@@ -117,6 +117,17 @@ const Auth = () => {
               required
             />
           </div>
+
+          {isLogin && (
+            <div className="flex justify-end px-1">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-semibold text-blue-600 hover:text-indigo-700 transition-colors"
+              >
+                {t("auth.forgotPassword") || "Forgot Password?"}
+              </Link>
+            </div>
+          )}
 
           <button
             type="submit"
