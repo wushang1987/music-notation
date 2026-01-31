@@ -12,6 +12,7 @@ import {
 } from "../utils/abcMidi";
 import JianpuRenderer from "../components/JianpuRenderer";
 import VerovioService from "../services/VerovioService";
+import { audioBufferToWav } from "../utils/audioExport";
 
 const ScoreView = () => {
   const { id } = useParams();
@@ -279,6 +280,67 @@ const ScoreView = () => {
     }
   }, [score, activeTab, t, notationMode]);
 
+  const getEffectiveAbc = () => {
+    if (!score) return "";
+    if (score.parts && score.parts.length > 0) {
+      return generateMultiPartAbc(score.parts);
+    } else {
+      return ensureMidiProgram(
+        score.content,
+        typeof score.instrumentProgram === "number"
+          ? score.instrumentProgram
+          : 0
+      );
+    }
+  };
+
+  const handleDownloadAbc = () => {
+    const abc = getEffectiveAbc();
+    if (!abc) return;
+    const blob = new Blob([abc], { type: "text/vnd.abc" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${score.title || "score"}.abc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadMidi = () => {
+    const abc = getEffectiveAbc();
+    if (!abc) return;
+
+    // abcjs can generate MIDI data. Since we are using the synth, 
+    // we can get the MIDI data from the synth control or re-parse.
+    // The easiest way to get a standalone MIDI file from ABC is using abcjs.synth.getMidiFile
+    // Note: getMidiFile returns a Uint8Array or similar
+
+    try {
+      // We need a visualObj to get midi from
+      const dummyEl = document.createElement("div");
+      const visualObj = abcjs.renderAbc(dummyEl, abc)[0];
+      const midiData = abcjs.synth.getMidiFile(visualObj, { midiInAudio: true });
+
+      const blob = new Blob([midiData], { type: "audio/midi" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${score.title || "score"}.mid`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("MIDI download failed", e);
+      console.error("Audio download failed", e);
+      alert("Audio export failed or is not supported.");
+    } finally {
+      setExportingAudio(false);
+    }
+  };
+
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
@@ -508,7 +570,62 @@ const ScoreView = () => {
                     )}
                 </div>
 
-                <div className="w-full sm:w-auto">
+                <div className="w-full sm:w-auto flex gap-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                      className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md border bg-blue-600 border-blue-600 text-white hover:bg-blue-700 shadow-sm transition-all duration-200"
+                      title={t("common.download") || "Download"}
+                    >
+                      <svg
+                        className="w-4 h-4 sm:w-5 sm:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      <span className="font-semibold text-sm">
+                        {t("common.download") || "Download"}
+                      </span>
+                      <svg className={`w-4 h-4 transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {showDownloadMenu && (
+                      <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <button
+                          onClick={() => { handleDownloadAbc(); setShowDownloadMenu(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                        >
+                          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                          ABC Notation
+                        </button>
+                        <button
+                          onClick={() => { handleDownloadMidi(); setShowDownloadMenu(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                        >
+                          <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                          MIDI File
+                        </button>
+                        <button
+                          onClick={() => { handleDownloadAudio(); setShowDownloadMenu(false); }}
+                          disabled={exportingAudio}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                          {exportingAudio ? "Exporting..." : "Audio File (.wav)"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     onClick={() => window.print()}
                     className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md border bg-white border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm transition-all duration-200"

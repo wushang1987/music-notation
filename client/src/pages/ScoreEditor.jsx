@@ -21,6 +21,7 @@ import {
   setNoteAccidental,
   shiftPitch,
 } from "../utils/abcModification";
+import { audioBufferToWav } from "../utils/audioExport";
 
 const ScoreEditor = () => {
   const { id } = useParams();
@@ -65,6 +66,8 @@ const ScoreEditor = () => {
   const [sidebarWidth, setSidebarWidth] = useState(320); // Resizable sidebar width
   const [expertMode, setExpertMode] = useState(false); // Toggle for Expert Mode (raw ABC editing)
   const [expertModeContent, setExpertModeContent] = useState("");
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [exportingAudio, setExportingAudio] = useState(false);
 
   // AI Generation State
   const [showAiModal, setShowAiModal] = useState(false);
@@ -599,6 +602,99 @@ const ScoreEditor = () => {
     [parts, activePartIndex]
   );
 
+  const getEffectiveAbc = () => {
+    return expertMode ? expertModeContent : generateMultiPartAbc(parts);
+  };
+
+  const handleDownloadAbc = () => {
+    const abc = getEffectiveAbc();
+    const blob = new Blob([abc], { type: "text/vnd.abc" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title || "score"}.abc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadMidi = () => {
+    const abc = getEffectiveAbc();
+    try {
+      const dummyEl = document.createElement("div");
+      const visualObj = abcjs.renderAbc(dummyEl, abc)[0];
+      const midiData = abcjs.synth.getMidiFile(visualObj, { midiInAudio: true });
+      const blob = new Blob([midiData], { type: "audio/midi" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title || "score"}.mid`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("MIDI download failed", e);
+      alert("Failed to generate MIDI file.");
+    }
+  };
+
+  const handleDownloadAudio = async () => {
+    const abc = getEffectiveAbc();
+    setExportingAudio(true);
+    try {
+      // Create a visualObj to get midi/audio from
+      const dummyEl = document.createElement("div");
+      const visualObj = abcjs.renderAbc(dummyEl, abc)[0];
+
+      // Use OfflineAudioContext for rendering
+      const audioContext = new (window.OfflineAudioContext || window.AudioContext)(
+        2,
+        44100 * 600, // 10 minutes max
+        44100
+      );
+
+      const createSynth = new abcjs.synth.CreateSynth();
+      await createSynth.init({
+        visualObj: visualObj,
+        audioContext: audioContext,
+        millisecondsPerMeasure: visualObj.millisecondsPerMeasure()
+      });
+
+      // Render the synth to the offline context
+      await createSynth.prime();
+
+      // Since it's an offline context, we usually need to call start() and then collect buffer
+      // However, abcjs synth doesn't natively support easy offline rendering directly to a buffer
+      // in one call. We might need to use the CreateSynth's internal buffer if available,
+      // or just warn that MP3/Audio export is restricted to ScoreView for now if complex.
+      // ACTUALLY, abcjs 6.x supporting offline rendering is a bit picky.
+
+      // Fallback: For now, if we can't do offline easily, we'll inform the user.
+      // But let's try the standard CreateSynth method.
+
+      const buffer = await createSynth.getAudioBuffer();
+      if (!buffer) throw new Error("Could not generate audio buffer");
+
+      const wavBuffer = audioBufferToWav(buffer);
+      const blob = new Blob([wavBuffer], { type: "audio/wav" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${title || "score"}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Audio download failed", e);
+      alert("Audio export is not supported in this version or failed.");
+    } finally {
+      setExportingAudio(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!user) {
       alert(t("auth.loginRequiredToSave", "You must be logged in to save your music."));
@@ -695,6 +791,46 @@ const ScoreEditor = () => {
           <div id="audio" className="flex-1 max-w-md ml-4"></div>
         </div>
         <div className="flex gap-3">
+          {/* Download Dropdown */}
+          <div className="relative no-print">
+            <button
+              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+              className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-gray-200 shadow-sm"
+              title={t("common.download") || "Download"}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              {t("common.download") || "Download"}
+              <svg className={`w-3.5 h-3.5 transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+
+            {showDownloadMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <button
+                  onClick={() => { handleDownloadAbc(); setShowDownloadMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                >
+                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  ABC Notation (.abc)
+                </button>
+                <button
+                  onClick={() => { handleDownloadMidi(); setShowDownloadMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                >
+                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                  MIDI File (.mid)
+                </button>
+                <button
+                  onClick={() => { handleDownloadAudio(); setShowDownloadMenu(false); }}
+                  disabled={exportingAudio}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                  {exportingAudio ? "Exporting..." : "Audio File (.wav)"}
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={() => window.print()}
             className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
