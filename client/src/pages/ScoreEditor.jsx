@@ -186,7 +186,11 @@ const ScoreEditor = () => {
   useEffect(() => {
     if (!loading) {
       // Generate combined ABC for all parts or use expert content
-      const effectiveAbc = expertMode ? expertModeContent : generateMultiPartAbc(parts);
+      let rawAbc = expertMode ? expertModeContent : generateMultiPartAbc(parts);
+
+      // Sanitize: Collapse multiple newlines/blank lines to avoid breaking the tune
+      // This fixes issues where AI or paste introduces blank lines between voices, which abcjs might treat as new tunes
+      const effectiveAbc = rawAbc.replace(/\n\s*\n/g, "\n");
 
       const renderOptions = {
         responsive: "resize",
