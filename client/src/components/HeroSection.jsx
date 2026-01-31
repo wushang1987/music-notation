@@ -1,9 +1,19 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import api from '../api';
 import './HeroSection.css';
 
 const HeroSection = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [prompt, setPrompt] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const handleGenerate = () => {
+        if (!prompt.trim()) return;
+        navigate('/create/abcjs', { state: { prompt } });
+    };
 
     return (
         <div className="hero-container relative overflow-hidden text-white min-h-[90vh] flex flex-col justify-center">
@@ -49,6 +59,77 @@ const HeroSection = () => {
                     <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-300 mb-10 animate-slideUp animation-delay-200">
                         {t('hero.subtitle')}
                     </p>
+
+                    {/* AI Generation Box */}
+                    <div className="max-w-3xl mx-auto mb-16 animate-slideUp animation-delay-300">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl">
+                            <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2">
+                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
+                                    AI Music Composer
+                                </span>
+                                <span className="text-sm bg-blue-600/50 px-2 py-0.5 rounded-full text-blue-100 font-medium">BETA</span>
+                            </h2>
+
+                            {/* Steps Explanation */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-sm text-gray-300 text-left">
+                                <div className="flex items-start gap-3">
+                                    <div className="bg-blue-500/20 rounded-full p-1.5 shrink-0">
+                                        <div className="w-5 h-5 flex items-center justify-center font-bold text-blue-300">1</div>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white">Describe</p>
+                                        <p>Type your musical idea in the box below.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="bg-purple-500/20 rounded-full p-1.5 shrink-0">
+                                        <div className="w-5 h-5 flex items-center justify-center font-bold text-purple-300">2</div>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white">Generate</p>
+                                        <p>AI creates the ABC notation instantly.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="bg-pink-500/20 rounded-full p-1.5 shrink-0">
+                                        <div className="w-5 h-5 flex items-center justify-center font-bold text-pink-300">3</div>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white">Play & Edit</p>
+                                        <p>Listen, refine, and save your masterpiece.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Input Area */}
+                            <div className="relative group">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl opacity-50 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 blur"></div>
+                                <div className="relative bg-black/20 backdrop-blur-xl rounded-xl p-1 flex items-stretch border border-white/10">
+                                    <textarea
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        placeholder="Describe the music you want to create (e.g. 'A melancholic violin melody in D minor')..."
+                                        className="w-full bg-transparent text-white placeholder-gray-400 border-none focus:ring-0 resize-none py-3 px-4 min-h-[60px]"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleGenerate();
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={handleGenerate}
+                                        disabled={isGenerating || !prompt.trim()}
+                                        className="ml-2 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg px-6 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 my-1 shadow-lg"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                        <span>Generate</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp animation-delay-400">
                         <Link
                             to="/create"
