@@ -6,4 +6,5 @@ const commentSchema = new mongoose.Schema({
     score: { type: mongoose.Schema.Types.ObjectId, ref: 'Score', required: true },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Comment', commentSchema);
+module.exports = mongoose.models.Comment || mongoose.model('Comment', commentSchema);
+

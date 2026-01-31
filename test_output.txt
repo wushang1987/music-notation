@@ -1,0 +1,76 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mc:/GitHupWorkspace/music-notation[39m
+
+ [32m✓[39m [35m|music-notation-server|[39m src/tests/simple.test.js [2m([22m[2m1 test[22m[2m)[22m[90m 78[2mms[22m[39m
+ [31m❯[39m [35m|music-notation-server|[39m src/tests/score.test.js [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m [35m|music-notation-server|[39m src/tests/auth.test.js [2m([22m[2m5 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 25123[2mms[22m[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould register a new user and require verification[33m 5018[2mms[22m[31m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould not allow login before verification[33m 5005[2mms[22m[31m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould verify email with correct token[33m 5008[2mms[22m[31m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould login after verification[33m 5017[2mms[22m[31m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould fail login with wrong credentials[33m 5004[2mms[22m[31m[39m
+[31m     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Suites 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/score.test.js[2m [ server/src/tests/score.test.js ][22m
+[31m[1mOverwriteModelError[22m: Cannot overwrite `Score` model once compiled.[39m
+[90m [2m❯[22m Mongoose.model node_modules/mongoose/lib/mongoose.js:[2m609:13[22m[39m
+[36m [2m❯[22m src/models/Score.js:[2m46:27[22m[39m
+    [90m 44| [39m)[33m;[39m
+    [90m 45| [39m
+    [90m 46| [39mmodule[33m.[39mexports [33m=[39m mongoose[33m.[39m[34mmodel[39m([32m"Score"[39m[33m,[39m scoreSchema)[33m;[39m
+    [90m   | [39m                          [31m^[39m
+    [90m 47| [39m
+[90m [2m❯[22m src/tests/score.test.js:[2m4:31[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 5 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould register a new user and require verification
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould not allow login before verification
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould verify email with correct token
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould login after verification
+[31m[1m[7m FAIL [27m[22m[39m[35m|music-notation-server|[39m  src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould fail login with wrong credentials
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Unhandled Errors [27m[22m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Unhandled Error [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mError[22m: Cannot find package 'jsdom' imported from c:\GitHupWorkspace\music-notation\node_modules\vitest\dist\chunks\index.K90BXFOx.js[39m
+[90m [2m❯[22m Object.getPackageJSONURL node:internal/modules/package_json_reader:[2m314:9[22m[39m
+[90m [2m❯[22m packageResolve node:internal/modules/esm/resolve:[2m767:81[22m[39m
+[90m [2m❯[22m moduleResolve node:internal/modules/esm/resolve:[2m853:18[22m[39m
+[90m [2m❯[22m defaultResolve node:internal/modules/esm/resolve:[2m983:11[22m[39m
+[90m [2m❯[22m ModuleLoader.#cachedDefaultResolve node:internal/modules/esm/loader:[2m731:20[22m[39m
+[90m [2m❯[22m ModuleLoader.resolve node:internal/modules/esm/loader:[2m708:38[22m[39m
+[90m [2m❯[22m ModuleLoader.getModuleJobForImport node:internal/modules/esm/loader:[2m310:38[22m[39m
+[90m [2m❯[22m onImport.tracePromise.__proto__ node:internal/modules/esm/loader:[2m664:36[22m[39m
+[90m [2m❯[22m TracingChannel.tracePromise node:diagnostics_channel:[2m350:14[22m[39m
+[90m [2m❯[22m ModuleLoader.import node:internal/modules/esm/loader:[2m663:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ code: 'ERR_MODULE_NOT_FOUND' }[39m
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m5 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (6)[39m
+[2m     Errors [22m [1m[31m1 error[39m[22m
+[2m   Start at [22m 12:05:41
+[2m   Duration [22m 26.97s[2m (transform 78ms, setup 1.37s, collect 700ms, tests 25.20s, environment 1ms, prepare 1.05s)[22m
+

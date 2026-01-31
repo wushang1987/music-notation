@@ -1,11 +1,17 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
 
 const sendVerificationEmail = async (email, token) => {
     const verificationUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/verify/${token}`;
 
+    if (!resend) {
+        console.warn('Resend API key missing, skipping email sending');
+        return { data: 'skipped' };
+    }
     try {
+
         const { data, error } = await resend.emails.send({
             from: 'Music Notation <onboarding@resend.dev>',
             to: [email],
@@ -46,7 +52,12 @@ const sendVerificationEmail = async (email, token) => {
 const sendResetPasswordEmail = async (email, token) => {
     const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${token}`;
 
+    if (!resend) {
+        console.warn('Resend API key missing, skipping email sending');
+        return { data: 'skipped' };
+    }
     try {
+
         const { data, error } = await resend.emails.send({
             from: 'Music Notation <onboarding@resend.dev>',
             to: [email],

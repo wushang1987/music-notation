@@ -1,0 +1,88 @@
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mc:/GitHupWorkspace/music-notation/server[39m
+
+ [32m✓[39m src/tests/simple.test.js [2m([22m[2m1 test[22m[2m)[22m[90m 49[2mms[22m[39m
+ [31m❯[39m src/tests/score.test.js [2m([22m[2m0 test[22m[2m)[22m
+[90mstderr[2m | src/tests/auth.test.js[2m > [22m[2mAuth API Integration Tests[2m > [22m[2mshould register a new user and require verification
+[22m[39mResend API key missing, skipping email sending
+
+ [31m❯[39m src/tests/auth.test.js [2m([22m[2m5 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[90m 296[2mms[22m[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould not allow login before verification[90m 15[2mms[22m[31m[39m
+[31m     → expected 400 to be 401 // Object.is equality[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould verify email with correct token[90m 8[2mms[22m[31m[39m
+[31m     → Cannot read properties of null (reading 'verificationToken')[39m
+[31m   [31m×[31m Auth API Integration Tests[2m > [22mshould login after verification[90m 10[2mms[22m[31m[39m
+[31m     → expected 400 to be 200 // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Suites 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/score.test.js[2m [ src/tests/score.test.js ][22m
+[31m[1mOverwriteModelError[22m: Cannot overwrite `Score` model once compiled.[39m
+[90m [2m❯[22m Mongoose.model node_modules/mongoose/lib/mongoose.js:[2m609:13[22m[39m
+[36m [2m❯[22m src/models/Score.js:[2m46:27[22m[39m
+    [90m 44| [39m)[33m;[39m
+    [90m 45| [39m
+    [90m 46| [39mmodule[33m.[39mexports [33m=[39m mongoose[33m.[39m[34mmodel[39m([32m"Score"[39m[33m,[39m scoreSchema)[33m;[39m
+    [90m   | [39m                          [31m^[39m
+    [90m 47| [39m
+[90m [2m❯[22m src/tests/score.test.js:[2m4:31[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 3 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould not allow login before verification
+[31m[1mAssertionError[22m: expected 400 to be 401 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 401[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m src/tests/auth.test.js:[2m41:24[22m[39m
+    [90m 39| [39m      })[33m;[39m
+    [90m 40| [39m    
+    [90m 41| [39m    [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m401[39m)[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 42| [39m    [34mexpect[39m(res[33m.[39mbody[33m.[39mmessage)[33m.[39m[34mtoMatch[39m([36m/verify/i[39m)[33m;[39m
+    [90m 43| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould verify email with correct token
+[31m[1mTypeError[22m: Cannot read properties of null (reading 'verificationToken')[39m
+[36m [2m❯[22m src/tests/auth.test.js:[2m47:24[22m[39m
+    [90m 45| [39m  [34mit[39m([32m'should verify email with correct token'[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m 46| [39m    [35mconst[39m user [33m=[39m [35mawait[39m [33mUser[39m[33m.[39m[34mfindOne[39m({ email[33m:[39m testUser[33m.[39memail })[33m;[39m
+    [90m 47| [39m    [35mconst[39m token [33m=[39m user[33m.[39mverificationToken[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 48| [39m
+    [90m 49| [39m    [35mconst[39m res [33m=[39m [35mawait[39m [34mrequest[39m(app)
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/tests/auth.test.js[2m > [22mAuth API Integration Tests[2m > [22mshould login after verification
+[31m[1mAssertionError[22m: expected 400 to be 200 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+[36m [2m❯[22m src/tests/auth.test.js:[2m66:24[22m[39m
+    [90m 64| [39m      })[33m;[39m
+    [90m 65| [39m    
+    [90m 66| [39m    [34mexpect[39m(res[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m200[39m)[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 67| [39m    [34mexpect[39m(res[33m.[39mbody)[33m.[39m[34mtoHaveProperty[39m([32m'token'[39m)[33m;[39m
+    [90m 68| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 12:08:05
+[2m   Duration [22m 1.37s[2m (transform 98ms, setup 933ms, collect 344ms, tests 345ms, environment 1ms, prepare 481ms)[22m
+
