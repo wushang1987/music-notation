@@ -20,8 +20,15 @@ const generateMusic = async (req, res) => {
             body: JSON.stringify({
                 model: "deepseek-chat",
                 messages: [
-                    { role: "system", content: "You are a helpful assistant that generates ABC music notation. Output ONLY the ABC notation code. No markdown, no explanations. Start with X:1" },
-                    { role: "user", content: `Generate a piece of music based on this description: ${prompt}. Return valid ABC notation. Ensure it starts with X:1 and has a T:Title field.` }
+                    { role: "system", content: "You are an expert music composer and arranger specializing in ABC notation. Create complex, professional-grade musical arrangements. Output ONLY the valid ABC notation code. No markdown, no explanations. Start with X:1" },
+                    {
+                        role: "user", content: `Compose a complete musical arrangement based on this description: "${prompt}".
+                    
+                    Requirements:
+                    1. Structure: The piece MUST follow a complete song structure: Intro -> Verse -> Pre-Chorus -> Chorus -> Bridge -> Chorus -> Outro.
+                    2. Duration: Unless specified otherwise in the description, the piece should be approximately 3 minutes long (ensure enough bars and repeats).
+                    3. Instrumentation: Use multiple instruments/voices (at least 2-3 parts, e.g., Melody, Harmony, Bass) using V:1, V:2, etc.
+                    4. Format: Return ONLY valid ABC notation starting with X:1. Include T:Title, C:Composer (AI), M:Meter, L:Unit Note Length, K:Key, and Q:Tempo fields.` }
                 ],
                 stream: false
             })
