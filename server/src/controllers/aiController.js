@@ -27,7 +27,7 @@ const generateMusic = async (req, res) => {
                     Requirements:
                     1. Structure: The piece MUST follow a complete song structure: Intro -> Verse -> Pre-Chorus -> Chorus -> Bridge -> Chorus -> Outro.
                     2. Duration: Unless specified otherwise in the description, the piece should be approximately 3 minutes long (ensure enough bars and repeats).
-                    3. Instrumentation: Use multiple instruments/voices (at least 2-3 parts, e.g., Melody, Harmony, Bass) using V:1, V:2, etc.
+                    3. Instrumentation: Use multiple instruments/voices (at least 2-3 parts, e.g., Melody, Harmony, Bass) using V:1, V:2, etc. IMPORTANT: You MUST specify the MIDI instrument for each voice using '%%MIDI program [program_number]' immediately after each voice definition or in the header. Choose appropriate General MIDI program numbers (e.g., 0 for Piano, 40 for Violin, 73 for Flute, 24 for Acoustic Guitar, 32 for Acoustic Bass) that match the intended instrument.
                     4. Format: Return ONLY valid ABC notation starting with X:1. Include T:Title, C:Composer (AI), M:Meter, L:Unit Note Length, K:Key, and Q:Tempo fields.` }
                 ],
                 stream: false
