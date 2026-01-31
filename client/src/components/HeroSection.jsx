@@ -65,9 +65,9 @@ const HeroSection = () => {
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl">
                             <h2 className="text-2xl font-bold mb-4 flex items-center justify-center gap-2">
                                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-purple-300">
-                                    AI Music Composer
+                                    {t('hero.ai.title')}
                                 </span>
-                                <span className="text-sm bg-blue-600/50 px-2 py-0.5 rounded-full text-blue-100 font-medium">BETA</span>
+                                <span className="text-sm bg-blue-600/50 px-2 py-0.5 rounded-full text-blue-100 font-medium">{t('hero.ai.beta')}</span>
                             </h2>
 
                             {/* Steps Explanation */}
@@ -77,8 +77,8 @@ const HeroSection = () => {
                                         <div className="w-5 h-5 flex items-center justify-center font-bold text-blue-300">1</div>
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-white">Describe</p>
-                                        <p>Type your musical idea in the box below.</p>
+                                        <p className="font-semibold text-white">{t('hero.ai.step1.title')}</p>
+                                        <p>{t('hero.ai.step1.desc')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -86,8 +86,8 @@ const HeroSection = () => {
                                         <div className="w-5 h-5 flex items-center justify-center font-bold text-purple-300">2</div>
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-white">Generate</p>
-                                        <p>AI creates the ABC notation instantly.</p>
+                                        <p className="font-semibold text-white">{t('hero.ai.step2.title')}</p>
+                                        <p>{t('hero.ai.step2.desc')}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-start gap-3">
@@ -95,8 +95,8 @@ const HeroSection = () => {
                                         <div className="w-5 h-5 flex items-center justify-center font-bold text-pink-300">3</div>
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-white">Play & Edit</p>
-                                        <p>Listen, refine, and save your masterpiece.</p>
+                                        <p className="font-semibold text-white">{t('hero.ai.step3.title')}</p>
+                                        <p>{t('hero.ai.step3.desc')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -108,7 +108,7 @@ const HeroSection = () => {
                                     <textarea
                                         value={prompt}
                                         onChange={(e) => setPrompt(e.target.value)}
-                                        placeholder="Describe the music you want to create (e.g. 'A melancholic violin melody in D minor')..."
+                                        placeholder={t('hero.ai.placeholder')}
                                         className="w-full bg-transparent text-white placeholder-gray-400 border-none focus:ring-0 resize-none py-3 px-4 min-h-[60px]"
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -123,7 +123,7 @@ const HeroSection = () => {
                                         className="ml-2 bg-gradient-to-br from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg px-6 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 my-1 shadow-lg"
                                     >
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                                        <span>Generate</span>
+                                        <span>{t('hero.ai.button')}</span>
                                     </button>
                                 </div>
                             </div>

@@ -103,7 +103,25 @@
     "feature2Title": "Create Scores",
     "feature2Desc": "Compose with ABC notation",
     "feature3Title": "Share Music",
-    "feature3Desc": "Connect with musicians worldwide"
+    "feature3Desc": "Connect with musicians worldwide",
+    "ai": {
+      "title": "AI Music Composer",
+      "beta": "BETA",
+      "step1": {
+        "title": "Describe",
+        "desc": "Type your musical idea in the box below."
+      },
+      "step2": {
+        "title": "Generate",
+        "desc": "AI creates the ABC notation instantly."
+      },
+      "step3": {
+        "title": "Play & Edit",
+        "desc": "Listen, refine, and save your masterpiece."
+      },
+      "placeholder": "Describe the music you want to create (e.g. 'A melancholic violin melody in D minor')...",
+      "button": "Generate"
+    }
   },
   "pagination": {
     "previous": "Previous",

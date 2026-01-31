@@ -103,7 +103,25 @@
     "feature2Title": "创作乐谱",
     "feature2Desc": "使用 ABC 记谱法作曲",
     "feature3Title": "分享音乐",
-    "feature3Desc": "与全球音乐家交流"
+    "feature3Desc": "与全球音乐家交流",
+    "ai": {
+      "title": "AI 音乐作曲家",
+      "beta": "测试版",
+      "step1": {
+        "title": "描述",
+        "desc": "在下方输入您的音乐创意。"
+      },
+      "step2": {
+        "title": "生成",
+        "desc": "AI 即时创建 ABC 记谱法。"
+      },
+      "step3": {
+        "title": "播放与编辑",
+        "desc": "收听、完善并保存您的杰作。"
+      },
+      "placeholder": "描述您想创作的音乐（例如：'D小调忧郁的小提琴旋律'）...",
+      "button": "生成"
+    }
   },
   "pagination": {
     "previous": "上一页",
