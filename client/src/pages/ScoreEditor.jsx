@@ -9,6 +9,7 @@ import EditorRibbon from "../components/EditorRibbon";
 import {
   ensureMidiProgram,
   generateMultiPartAbc,
+  parseMultiPartAbc,
   INSTRUMENT_OPTIONS,
 } from "../utils/abcMidi";
 import { parsePianoAbc, generatePianoAbc } from "../utils/pianoHelpers";
@@ -48,7 +49,8 @@ const ScoreEditor = () => {
   const [activeHand, setActiveHand] = useState("right");
   const [abcTypingEnabled, setAbcTypingEnabled] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(320); // Resizable sidebar width
-  const [showRawAbc, setShowRawAbc] = useState(false); // Toggle for viewing raw ABC
+  const [expertMode, setExpertMode] = useState(false); // Toggle for Expert Mode (raw ABC editing)
+  const [expertModeContent, setExpertModeContent] = useState("");
 
   const navigate = useNavigate();
 
@@ -110,8 +112,8 @@ const ScoreEditor = () => {
   // --- Rendering & Audio ---
   useEffect(() => {
     if (!loading) {
-      // Generate combined ABC for all parts
-      const effectiveAbc = generateMultiPartAbc(parts);
+      // Generate combined ABC for all parts or use expert content
+      const effectiveAbc = expertMode ? expertModeContent : generateMultiPartAbc(parts);
 
       const renderOptions = {
         responsive: "resize",
@@ -234,10 +236,18 @@ const ScoreEditor = () => {
           )}</div>`;
       }
     }
-  }, [parts, loading, selection]); // Re-render on parts change
+  }, [parts, loading, selection, expertMode, expertModeContent]); // Re-render on parts change
 
   // --- Modification Handlers ---
   const handleDurationChange = (newDuration) => {
+    if (expertMode) {
+      const newContent = modifyNoteInAbc(expertModeContent, selection, (note) =>
+        setNoteDuration(note, newDuration)
+      );
+      setExpertModeContent(newContent);
+      return;
+    }
+
     const currentPart = parts[activePartIndex];
     const isPiano = currentPart.program === 0;
 
@@ -263,6 +273,14 @@ const ScoreEditor = () => {
   };
 
   const handleAccidentalChange = (newAccidental) => {
+    if (expertMode) {
+      const newContent = modifyNoteInAbc(expertModeContent, selection, (note) =>
+        setNoteAccidental(note, newAccidental)
+      );
+      setExpertModeContent(newContent);
+      return;
+    }
+
     const currentPart = parts[activePartIndex];
     const isPiano = currentPart.program === 0;
 
@@ -304,33 +322,41 @@ const ScoreEditor = () => {
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        if (isPiano) {
+        if (expertMode) {
+          newContent = applyShift(expertModeContent, 1);
+          setExpertModeContent(newContent);
+        } else if (isPiano) {
           const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
           const targetContent = activeHand === "left" ? leftHand : rightHand;
           const newTarget = applyShift(targetContent, 1);
           newContent = activeHand === "left"
             ? generatePianoAbc(headers, rightHand, newTarget)
             : generatePianoAbc(headers, newTarget, leftHand);
+          updateActivePartContent(newContent);
         } else {
           newContent = applyShift(currentPart.content, 1);
+          updateActivePartContent(newContent);
         }
-        updateActivePartContent(newContent);
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        if (isPiano) {
+        if (expertMode) {
+          newContent = applyShift(expertModeContent, -1);
+          setExpertModeContent(newContent);
+        } else if (isPiano) {
           const { headers, rightHand, leftHand } = parsePianoAbc(currentPart.content);
           const targetContent = activeHand === "left" ? leftHand : rightHand;
           const newTarget = applyShift(targetContent, -1);
           newContent = activeHand === "left"
             ? generatePianoAbc(headers, rightHand, newTarget)
             : generatePianoAbc(headers, newTarget, leftHand);
+          updateActivePartContent(newContent);
         } else {
           newContent = applyShift(currentPart.content, -1);
+          updateActivePartContent(newContent);
         }
-        updateActivePartContent(newContent);
       }
     },
-    [parts, activePartIndex, selection, activeHand]
+    [parts, activePartIndex, selection, activeHand, expertMode, expertModeContent]
   );
 
   useEffect(() => {
@@ -360,7 +386,9 @@ const ScoreEditor = () => {
       const after = taValue.slice(end);
       const nextVal = before + text + after;
 
-      if (isPiano) {
+      if (expertMode) {
+        setExpertModeContent(nextVal);
+      } else if (isPiano) {
         const { headers, rightHand, leftHand } = parsePianoAbc(currentContent);
         if (activeHand === "right") {
           updateActivePartContent(generatePianoAbc(headers, nextVal, leftHand));
@@ -384,7 +412,8 @@ const ScoreEditor = () => {
         } catch { }
       });
     },
-    [parts, activePartIndex, activeHand]
+
+    [parts, activePartIndex, activeHand, expertMode, expertModeContent]
   );
 
   const insertLineBreak = useCallback(
@@ -456,7 +485,7 @@ const ScoreEditor = () => {
         .filter(Boolean);
       const payload = {
         title,
-        parts, // Send parts
+        parts: expertMode ? parseMultiPartAbc(expertModeContent) : parts, // Send parts (parse if in expert mode)
         isPublic,
         tags,
         notationType: "abcjs",
@@ -563,8 +592,13 @@ const ScoreEditor = () => {
           onInsert={insertAtSource}
           onOctaveShift={(shift) => {
             const currentContent = parts[activePartIndex].content;
-            const newContent = modifyNoteInAbc(currentContent, selection, (note) => shiftPitch(note, shift * 7)); // Shift by octave (7 steps)
-            updateActivePartContent(newContent);
+            if (expertMode) {
+              const newContent = modifyNoteInAbc(expertModeContent, selection, (note) => shiftPitch(note, shift * 7));
+              setExpertModeContent(newContent);
+            } else {
+              const newContent = modifyNoteInAbc(currentContent, selection, (note) => shiftPitch(note, shift * 7));
+              updateActivePartContent(newContent);
+            }
           }}
         />
       </div>
@@ -617,118 +651,145 @@ const ScoreEditor = () => {
           </div>
 
           <div className="flex-1 flex flex-col font-sans ml-1">
-            {/* Parts Header with Dropdown */}
-            <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
-              <div className="flex items-center gap-3 flex-1">
-                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('editor.parts.label')}:</label>
-                <select
-                  value={activePartIndex}
-                  onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
-                  className="flex-1 text-sm border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
-                >
-                  {parts.map((part, idx) => (
-                    <option key={idx} value={idx}>
-                      {part.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* Sidebar Header with Mode Toggle */}
+            <div className="px-4 py-3 bg-gray-100 border-b flex justify-between items-center shadow-sm z-10">
+              <span className="font-bold text-gray-700 text-sm">
+                {expertMode ? "Global Editor" : t('editor.parts.label')}
+              </span>
               <button
-                onClick={handleAddPart}
-                className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
+                onClick={() => {
+                  if (!expertMode) {
+                    setExpertModeContent(generateMultiPartAbc(parts));
+                    setExpertMode(true);
+                  } else {
+                    if (window.confirm("Switching to Standard Mode will attempt to parse your changes into parts. Complex structures may be preserved as a single part. Continue?")) {
+                      const newParts = parseMultiPartAbc(expertModeContent);
+                      if (newParts.length > 0) {
+                        setParts(newParts);
+                        setActivePartIndex(0);
+                      }
+                      setExpertMode(false);
+                    }
+                  }
+                }}
+                className={`text-xs px-2 py-1.5 rounded transition-colors font-medium flex items-center gap-1 border ${expertMode
+                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  }`}
               >
-                + {t('editor.parts.new')}
+                {expertMode ? (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                    Standard Mode
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    Expert Mode
+                  </>
+                )}
               </button>
             </div>
 
-            {/* Active Part Config */}
-            <div className="p-4 bg-gray-50 border-b space-y-3">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.name')}</label>
-                  <input
-                    type="text"
-                    value={parts[activePartIndex].name}
-                    onChange={(e) => handlePartNameChange(e.target.value)}
-                    className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-                {parts.length > 1 && (
-                  <button
-                    onClick={() => {
-                      if (confirm(t('editor.parts.deleteConfirm'))) handleRemovePart(activePartIndex);
-                    }}
-                    className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
-                    title="Delete Part"
+            {/* Parts Header with Dropdown - HIDDEN IN EXPERT MODE */}
+            {!expertMode && (
+              <div className="px-4 py-2 bg-gray-50 border-b flex justify-between items-center">
+                <div className="flex items-center gap-3 flex-1">
+                  {/* <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('editor.parts.label')}:</label> */}
+                  <select
+                    value={activePartIndex}
+                    onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
+                    className="flex-1 text-sm border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
                   >
-                    {t('editor.parts.delete')}
-                  </button>
-                )}
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.instrument')}</label>
-                <select
-                  className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  value={parts[activePartIndex].program}
-                  onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
+                    {parts.map((part, idx) => (
+                      <option key={idx} value={idx}>
+                        {part.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleAddPart}
+                  className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
                 >
-                  {INSTRUMENT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
-                  ))}
-                </select>
+                  + {t('editor.parts.new')}
+                </button>
               </div>
-            </div>
+            )}
+
+            {/* Active Part Config - HIDDEN IN EXPERT MODE */}
+            {!expertMode && (
+              <div className="p-4 bg-gray-50 border-b space-y-3">
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.name')}</label>
+                    <input
+                      type="text"
+                      value={parts[activePartIndex].name}
+                      onChange={(e) => handlePartNameChange(e.target.value)}
+                      className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+                  {parts.length > 1 && (
+                    <button
+                      onClick={() => {
+                        if (confirm(t('editor.parts.deleteConfirm'))) handleRemovePart(activePartIndex);
+                      }}
+                      className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                      title="Delete Part"
+                    >
+                      {t('editor.parts.delete')}
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.instrument')}</label>
+                  <select
+                    className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={parts[activePartIndex].program}
+                    onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
+                  >
+                    {INSTRUMENT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
             {/* Source Code Editor - Light Theme */}
             <div className="flex-1 flex flex-col min-h-0 bg-white">
               <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
                 <span>{t('editor.sourceCode.title')}</span>
                 <div className="flex items-center gap-2">
-                  {parts[activePartIndex].program === 0 && !showRawAbc && (
+                  {parts[activePartIndex].program === 0 && !expertMode && (
                     <span className="text-xs normal-case opacity-70 font-normal">{t('editor.sourceCode.pianoMode')}</span>
                   )}
-                  <button
-                    onClick={() => setShowRawAbc(!showRawAbc)}
-                    className={`text-xs px-2 py-1 rounded transition-colors font-medium flex items-center gap-1 ${showRawAbc
-                      ? 'bg-blue-500 text-white hover:bg-blue-600'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    title={showRawAbc ? t('editor.sourceCode.editParts') : t('editor.sourceCode.viewRaw')}
-                  >
-                    {showRawAbc ? (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        {t('editor.actions.edit')}
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        {t('editor.actions.raw')}
-                      </>
-                    )}
-                  </button>
+                  {/* Expert Button Removed from here */}
                 </div>
               </div>
 
-              {showRawAbc ? (
-                // Raw ABC View - Read-only for inspection and copying
+              {expertMode ? (
+                // Expert Mode - Complete Editable Text Editor
                 <div className="flex-1 flex flex-col min-h-0">
-                  <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200 text-xs text-yellow-800">
-                    {t('editor.sourceCode.rawNotice')}
+                  <div className="px-3 py-1 bg-blue-50 border-b border-blue-100 text-[10px] text-blue-600">
+                    Global Expert Mode: Edit the entire ABC score including all voices.
                   </div>
                   <textarea
-                    className="flex-1 w-full p-3 font-mono text-xs bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
-                    value={generateMultiPartAbc(parts)}
-                    readOnly
+                    className="flex-1 w-full p-3 font-mono text-sm bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
+                    value={expertModeContent}
                     spellCheck="false"
+                    onChange={(e) => setExpertModeContent(e.target.value)}
+                    ref={sourceRef}
+                    onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
                     onSelect={(e) => {
                       setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
                     }}
+                    onKeyDown={handleTextareaKeyDown}
                   />
                 </div>
               ) : (

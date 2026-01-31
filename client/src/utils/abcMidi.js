@@ -207,8 +207,155 @@ export const INSTRUMENT_OPTIONS = [
   { value: 73, i18nKey: "score.instruments.flute" },
 ];
 
+
 export const getInstrumentOption = (program) => {
   const n = Number.parseInt(program, 10);
   if (!Number.isFinite(n)) return INSTRUMENT_OPTIONS[0];
   return INSTRUMENT_OPTIONS.find((o) => o.value === n) || INSTRUMENT_OPTIONS[0];
 };
+
+export const parseMultiPartAbc = (abcText) => {
+  if (!abcText) return [];
+
+  const lines = abcText.split(/\r?\n/);
+  const headers = [];
+  const voices = {}; // Map V number to content
+  const voiceNames = {}; // Map V number to name
+  const voicePrograms = {}; // Map V number to program
+  const voiceClefs = {}; // Map V number to clef
+
+  let currentVoice = null;
+  let scoreDirective = null;
+
+  // 1. First pass: Extract headers, score directive, and split content by voice
+  for (const line of lines) {
+    if (/^%%score/.test(line)) {
+      scoreDirective = line;
+      continue;
+    }
+
+    const voiceMatch = line.match(/^V:\s*(\w+)(.*)/);
+    if (voiceMatch) {
+      currentVoice = voiceMatch[1];
+      if (currentVoice.startsWith("V"))
+        currentVoice = currentVoice.substring(1);
+
+      if (!voices[currentVoice]) voices[currentVoice] = [];
+
+      const attrs = voiceMatch[2];
+      const nameMatch = attrs.match(/name="([^"]+)"/);
+      if (nameMatch) voiceNames[currentVoice] = nameMatch[1];
+
+      const clefMatch = attrs.match(/clef=(\w+)/);
+      if (clefMatch) voiceClefs[currentVoice] = clefMatch[1];
+
+      continue;
+    }
+
+    const programMatch = line.match(/^%%MIDI program (\d+)/);
+    if (programMatch && currentVoice) {
+      voicePrograms[currentVoice] = parseInt(programMatch[1], 10);
+      continue;
+    }
+
+    if (currentVoice) {
+      voices[currentVoice].push(line);
+    } else {
+      if (/^[A-Za-z]:/.test(line) || /^%%/.test(line)) {
+        headers.push(line);
+      }
+    }
+  }
+
+  // 2. Parse Score Directive to group parts
+  const parts = [];
+
+  if (scoreDirective) {
+    let content = scoreDirective.replace(/^%%score\s+/, "");
+    let i = 0;
+    while (i < content.length) {
+      if (content[i] === "{") {
+        const end = content.indexOf("}", i);
+        if (end !== -1) {
+          const groupStr = content.substring(i + 1, end);
+          const groupVoices = groupStr
+            .match(/V\d+/g)
+            .map((v) => v.replace("V", ""));
+
+          const primaryVoice = groupVoices[0];
+          let partContent = headers.join("\n") + "\n";
+          let partName = "Untitled";
+          let partProgram = 0;
+
+          groupVoices.forEach((vId, idx) => {
+            const lines = voices[vId] || [];
+            const voiceHead = `V:V${idx + 1} clef=${voiceClefs[vId] || (idx === 0 ? "treble" : "bass")
+              }`;
+            partContent += voiceHead + "\n";
+            partContent += lines.join("\n") + "\n";
+
+            if (voiceNames[vId]) partName = voiceNames[vId];
+            if (voicePrograms[vId] !== undefined)
+              partProgram = voicePrograms[vId];
+          });
+
+          parts.push({
+            name: partName,
+            program: partProgram,
+            content: partContent,
+            voiceId: primaryVoice,
+          });
+
+          i = end + 1;
+        } else {
+          i++;
+        }
+      } else if (content[i].match(/\s/)) {
+        i++;
+      } else {
+        let end = i;
+        while (end < content.length && !/\s/.test(content[end])) end++;
+        const token = content.substring(i, end);
+        const vId = token.replace("V", "");
+
+        if (voices[vId]) {
+          let partContent = headers.join("\n") + "\n";
+          partContent += (voices[vId] || []).join("\n") + "\n";
+
+          parts.push({
+            name: voiceNames[vId] || `Part ${vId}`,
+            program: voicePrograms[vId] || 0,
+            content: partContent,
+            voiceId: vId,
+          });
+        }
+        i = end;
+      }
+    }
+  } else {
+    // Fallback if no score directive
+    const voiceKeys = Object.keys(voices);
+    if (voiceKeys.length === 0) {
+      // Assume single part with provided content
+      parts.push({
+        name: "Main",
+        program: 0,
+        content: abcText,
+        voiceId: "1",
+      });
+    } else {
+      voiceKeys.forEach((vId) => {
+        const partContent =
+          headers.join("\n") + "\n" + (voices[vId] || []).join("\n");
+        parts.push({
+          name: voiceNames[vId] || `Voice ${vId}`,
+          program: voicePrograms[vId] || 0,
+          content: partContent,
+          voiceId: vId,
+        });
+      });
+    }
+  }
+  return parts;
+};
+
