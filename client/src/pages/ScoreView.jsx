@@ -312,13 +312,7 @@ const ScoreView = () => {
     const abc = getEffectiveAbc();
     if (!abc) return;
 
-    // abcjs can generate MIDI data. Since we are using the synth, 
-    // we can get the MIDI data from the synth control or re-parse.
-    // The easiest way to get a standalone MIDI file from ABC is using abcjs.synth.getMidiFile
-    // Note: getMidiFile returns a Uint8Array or similar
-
     try {
-      // We need a visualObj to get midi from
       const dummyEl = document.createElement("div");
       const visualObj = abcjs.renderAbc(dummyEl, abc)[0];
       const midiData = abcjs.synth.getMidiFile(visualObj, { midiInAudio: true });
@@ -334,12 +328,47 @@ const ScoreView = () => {
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error("MIDI download failed", e);
+      alert("Failed to generate MIDI file.");
+    }
+  };
+
+  const handleDownloadAudio = async () => {
+    const abc = getEffectiveAbc();
+    if (!abc) return;
+    setExportingAudio(true);
+    try {
+      const dummyEl = document.createElement("div");
+      const visualObj = abcjs.renderAbc(dummyEl, abc)[0];
+      const audioContext = new (window.OfflineAudioContext || window.AudioContext)(2, 44100 * 600, 44100);
+      const createSynth = new abcjs.synth.CreateSynth();
+      await createSynth.init({
+        visualObj: visualObj,
+        audioContext: audioContext,
+        millisecondsPerMeasure: visualObj.millisecondsPerMeasure()
+      });
+      await createSynth.prime();
+      const buffer = await createSynth.getAudioBuffer();
+      if (!buffer) throw new Error("Could not generate audio buffer");
+      const wavBuffer = audioBufferToWav(buffer);
+      const blob = new Blob([wavBuffer], { type: "audio/wav" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${score.title || "score"}.wav`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
       console.error("Audio download failed", e);
       alert("Audio export failed or is not supported.");
     } finally {
       setExportingAudio(false);
     }
   };
+
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const [exportingAudio, setExportingAudio] = useState(false);
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
