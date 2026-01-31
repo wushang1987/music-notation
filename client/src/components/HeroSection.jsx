@@ -51,7 +51,7 @@ const HeroSection = () => {
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slideUp animation-delay-400">
                         <Link
-                            to="/auth"
+                            to="/create"
                             className="cta-button-primary inline-flex items-center justify-center px-8 py-4 text-lg font-bold rounded-xl"
                         >
                             {t('hero.getStarted')}

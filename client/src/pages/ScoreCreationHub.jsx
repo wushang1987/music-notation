@@ -1,10 +1,32 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Music, FileText, Zap, Shield, ChevronRight } from "lucide-react";
+import api from "../api";
 
 const ScoreCreationHub = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const handleToolClick = async (path) => {
+    try {
+      await api.post("/scores/start-session");
+      navigate(path);
+    } catch (error) {
+      if (error.response && error.response.status === 429) {
+        alert(t("auth.limitReached", "Daily creation limit reached for this IP address. Please register to create more."));
+        navigate("/auth");
+      } else {
+        console.error("Failed to start session:", error);
+        // Navigate anyway if backend fails? No, better block if critical. Or allow if backend is down but not 429?
+        // Let's assume block if error is weird, or just navigate if it's not a limit issue?
+        // Safer to navigate if it's NOT a limit issue to avoid blocking users on server error, 
+        // but for now I'll just alert.
+        if (error.response?.status !== 429) {
+          navigate(path); // Fallback: allow if server error (e.g. 500) to not break UX totally
+        }
+      }
+    }
+  };
 
   const tools = [
     {
@@ -51,7 +73,7 @@ const ScoreCreationHub = () => {
           {tools.map((tool) => (
             <div
               key={tool.id}
-              onClick={() => navigate(tool.path)}
+              onClick={() => handleToolClick(tool.path)}
               className="group relative bg-white rounded-3xl border border-slate-200 p-8 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.98]"
             >
               {/* Background Accent */}

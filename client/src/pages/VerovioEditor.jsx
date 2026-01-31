@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Editor, { useMonaco } from "@monaco-editor/react";
 import api from "../api";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 import VerovioService from "../services/VerovioService";
 import { Save, ArrowLeft, Printer, ZoomIn, ZoomOut, FileCode, Settings, Terminal, Layout } from "lucide-react";
@@ -67,6 +69,7 @@ const VerovioEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useContext(AuthContext);
   const isEdit = !!id;
 
   const {
@@ -121,7 +124,7 @@ const VerovioEditor = () => {
   const renderScore = useCallback((mei) => {
     setRendering(true);
     if (renderTimeoutRef.current) clearTimeout(renderTimeoutRef.current);
-    
+
     renderTimeoutRef.current = setTimeout(() => {
       try {
         const renderedSvg = VerovioService.render(mei, { scale: zoom });
@@ -166,7 +169,7 @@ const VerovioEditor = () => {
       setLoading(false);
       initVerovio(DEFAULT_MEI);
     }
-    
+
     return () => {
       if (renderTimeoutRef.current) clearTimeout(renderTimeoutRef.current);
     };
@@ -293,6 +296,11 @@ const VerovioEditor = () => {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      alert(t("auth.loginRequiredToSave", "You must be logged in to save your music."));
+      navigate("/auth");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -300,7 +308,7 @@ const VerovioEditor = () => {
         .split(",")
         .map((t) => t.trim())
         .filter(Boolean);
-      
+
       const payload = {
         title,
         content,
@@ -405,54 +413,54 @@ const VerovioEditor = () => {
             "h-full border-r border-slate-800/50 flex flex-col bg-slate-950 transition-all duration-500",
             showSource ? "w-1/2" : "w-0 opacity-0 pointer-events-none border-none"
           )}>
-               <div className="h-8 bg-slate-900/50 px-4 flex items-center justify-between border-b border-slate-800/50">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Terminal className="w-3 h-3" />
-                  MEI Source Inspector
-                </span>
-              </div>
-              <Editor
-                height="100%"
-                defaultLanguage="xml"
-                theme="vs-dark"
-                value={content}
-                onChange={(value) => setContent(value || "")}
-                onMount={handleEditorDidMount}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 13,
-                  lineNumbers: "on",
-                  scrollBeyondLastLine: false,
-                  automaticLayout: true,
-                  wordWrap: "on",
-                }}
-              />
+            <div className="h-8 bg-slate-900/50 px-4 flex items-center justify-between border-b border-slate-800/50">
+              <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Terminal className="w-3 h-3" />
+                MEI Source Inspector
+              </span>
+            </div>
+            <Editor
+              height="100%"
+              defaultLanguage="xml"
+              theme="vs-dark"
+              value={content}
+              onChange={(value) => setContent(value || "")}
+              onMount={handleEditorDidMount}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                wordWrap: "on",
+              }}
+            />
           </div>
 
           {/* Canvas Preview Area */}
           <div className={cn("h-full flex flex-col relative overflow-hidden transition-all duration-500", showSource ? "w-1/2" : "w-full")}>
 
-             {/* Toolbar overlay for the canvas */}
-             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/80 backdrop-blur border border-slate-200 p-1.5 rounded-2xl shadow-xl">
-                <div className="flex items-center gap-1 border-r border-slate-200 pr-2 mr-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setZoom(Math.max(10, zoom - 5))}><ZoomOut className="w-4 h-4" /></Button>
-                  <span className="text-[10px] font-bold text-slate-500 w-8 text-center">{zoom}%</span>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setZoom(Math.min(100, zoom + 5))}><ZoomIn className="w-4 h-4" /></Button>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => window.print()}><Printer className="w-4 h-4" /></Button>
+            {/* Toolbar overlay for the canvas */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/80 backdrop-blur border border-slate-200 p-1.5 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-1 border-r border-slate-200 pr-2 mr-1">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setZoom(Math.max(10, zoom - 5))}><ZoomOut className="w-4 h-4" /></Button>
+                <span className="text-[10px] font-bold text-slate-500 w-8 text-center">{zoom}%</span>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => setZoom(Math.min(100, zoom + 5))}><ZoomIn className="w-4 h-4" /></Button>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl" onClick={() => window.print()}><Printer className="w-4 h-4" /></Button>
 
-             </div>
+            </div>
 
-             <ScoreViewer svg={svg} rendering={rendering} onEdit={handleVisualEdit} />
+            <ScoreViewer svg={svg} rendering={rendering} onEdit={handleVisualEdit} />
 
-             
-             <FloatingToolbar onEdit={handleVisualEdit} />
+
+            <FloatingToolbar onEdit={handleVisualEdit} />
           </div>
         </main>
 
         {/* Right Side: Metadata */}
         {showMetadata && (
-          <MetadataPanel 
+          <MetadataPanel
             title={title} setTitle={setTitle}
             isPublic={isPublic} setIsPublic={setIsPublic}
             tagsInput={tagsInput} setTagsInput={setTagsInput}

@@ -9,6 +9,7 @@ const {
   deleteScore,
   toggleLike,
   rateScore,
+  startCreationSession,
 } = require("../controllers/scoreController");
 const { protect, resolveUser } = require("../middleware/authMiddleware");
 const router = express.Router();
@@ -22,5 +23,6 @@ router.put("/:id", protect, updateScore);
 router.delete("/:id", protect, deleteScore);
 router.put("/:id/like", protect, toggleLike);
 router.put("/:id/rate", protect, rateScore);
+router.post("/start-session", resolveUser, startCreationSession);
 
 module.exports = router;

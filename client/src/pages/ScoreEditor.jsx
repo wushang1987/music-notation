@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import abcjs from "abcjs";
 import "abcjs/abcjs-audio.css";
 import api from "../api";
+import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorRibbon from "../components/EditorRibbon";
@@ -23,6 +24,7 @@ import {
 
 const ScoreEditor = () => {
   const { id } = useParams();
+  const { user } = useContext(AuthContext);
   const { t } = useTranslation();
   const isEdit = !!id;
 
@@ -478,6 +480,11 @@ const ScoreEditor = () => {
   );
 
   const handleSave = async () => {
+    if (!user) {
+      alert(t("auth.loginRequiredToSave", "You must be logged in to save your music."));
+      navigate("/auth"); // TODO: Consider persisting state
+      return;
+    }
     try {
       const tags = tagsInput
         .split(",")

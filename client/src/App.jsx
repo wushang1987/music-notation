@@ -127,27 +127,15 @@ const AppContent = () => {
             <Route path="/register" element={<Navigate to="/auth" />} />
             <Route
               path="/create"
-              element={
-                <PrivateRoute>
-                  <ScoreCreationHub />
-                </PrivateRoute>
-              }
+              element={<ScoreCreationHub />}
             />
             <Route
               path="/create/abcjs"
-              element={
-                <PrivateRoute>
-                  <ScoreEditor />
-                </PrivateRoute>
-              }
+              element={<ScoreEditor />}
             />
             <Route
               path="/create/verovio"
-              element={
-                <PrivateRoute>
-                  <VerovioEditor />
-                </PrivateRoute>
-              }
+              element={<VerovioEditor />}
             />
             <Route
               path="/edit/:id"

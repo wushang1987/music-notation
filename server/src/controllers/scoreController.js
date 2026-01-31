@@ -1,4 +1,5 @@
 const Score = require("../models/Score");
+const IpUsage = require("../models/IpUsage");
 const mongoose = require("mongoose");
 
 const parseInstrumentProgram = (value) => {
@@ -109,8 +110,8 @@ const getScores = async (req, res) => {
       req.user && req.user.role === "admin"
         ? {}
         : {
-            $or: [{ isPublic: true }, { owner: req.user ? req.user.id : null }],
-          };
+          $or: [{ isPublic: true }, { owner: req.user ? req.user.id : null }],
+        };
 
     // Add search filtering if provided
     if (search) {
@@ -129,13 +130,13 @@ const getScores = async (req, res) => {
         req.user && req.user.role === "admin"
           ? {}
           : req.user
-          ? {
+            ? {
               $or: [
                 { isPublic: true },
                 { owner: new mongoose.Types.ObjectId(req.user.id) },
               ],
             }
-          : { isPublic: true };
+            : { isPublic: true };
 
       if (search) {
         matchFilter.title = { $regex: search, $options: "i" };
@@ -168,13 +169,13 @@ const getScores = async (req, res) => {
         req.user && req.user.role === "admin"
           ? {}
           : req.user
-          ? {
+            ? {
               $or: [
                 { isPublic: true },
                 { owner: new mongoose.Types.ObjectId(req.user.id) },
               ],
             }
-          : { isPublic: true };
+            : { isPublic: true };
 
       if (search) {
         matchFilter.title = { $regex: search, $options: "i" };
@@ -661,6 +662,43 @@ const getLikedScores = async (req, res) => {
   }
 };
 
+const startCreationSession = async (req, res) => {
+  try {
+    // If user is logged in, always allowed
+    if (req.user) {
+      return res.json({ allowed: true });
+    }
+
+    // Normalize IP
+    let ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (ip && ip.includes(",")) ip = ip.split(",")[0].trim();
+
+    const today = new Date().toISOString().split("T")[0];
+
+    // Atomic update: increment by 1 only if count < 1 (conceptually)
+    // Actually finding first is easier to handle logic
+    let usage = await IpUsage.findOne({ ip, date: today });
+
+    if (usage && usage.count >= 1) {
+      return res.status(429).json({
+        allowed: false,
+        message: "Daily creation limit reached for this IP address."
+      });
+    }
+
+    // Upsert and increment
+    await IpUsage.findOneAndUpdate(
+      { ip, date: today },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true }
+    );
+
+    res.json({ allowed: true });
+  } catch (error) {
+    res.status(500).json({ message: "Error starting creation session", error: error.message });
+  }
+};
+
 module.exports = {
   createScore,
   getScores,
@@ -671,4 +709,5 @@ module.exports = {
   deleteScore,
   toggleLike,
   rateScore,
+  startCreationSession,
 };
