@@ -72,6 +72,7 @@ const ScoreEditor = () => {
   const [streamingAbc, setStreamingAbc] = useState("");
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingReasoning, setStreamingReasoning] = useState("");
 
   const navigate = useNavigate();
 
@@ -90,35 +91,79 @@ const ScoreEditor = () => {
   const generateAiMusic = async (prompt) => {
     setIsAiGenerating(true);
     setStreamingAbc("");
+    setStreamingReasoning("");
+    setIsStreaming(true);
     try {
-      const { data } = await api.post('/ai/generate', { prompt });
-      streamText(data.abc);
+      const baseUrl =
+        window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+          ? "http://localhost:5000/api"
+          : "http://47.110.94.14:5000/api";
+
+      const response = await fetch(`${baseUrl}/ai/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate music");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.replace("data: ", ""));
+              if (data.reasoning) {
+                setStreamingReasoning((prev) => prev + data.reasoning);
+              }
+              if (data.abc) {
+                setStreamingAbc((prev) => prev + data.abc);
+              }
+              if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              // partial json or ignore
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error("AI Generation failed", err);
-      setIsAiGenerating(false);
-      alert(t("ai.generationFailed", "Failed to generate music."));
+      alert(
+        t("ai.generationFailed", "Failed to generate music: " + err.message)
+      );
       setShowAiModal(false);
+    } finally {
+      setIsAiGenerating(false);
+      setIsStreaming(false);
     }
   };
 
-  const streamText = (fullText) => {
-    setIsStreaming(true);
-    let index = 0;
-    const interval = setInterval(() => {
-      setStreamingAbc((prev) => prev + fullText.charAt(index));
-      index++;
-      if (index >= fullText.length) {
-        clearInterval(interval);
-        setIsStreaming(false);
-        setIsAiGenerating(false);
-      }
-    }, 20); // ms per character
-  };
-
   const handleAcceptAi = () => {
-    setExpertModeContent(streamingAbc);
+    let finalAbc = streamingAbc;
+    // Cleanup markdown code blocks if present (sometimes models still include them)
+    finalAbc = finalAbc.replace(/```abc/gi, '').replace(/```/g, '').trim();
+
+    setExpertModeContent(finalAbc);
     setExpertMode(true);
     setShowAiModal(false);
+    setStreamingReasoning(""); // Clear reasoning
+
 
     // Optional: Try to parse into parts for standard mode preview
     try {
@@ -969,11 +1014,33 @@ const ScoreEditor = () => {
               </p>
             </div>
 
-            <div className="flex-1 p-6 overflow-auto bg-gray-900 text-green-400 font-mono text-sm leading-relaxed whitespace-pre-wrap">
-              {streamingAbc}
-              {(isAiGenerating || isStreaming) && (
-                <span className="animate-pulse inline-block w-2 H-4 bg-green-500 ml-1">|</span>
+            <div className="flex-1 p-6 overflow-auto bg-gray-900 flex flex-col gap-4">
+              {streamingReasoning && (
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+                  <div className="text-[10px] text-gray-400 uppercase font-bold mb-2 tracking-wider flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                    AI Reasoning Process
+                  </div>
+                  <div className="text-gray-300 font-sans text-sm italic leading-relaxed whitespace-pre-wrap">
+                    {streamingReasoning}
+                  </div>
+                </div>
               )}
+
+              <div className="flex-1">
+                <div className="text-[10px] text-green-600 uppercase font-bold mb-2 tracking-wider flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  Generated ABC Notation
+                </div>
+                <div className="text-green-400 font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                  {streamingAbc}
+                  {(isAiGenerating || isStreaming) && (
+                    <span className="animate-pulse inline-block w-2 h-4 bg-green-500 ml-1">
+                      |
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="p-4 border-t bg-gray-50 flex justify-end gap-3">
