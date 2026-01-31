@@ -76,6 +76,8 @@ const ScoreEditor = () => {
   const [isAiGenerating, setIsAiGenerating] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingReasoning, setStreamingReasoning] = useState("");
+  const [expertChatInput, setExpertChatInput] = useState("");
+  const [isModifying, setIsModifying] = useState(false);
 
   const navigate = useNavigate();
 
@@ -159,8 +161,19 @@ const ScoreEditor = () => {
 
   const handleAcceptAi = () => {
     let finalAbc = streamingAbc;
-    // Cleanup markdown code blocks if present (sometimes models still include them)
-    finalAbc = finalAbc.replace(/```abc/gi, '').replace(/```/g, '').trim();
+    // Cleanup markdown code blocks and reasoning/text before X:1
+    const extractAbc = (text) => {
+      // 1. Remove markdown blocks
+      let clean = text.replace(/```abc/gi, '').replace(/```/g, '').trim();
+      // 2. Find the start of ABC (X:1 or X:)
+      const xIndex = clean.search(/^X:\s*\d+/m);
+      if (xIndex !== -1) {
+        return clean.slice(xIndex).trim();
+      }
+      return clean;
+    };
+
+    finalAbc = extractAbc(finalAbc);
 
     setExpertModeContent(finalAbc);
     setExpertMode(true);
@@ -173,6 +186,87 @@ const ScoreEditor = () => {
       const parsed = parseMultiPartAbc(streamingAbc);
       if (parsed.length > 0) setParts(parsed);
     } catch (e) { console.warn("Could not parse AI content into parts", e); }
+  };
+
+  const handleModifyMusic = async (e) => {
+    if (e) e.preventDefault();
+    if (!expertChatInput.trim() || isModifying) return;
+
+    setIsModifying(true);
+    setStreamingReasoning("");
+    const prompt = expertChatInput;
+    setExpertChatInput("");
+
+    try {
+      const baseUrl =
+        window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1"
+          ? "http://localhost:5000/api"
+          : "http://47.110.94.14:5000/api";
+
+      const response = await fetch(`${baseUrl}/ai/modify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ prompt, currentAbc: expertModeContent }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to modify music");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullAbc = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.replace("data: ", ""));
+              if (data.reasoning) {
+                setStreamingReasoning((prev) => prev + data.reasoning);
+              }
+              if (data.abc) {
+                fullAbc += data.abc;
+                // Cleanup markdown code blocks and reasoning/text before X:1
+                const extractAbc = (text) => {
+                  let clean = text.replace(/```abc/gi, '').replace(/```/g, '').trim();
+                  const xIndex = clean.search(/^X:\s*\d+/m);
+                  if (xIndex !== -1) {
+                    return clean.slice(xIndex).trim();
+                  }
+                  return clean;
+                };
+
+                const cleanAbc = extractAbc(fullAbc);
+                setExpertModeContent(cleanAbc);
+              }
+              if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              // partial json or ignore
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("AI Modification failed", err);
+      alert(
+        t("ai.modificationFailed", "Failed to modify music: " + err.message)
+      );
+    } finally {
+      setIsModifying(false);
+    }
   };
 
   // --- Data Fetching ---
@@ -1054,6 +1148,68 @@ const ScoreEditor = () => {
                     }}
                     onKeyDown={handleTextareaKeyDown}
                   />
+
+                  {/* AI Dialogue Box for Expert Mode - Enhanced Style */}
+                  <div className="bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 p-4 shrink-0 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-10">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                        </div>
+                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">{t("ai.assistantName", "AI Music Assistant")}</span>
+                      </div>
+                      {isModifying && (
+                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-[10px] text-indigo-600 font-medium animate-pulse">
+                          <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+                          {t("ai.processing", "Composing...")}
+                        </div>
+                      )}
+                    </div>
+
+                    {streamingReasoning && (
+                      <div className="mb-4 bg-indigo-50/50 border border-indigo-100/50 rounded-xl p-3 text-[11px] text-indigo-900/80 leading-relaxed backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-500 max-h-32 overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center gap-2 mb-2 font-bold uppercase tracking-wider text-[9px] text-indigo-500/80">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9l-.707.707M12 18v1m4.243-4.243l.707.707" /></svg>
+                          Process reasoning
+                        </div>
+                        {streamingReasoning}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleModifyMusic} className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
+                      <div className="relative flex gap-2 overflow-hidden bg-white rounded-full border border-gray-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all duration-300">
+                        <input
+                          type="text"
+                          value={expertChatInput}
+                          onChange={(e) => setExpertChatInput(e.target.value)}
+                          placeholder={t("ai.modifyPlaceholderShort", "Instruction AI: 'Transpose +1 octave', 'Modify tempo'...")}
+                          className="flex-1 text-sm border-none bg-transparent pl-5 pr-12 py-3 focus:ring-0 placeholder-gray-400"
+                          disabled={isModifying}
+                        />
+                        <button
+                          type="submit"
+                          disabled={!expertChatInput.trim() || isModifying}
+                          className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-300 active:scale-95 flex items-center justify-center shadow-sm hover:shadow-md"
+                          title="Apply Changes"
+                        >
+                          {isModifying ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">{t("common.apply", "Apply")}</span>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                    <p className="mt-2 text-[10px] text-gray-400 text-center italic">
+                      Powered by DeepSeek AI Composer
+                    </p>
+                  </div>
                 </div>
               ) : (
                 // Normal Part Editing View

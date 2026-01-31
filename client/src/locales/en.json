@@ -121,7 +121,12 @@
         "desc": "Listen, refine, and save your masterpiece."
       },
       "placeholder": "Describe the music you want to create (e.g. 'A melancholic violin melody in D minor')...",
-      "button": "Generate"
+      "button": "Generate",
+      "modifyPlaceholder": "Ask AI to modify this score (e.g., 'transpose up an octave', 'add more parts')...",
+      "modifyPlaceholderShort": "Instruction AI: 'Transpose +1 octave', 'Modify tempo'...",
+      "assistantName": "AI Music Assistant",
+      "processing": "Composing...",
+      "modificationFailed": "Failed to modify music: {{error}}"
     }
   },
   "pagination": {

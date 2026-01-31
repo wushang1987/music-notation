@@ -121,7 +121,12 @@
         "desc": "收听、完善并保存您的杰作。"
       },
       "placeholder": "描述您想创作的音乐（例如：'D小调忧郁的小提琴旋律'）...",
-      "button": "生成"
+      "button": "生成",
+      "modifyPlaceholder": "让 AI 修改乐谱 (例如：'升高一个八度', '增加更多声部')...",
+      "modifyPlaceholderShort": "指令 AI: '升高一个八度', '修改节奏'...",
+      "assistantName": "AI 音乐助手",
+      "processing": "正在创作...",
+      "modificationFailed": "修改音乐失败: {{error}}"
     }
   },
   "pagination": {
