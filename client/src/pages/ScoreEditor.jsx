@@ -5,6 +5,7 @@ import "abcjs/abcjs-audio.css";
 import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorRibbon from "../components/EditorRibbon";
 import {
@@ -111,7 +112,7 @@ const ScoreEditor = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, language: i18n.language }),
       });
 
       if (!response.ok) {
@@ -210,7 +211,7 @@ const ScoreEditor = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({ prompt, currentAbc: expertModeContent }),
+        body: JSON.stringify({ prompt, currentAbc: expertModeContent, language: i18n.language }),
       });
 
       if (!response.ok) {
