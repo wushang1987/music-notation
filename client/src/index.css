@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html, body, #root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -7,7 +11,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
+  /* Allow body scrolling: use a single, top-level scrollbar */
+} 
 
 .highlight {
   fill: #f936f9 !important;

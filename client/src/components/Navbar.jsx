@@ -48,7 +48,7 @@ const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
   }, []);
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50 shadow-sm isolate">
+    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6 py-3 flex flex-row justify-between items-center gap-3 w-full max-w-none">
         <div className="flex items-center gap-3 shrink-0">
           {user && onOpenSidebar && useHamburgerNav ? (

@@ -9,6 +9,7 @@ import { AuthProvider, AuthContext } from "./context/AuthContext";
 import { useContext, useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -18,8 +19,6 @@ import ScoreEditor from "./pages/ScoreEditor";
 import VerovioEditor from "./pages/VerovioEditor";
 import ScoreEditorWrapper from "./components/ScoreEditorWrapper";
 import ScoreView from "./pages/ScoreView";
-
-
 
 import Albums from "./pages/Albums";
 import AlbumEditor from "./pages/AlbumEditor";
@@ -49,14 +48,15 @@ const AppContent = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [useHamburgerNav, setUseHamburgerNav] = useState(false);
   const isAuthPage =
-    ["/auth", "/login", "/register", "/forgot-password"].includes(location.pathname) ||
+    ["/auth", "/login", "/register", "/forgot-password"].includes(
+      location.pathname,
+    ) ||
     location.pathname.startsWith("/verify/") ||
     location.pathname.startsWith("/reset-password/");
 
   const isEditorPage =
     location.pathname.startsWith("/create") ||
     location.pathname.startsWith("/edit/");
-
 
   useEffect(() => {
     document.title = t("brand.name");
@@ -74,7 +74,7 @@ const AppContent = () => {
     // - small screens (portrait/any)
     // - small-device landscape (avoid desktop-style sidebar on phones/tablets in landscape)
     const mediaQuery = window.matchMedia(
-      "(max-width: 767px), (orientation: landscape) and (max-width: 1024px) and (max-height: 600px)"
+      "(max-width: 767px), (orientation: landscape) and (max-width: 1024px) and (max-height: 600px)",
     );
 
     const handleChange = () => {
@@ -95,14 +95,14 @@ const AppContent = () => {
   }, []);
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {!isAuthPage && !isEditorPage && (
         <Navbar
           onOpenSidebar={user ? () => setSidebarOpen(true) : undefined}
           useHamburgerNav={useHamburgerNav}
         />
       )}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         {!isAuthPage && !isEditorPage && user && (
           <Sidebar
             isOpen={sidebarOpen}
@@ -111,8 +111,9 @@ const AppContent = () => {
           />
         )}
         <main
-          className={`flex-1 overflow-y-auto bg-white ${!isAuthPage && !isEditorPage ? "shadow-inner" : ""
-            }`}
+          className={`flex-1 bg-white ${
+            !isAuthPage && !isEditorPage ? "shadow-inner" : ""
+          }`}
         >
           <Routes>
             <Route
@@ -125,18 +126,9 @@ const AppContent = () => {
             <Route path="/verify/:token" element={<VerifyEmail />} />
             <Route path="/login" element={<Navigate to="/auth" />} />
             <Route path="/register" element={<Navigate to="/auth" />} />
-            <Route
-              path="/create"
-              element={<ScoreCreationHub />}
-            />
-            <Route
-              path="/create/abcjs"
-              element={<ScoreEditor />}
-            />
-            <Route
-              path="/create/verovio"
-              element={<VerovioEditor />}
-            />
+            <Route path="/create" element={<ScoreCreationHub />} />
+            <Route path="/create/abcjs" element={<ScoreEditor />} />
+            <Route path="/create/verovio" element={<VerovioEditor />} />
             <Route
               path="/edit/:id"
               element={
@@ -145,7 +137,6 @@ const AppContent = () => {
                 </PrivateRoute>
               }
             />
-
 
             <Route
               path="/created"
@@ -195,6 +186,7 @@ const AppContent = () => {
           </Routes>
         </main>
       </div>
+      {!isAuthPage && !isEditorPage && <Footer />}
     </div>
   );
 };
