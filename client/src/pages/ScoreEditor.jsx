@@ -6,6 +6,7 @@ import api from "../api";
 import { AuthContext } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n";
+import useIsMobile from "../hooks/useIsMobile";
 import VirtualPiano, { NOTES } from "../components/VirtualPiano";
 import EditorRibbon from "../components/EditorRibbon";
 import {
@@ -79,6 +80,11 @@ const ScoreEditor = () => {
   const [streamingReasoning, setStreamingReasoning] = useState("");
   const [expertChatInput, setExpertChatInput] = useState("");
   const [isModifying, setIsModifying] = useState(false);
+
+  // Mobile responsiveness
+  const isMobile = useIsMobile();
+  const [showRightPanelMobile, setShowRightPanelMobile] = useState(false);
+  const [showPianoMobile, setShowPianoMobile] = useState(false);
 
   const navigate = useNavigate();
 
@@ -431,7 +437,9 @@ const ScoreEditor = () => {
           },
         };
 
-        synthControl.load("#audio", cursorControl, {
+        // Use different audio div based on mobile state
+        const audioSelector = isMobile ? "#audio-mobile" : "#audio";
+        synthControl.load(audioSelector, cursorControl, {
           displayLoop: true,
           displayRestart: true,
           displayPlay: true,
@@ -449,14 +457,14 @@ const ScoreEditor = () => {
             console.warn("Audio problem:", error);
           });
       } else {
-        const audioEl = document.querySelector("#audio");
+        const audioEl = document.querySelector(isMobile ? "#audio-mobile" : "#audio");
         if (audioEl)
           audioEl.innerHTML = `<div class='text-red-500'>${t(
             "score.notSupported"
           )}</div>`;
       }
     }
-  }, [parts, loading, selection, expertMode, expertModeContent]); // Re-render on parts change
+  }, [parts, loading, selection, expertMode, expertModeContent, isMobile]); // Re-render on parts change or mobile state change
 
   // --- Modification Handlers ---
   const handleDurationChange = (newDuration) => {
@@ -868,82 +876,100 @@ const ScoreEditor = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50 text-slate-800">
-      {/* Header */}
-      <div className="bg-white border-b px-4 h-14 flex justify-between items-center shadow-sm z-30 no-print">
-        <div className="flex gap-4 items-center flex-1">
-          <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-800">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </button>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border-none text-lg font-bold bg-transparent focus:ring-0 placeholder-gray-400"
-            placeholder="Untitled Score"
-          />
-          <div id="audio" className="flex-1 max-w-md ml-4"></div>
-        </div>
-        <div className="flex gap-3">
-          {/* Download Dropdown */}
-          <div className="relative no-print">
-            <button
-              onClick={() => setShowDownloadMenu(!showDownloadMenu)}
-              className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-gray-200 shadow-sm"
-              title={t("common.download") || "Download"}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              {t("common.download") || "Download"}
-              <svg className={`w-3.5 h-3.5 transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+      {/* Header - Mobile Optimized */}
+      <div className="bg-white border-b shadow-sm z-30 no-print">
+        {/* Standard Header Row */}
+        <div className="px-4 h-14 flex justify-between items-center">
+          <div className="flex gap-2 md:gap-4 items-center flex-1">
+            <button onClick={() => navigate('/')} className="text-gray-500 hover:text-gray-800">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
             </button>
 
-            {showDownloadMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                <button
-                  onClick={() => { handleDownloadAbc(); setShowDownloadMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                  ABC Notation (.abc)
-                </button>
-                <button
-                  onClick={() => { handleDownloadMidi(); setShowDownloadMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
-                  MIDI File (.mid)
-                </button>
-                <button
-                  onClick={() => { handleDownloadAudio(); setShowDownloadMenu(false); }}
-                  disabled={exportingAudio}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-                >
-                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
-                  {exportingAudio ? "Exporting..." : "Audio File (.wav)"}
-                </button>
-              </div>
+            {/* Mobile Toggle Buttons (Only on Mobile) */}
+            {isMobile && expertMode && (
+              <button
+                onClick={() => setShowRightPanelMobile(!showRightPanelMobile)}
+                className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                title="Toggle Source Panel"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </button>
             )}
-          </div>
 
-          <button
-            onClick={() => window.print()}
-            className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-            {t("common.print") || "Print"}
-          </button>
-          <button
-            onClick={handleSave}
-            className="bg-blue-600 text-white px-5 py-1.5 rounded-full font-medium text-sm hover:bg-blue-700 shadow-md transition-all active:scale-95"
-          >
-            {t("common.save")}
-          </button>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="border-none text-sm md:text-lg font-bold bg-transparent focus:ring-0 placeholder-gray-400 flex-1 min-w-0"
+              placeholder="Untitled Score"
+            />
+            {/* Audio player on desktop */}
+            <div id="audio" className="hidden md:flex flex-1 max-w-md ml-4"></div>
+          </div>
+          <div className="flex gap-1 md:gap-3">
+            {/* Simplified buttons on mobile */}
+            <div className="relative no-print hidden md:block">
+              <button
+                onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                className="text-gray-600 hover:bg-gray-100 px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-gray-200 shadow-sm"
+                title={t("common.download") || "Download"}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                {t("common.download") || "Download"}
+                <svg className={`w-3.5 h-3.5 transition-transform ${showDownloadMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              </button>
+
+              {showDownloadMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <button
+                    onClick={() => { handleDownloadAbc(); setShowDownloadMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    ABC Notation (.abc)
+                  </button>
+                  <button
+                    onClick={() => { handleDownloadMidi(); setShowDownloadMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                    MIDI File (.mid)
+                  </button>
+                  <button
+                    onClick={() => { handleDownloadAudio(); setShowDownloadMenu(false); }}
+                    disabled={exportingAudio}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
+                    {exportingAudio ? "Exporting..." : "Audio File (.wav)"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleSave}
+              className="bg-blue-600 text-white px-3 md:px-5 py-1.5 rounded-full font-medium text-sm hover:bg-blue-700 shadow-md transition-all active:scale-95"
+            >
+              {t("common.save")}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Audio Player - Centered at Top (Only on Mobile) */}
+        {isMobile && (
+          <div className="px-4 py-2 border-t bg-gray-50 flex justify-center">
+            <div id="audio-mobile" className="w-full max-w-lg"></div>
+          </div>
+        )}
       </div>
 
-      {/* Ribbon Toolbar */}
-      <div className="shrink-0 z-20 no-print">
+      {/* Ribbon Toolbar - Hidden on Mobile */}
+      <div className="hidden md:block shrink-0 z-20 no-print">
         <EditorRibbon
           onDurationChange={handleDurationChange}
           onAccidentalChange={handleAccidentalChange}
@@ -965,10 +991,10 @@ const ScoreEditor = () => {
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* Center Canvas */}
-        <div className="flex-1 bg-gray-100 overflow-auto p-8 flex flex-col items-center shadow-inner">
+        <div className={`flex-1 bg-gray-100 overflow-auto ${isMobile ? 'p-2' : 'p-8'} flex flex-col items-center shadow-inner`}>
           <div
             id="paper-container"
-            className="w-full max-w-[850px] flex flex-col gap-8 pb-32 transition-all duration-300"
+            className={`w-full ${isMobile ? 'max-w-full' : 'max-w-[850px]'} flex flex-col gap-8 pb-32 transition-all duration-300`}
           ></div>
           {/* Staging area */}
           <div
@@ -977,290 +1003,186 @@ const ScoreEditor = () => {
           ></div>
         </div>
 
-        {/* Right Source Panel - Resizable */}
-        <div
-          className="bg-white border-l shadow-xl z-20 flex no-print relative"
-          style={{ width: `${sidebarWidth}px`, minWidth: '280px', maxWidth: '600px' }}
-        >
-          {/* Resize Handle */}
+        {/* Right Source Panel - Hidden on Mobile by Default */}
+        {(!isMobile || (isMobile && showRightPanelMobile)) && (
           <div
-            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors z-30 group"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              const startX = e.clientX;
-              const startWidth = sidebarWidth;
-
-              const handleMouseMove = (moveEvent) => {
-                const delta = startX - moveEvent.clientX;
-                const newWidth = Math.min(Math.max(startWidth + delta, 280), 600);
-                setSidebarWidth(newWidth);
-              };
-
-              const handleMouseUp = () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-              };
-
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('mouseup', handleMouseUp);
-            }}
+            className={`bg-white border-l shadow-xl z-20 flex no-print relative ${isMobile ? 'fixed inset-y-0 right-0 w-full max-w-sm' : ''
+              }`}
+            style={!isMobile ? { width: `${sidebarWidth}px`, minWidth: '280px', maxWidth: '600px' } : {}}
           >
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-blue-400 rounded-r transition-colors"></div>
-          </div>
+            {/* Resize Handle */}
+            <div
+              className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400 active:bg-blue-500 transition-colors z-30 group"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const startX = e.clientX;
+                const startWidth = sidebarWidth;
 
-          <div className="flex-1 flex flex-col font-sans ml-1">
-            {/* Sidebar Header with Mode Toggle */}
-            <div className="px-4 py-3 bg-gray-100 border-b flex justify-between items-center shadow-sm z-10">
-              <span className="font-bold text-gray-700 text-sm">
-                {expertMode ? "Global Editor" : t('editor.parts.label')}
-              </span>
-              <button
-                onClick={() => {
-                  if (!expertMode) {
-                    setExpertModeContent(generateMultiPartAbc(parts));
-                    setExpertMode(true);
-                  } else {
-                    if (window.confirm("Switching to Standard Mode will attempt to parse your changes into parts. Complex structures may be preserved as a single part. Continue?")) {
-                      const newParts = parseMultiPartAbc(expertModeContent);
-                      if (newParts.length > 0) {
-                        setParts(newParts);
-                        setActivePartIndex(0);
-                      }
-                      setExpertMode(false);
-                    }
-                  }
-                }}
-                className={`text-xs px-2 py-1.5 rounded transition-colors font-medium flex items-center gap-1 border ${expertMode
-                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
-                  }`}
-              >
-                {expertMode ? (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    Standard Mode
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
-                    Expert Mode
-                  </>
-                )}
-              </button>
+                const handleMouseMove = (moveEvent) => {
+                  const delta = startX - moveEvent.clientX;
+                  const newWidth = Math.min(Math.max(startWidth + delta, 280), 600);
+                  setSidebarWidth(newWidth);
+                };
+
+                const handleMouseUp = () => {
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+              }}
+            >
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-gray-300 group-hover:bg-blue-400 rounded-r transition-colors"></div>
             </div>
 
-            {/* Parts Header with Dropdown - HIDDEN IN EXPERT MODE */}
-            {!expertMode && (
-              <div className="px-4 py-2 bg-gray-50 border-b flex justify-between items-center">
-                <div className="flex items-center gap-3 flex-1">
-                  {/* <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('editor.parts.label')}:</label> */}
-                  <select
-                    value={activePartIndex}
-                    onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
-                    className="flex-1 text-sm border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
-                  >
-                    {parts.map((part, idx) => (
-                      <option key={idx} value={idx}>
-                        {part.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  onClick={handleAddPart}
-                  className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
-                >
-                  + {t('editor.parts.new')}
-                </button>
-              </div>
-            )}
-
-            {/* Active Part Config - HIDDEN IN EXPERT MODE */}
-            {!expertMode && (
-              <div className="p-4 bg-gray-50 border-b space-y-3">
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.name')}</label>
-                    <input
-                      type="text"
-                      value={parts[activePartIndex].name}
-                      onChange={(e) => handlePartNameChange(e.target.value)}
-                      className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                  {parts.length > 1 && (
+            <div className="flex-1 flex flex-col font-sans ml-1">
+              {/* Sidebar Header with Mode Toggle */}
+              <div className="px-4 py-3 bg-gray-100 border-b flex justify-between items-center shadow-sm z-10">
+                <div className="flex items-center gap-2">
+                  {isMobile && (
                     <button
-                      onClick={() => {
-                        if (confirm(t('editor.parts.deleteConfirm'))) handleRemovePart(activePartIndex);
-                      }}
-                      className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
-                      title="Delete Part"
+                      onClick={() => setShowRightPanelMobile(false)}
+                      className="text-gray-500 hover:text-gray-800 p-1"
+                      title="Close Panel"
                     >
-                      {t('editor.parts.delete')}
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   )}
+                  <span className="font-bold text-gray-700 text-sm">
+                    {expertMode ? "Global Editor" : t('editor.parts.label')}
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.instrument')}</label>
-                  <select
-                    className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    value={parts[activePartIndex].program}
-                    onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
-                  >
-                    {INSTRUMENT_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {/* Source Code Editor - Light Theme */}
-            <div className="flex-1 flex flex-col min-h-0 bg-white">
-              <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
-                <span>{t('editor.sourceCode.title')}</span>
-                <div className="flex items-center gap-2">
-                  {parts[activePartIndex].program === 0 && !expertMode && (
-                    <span className="text-xs normal-case opacity-70 font-normal">{t('editor.sourceCode.pianoMode')}</span>
-                  )}
-                  {/* Expert Button Removed from here */}
-                </div>
-              </div>
-
-              {expertMode ? (
-                // Expert Mode - Complete Editable Text Editor
-                <div className="flex-1 flex flex-col min-h-0">
-                  <div className="px-3 py-1 bg-blue-50 border-b border-blue-100 text-[10px] text-blue-600">
-                    Global Expert Mode: Edit the entire ABC score including all voices.
-                  </div>
-                  <textarea
-                    className="flex-1 w-full p-3 font-mono text-sm bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
-                    value={expertModeContent}
-                    spellCheck="false"
-                    onChange={(e) => setExpertModeContent(e.target.value)}
-                    ref={sourceRef}
-                    onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                    onSelect={(e) => {
-                      setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
-                    }}
-                    onKeyDown={handleTextareaKeyDown}
-                  />
-
-                  {/* AI Dialogue Box for Expert Mode - Enhanced Style */}
-                  <div className="bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 p-4 shrink-0 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-10">
-                    <div className="flex items-center justify-between mb-3 px-1">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
-                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                        </div>
-                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">{t("ai.assistantName", "AI Music Assistant")}</span>
-                      </div>
-                      {isModifying && (
-                        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-[10px] text-indigo-600 font-medium animate-pulse">
-                          <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
-                          {t("ai.processing", "Composing...")}
-                        </div>
-                      )}
-                    </div>
-
-                    {streamingReasoning && (
-                      <div className="mb-4 bg-indigo-50/50 border border-indigo-100/50 rounded-xl p-3 text-[11px] text-indigo-900/80 leading-relaxed backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-500 max-h-32 overflow-y-auto custom-scrollbar">
-                        <div className="flex items-center gap-2 mb-2 font-bold uppercase tracking-wider text-[9px] text-indigo-500/80">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9l-.707.707M12 18v1m4.243-4.243l.707.707" /></svg>
-                          Process reasoning
-                        </div>
-                        {streamingReasoning}
-                      </div>
-                    )}
-
-                    <form onSubmit={handleModifyMusic} className="relative group">
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
-                      <div className="relative flex gap-2 overflow-hidden bg-white rounded-full border border-gray-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all duration-300">
-                        <input
-                          type="text"
-                          value={expertChatInput}
-                          onChange={(e) => setExpertChatInput(e.target.value)}
-                          placeholder={t("ai.modifyPlaceholderShort", "Instruction AI: 'Transpose +1 octave', 'Modify tempo'...")}
-                          className="flex-1 text-sm border-none bg-transparent pl-5 pr-12 py-3 focus:ring-0 placeholder-gray-400"
-                          disabled={isModifying}
-                        />
-                        <button
-                          type="submit"
-                          disabled={!expertChatInput.trim() || isModifying}
-                          className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-300 active:scale-95 flex items-center justify-center shadow-sm hover:shadow-md"
-                          title="Apply Changes"
-                        >
-                          {isModifying ? (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          ) : (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">{t("common.apply", "Apply")}</span>
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                            </div>
-                          )}
-                        </button>
-                      </div>
-                    </form>
-                    <p className="mt-2 text-[10px] text-gray-400 text-center italic">
-                      Powered by DeepSeek AI Composer
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                // Normal Part Editing View
-                <>
-                  {parts[activePartIndex].program === 0 ? (
-                    (() => {
-                      const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
-                      return (
-                        <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
-                          {/* Right Hand */}
-                          <div className="flex-1 flex flex-col relative group">
-                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.treble')}</div>
-                            <textarea
-                              className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                              value={rightHand}
-                              spellCheck="false"
-                              onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
-                              onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
-                              onSelect={(e) => {
-                                setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
-                              }}
-                              ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
-                              onKeyDown={handleTextareaKeyDown}
-                            />
-                          </div>
-                          {/* Left Hand */}
-                          <div className="flex-1 flex flex-col relative group">
-                            <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.bass')}</div>
-                            <textarea
-                              className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                              value={leftHand}
-                              spellCheck="false"
-                              onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
-                              onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
-                              onSelect={(e) => {
-                                setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
-                              }}
-                              ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
-                              onKeyDown={handleTextareaKeyDown}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()
+                <button
+                  onClick={() => {
+                    if (!expertMode) {
+                      setExpertModeContent(generateMultiPartAbc(parts));
+                      setExpertMode(true);
+                    } else {
+                      if (window.confirm("Switching to Standard Mode will attempt to parse your changes into parts. Complex structures may be preserved as a single part. Continue?")) {
+                        const newParts = parseMultiPartAbc(expertModeContent);
+                        if (newParts.length > 0) {
+                          setParts(newParts);
+                          setActivePartIndex(0);
+                        }
+                        setExpertMode(false);
+                      }
+                    }
+                  }}
+                  className={`text-xs px-2 py-1.5 rounded transition-colors font-medium flex items-center gap-1 border ${expertMode
+                    ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                    : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                >
+                  {expertMode ? (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                      </svg>
+                      Standard Mode
+                    </>
                   ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                      Expert Mode
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Parts Header with Dropdown - HIDDEN IN EXPERT MODE */}
+              {!expertMode && (
+                <div className="px-4 py-2 bg-gray-50 border-b flex justify-between items-center">
+                  <div className="flex items-center gap-3 flex-1">
+                    {/* <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('editor.parts.label')}:</label> */}
+                    <select
+                      value={activePartIndex}
+                      onChange={(e) => setActivePartIndex(parseInt(e.target.value))}
+                      className="flex-1 text-sm border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+                    >
+                      {parts.map((part, idx) => (
+                        <option key={idx} value={idx}>
+                          {part.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    onClick={handleAddPart}
+                    className="text-xs bg-gray-200 hover:bg-blue-500 hover:text-white text-gray-700 px-2 py-1.5 rounded transition-colors whitespace-nowrap ml-2 font-medium"
+                  >
+                    + {t('editor.parts.new')}
+                  </button>
+                </div>
+              )}
+
+              {/* Active Part Config - HIDDEN IN EXPERT MODE */}
+              {!expertMode && (
+                <div className="p-4 bg-gray-50 border-b space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.name')}</label>
+                      <input
+                        type="text"
+                        value={parts[activePartIndex].name}
+                        onChange={(e) => handlePartNameChange(e.target.value)}
+                        className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    {parts.length > 1 && (
+                      <button
+                        onClick={() => {
+                          if (confirm(t('editor.parts.deleteConfirm'))) handleRemovePart(activePartIndex);
+                        }}
+                        className="self-end text-red-600 hover:bg-red-500 hover:text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                        title="Delete Part"
+                      >
+                        {t('editor.parts.delete')}
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">{t('editor.parts.instrument')}</label>
+                    <select
+                      className="w-full border-gray-300 rounded text-sm px-2 py-1 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      value={parts[activePartIndex].program}
+                      onChange={(e) => handlePartProgramChange(parseInt(e.target.value))}
+                    >
+                      {INSTRUMENT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{t(opt.i18nKey)}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Source Code Editor - Light Theme */}
+              <div className="flex-1 flex flex-col min-h-0 bg-white">
+                <div className="px-4 py-2 bg-gray-100 text-[10px] font-bold text-gray-500 uppercase border-b border-gray-200 flex justify-between items-center">
+                  <span>{t('editor.sourceCode.title')}</span>
+                  <div className="flex items-center gap-2">
+                    {parts[activePartIndex].program === 0 && !expertMode && (
+                      <span className="text-xs normal-case opacity-70 font-normal">{t('editor.sourceCode.pianoMode')}</span>
+                    )}
+                    {/* Expert Button Removed from here */}
+                  </div>
+                </div>
+
+                {expertMode ? (
+                  // Expert Mode - Complete Editable Text Editor
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="px-3 py-1 bg-blue-50 border-b border-blue-100 text-[10px] text-blue-600">
+                      Global Expert Mode: Edit the entire ABC score including all voices.
+                    </div>
                     <textarea
-                      className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
-                      value={parts[activePartIndex].content}
+                      className="flex-1 w-full p-3 font-mono text-sm bg-gray-50 text-gray-800 resize-none focus:outline-none border-0"
+                      value={expertModeContent}
                       spellCheck="false"
-                      onChange={(e) => updateActivePartContent(e.target.value)}
+                      onChange={(e) => setExpertModeContent(e.target.value)}
                       ref={sourceRef}
                       onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
                       onSelect={(e) => {
@@ -1268,32 +1190,202 @@ const ScoreEditor = () => {
                       }}
                       onKeyDown={handleTextareaKeyDown}
                     />
-                  )}
-                </>
-              )}
-            </div>
 
-            <div className="p-2 bg-gray-50 border-t flex gap-2 overflow-x-auto no-scrollbar">
-              <button onClick={insertLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertLine')}</button>
-              <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertBar')}</button>
-              <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
-                <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
-                <span>{t('editor.actions.typeAbc')}</span>
-              </label>
+                    {/* AI Dialogue Box for Expert Mode - Enhanced Style */}
+                    <div className="bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 p-4 shrink-0 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-10">
+                      <div className="flex items-center justify-between mb-3 px-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">{t("ai.assistantName", "AI Music Assistant")}</span>
+                        </div>
+                        {isModifying && (
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-[10px] text-indigo-600 font-medium animate-pulse">
+                            <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+                            {t("ai.processing", "Composing...")}
+                          </div>
+                        )}
+                      </div>
+
+                      {streamingReasoning && (
+                        <div className="mb-4 bg-indigo-50/50 border border-indigo-100/50 rounded-xl p-3 text-[11px] text-indigo-900/80 leading-relaxed backdrop-blur-sm animate-in fade-in slide-in-from-bottom-2 duration-500 max-h-32 overflow-y-auto custom-scrollbar">
+                          <div className="flex items-center gap-2 mb-2 font-bold uppercase tracking-wider text-[9px] text-indigo-500/80">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9l-.707.707M12 18v1m4.243-4.243l.707.707" /></svg>
+                            Process reasoning
+                          </div>
+                          {streamingReasoning}
+                        </div>
+                      )}
+
+                      <form onSubmit={handleModifyMusic} className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
+                        <div className="relative flex gap-2 overflow-hidden bg-white rounded-full border border-gray-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all duration-300">
+                          <input
+                            type="text"
+                            value={expertChatInput}
+                            onChange={(e) => setExpertChatInput(e.target.value)}
+                            placeholder={t("ai.modifyPlaceholderShort", "Instruction AI: 'Transpose +1 octave', 'Modify tempo'...")}
+                            className="flex-1 text-sm border-none bg-transparent pl-5 pr-12 py-3 focus:ring-0 placeholder-gray-400"
+                            disabled={isModifying}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!expertChatInput.trim() || isModifying}
+                            className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-300 active:scale-95 flex items-center justify-center shadow-sm hover:shadow-md"
+                            title="Apply Changes"
+                          >
+                            {isModifying ? (
+                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-bold uppercase tracking-wider hidden sm:inline">{t("common.apply", "Apply")}</span>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                              </div>
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                      <p className="mt-2 text-[10px] text-gray-400 text-center italic">
+                        Powered by DeepSeek AI Composer
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // Normal Part Editing View
+                  <>
+                    {parts[activePartIndex].program === 0 ? (
+                      (() => {
+                        const { headers, rightHand, leftHand } = parsePianoAbc(parts[activePartIndex].content);
+                        return (
+                          <div className="flex-1 flex flex-col min-h-0 divide-y divide-gray-200">
+                            {/* Right Hand */}
+                            <div className="flex-1 flex flex-col relative group">
+                              <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.treble')}</div>
+                              <textarea
+                                className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                                value={rightHand}
+                                spellCheck="false"
+                                onChange={(e) => updateActivePartContent(generatePianoAbc(headers, e.target.value, leftHand))}
+                                onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                                onSelect={(e) => {
+                                  setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                                }}
+                                ref={(el) => { if (activeHand === "right") sourceRef.current = el; }}
+                                onKeyDown={handleTextareaKeyDown}
+                              />
+                            </div>
+                            {/* Left Hand */}
+                            <div className="flex-1 flex flex-col relative group">
+                              <div className="absolute top-1 right-2 px-2 py-0.5 text-[9px] bg-blue-50 text-blue-600 rounded opacity-60 group-hover:opacity-100 pointer-events-none font-medium">{t('editor.sourceCode.bass')}</div>
+                              <textarea
+                                className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                                value={leftHand}
+                                spellCheck="false"
+                                onChange={(e) => updateActivePartContent(generatePianoAbc(headers, rightHand, e.target.value))}
+                                onFocus={(e) => { setActiveHand("left"); sourceRef.current = e.target; }}
+                                onSelect={(e) => {
+                                  setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                                }}
+                                ref={(el) => { if (activeHand === "left") sourceRef.current = el; }}
+                                onKeyDown={handleTextareaKeyDown}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <textarea
+                        className="flex-1 w-full p-3 font-mono text-sm bg-white text-gray-800 resize-none focus:outline-none focus:bg-blue-50/30 transition-colors border-0"
+                        value={parts[activePartIndex].content}
+                        spellCheck="false"
+                        onChange={(e) => updateActivePartContent(e.target.value)}
+                        ref={sourceRef}
+                        onFocus={(e) => { setActiveHand("right"); sourceRef.current = e.target; }}
+                        onSelect={(e) => {
+                          setSelection({ start: e.target.selectionStart, end: e.target.selectionEnd });
+                        }}
+                        onKeyDown={handleTextareaKeyDown}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+
+              <div className="p-2 bg-gray-50 border-t flex gap-2 overflow-x-auto no-scrollbar">
+                <button onClick={insertLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertLine')}</button>
+                <button onClick={insertBarLineBreak} className="px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 text-gray-700 whitespace-nowrap font-medium transition-colors">{t('editor.actions.insertBar')}</button>
+                <label className="flex items-center gap-1.5 text-xs text-gray-600 ml-auto whitespace-nowrap px-1 cursor-pointer select-none">
+                  <input type="checkbox" checked={abcTypingEnabled} onChange={(e) => setAbcTypingEnabled(e.target.checked)} />
+                  <span>{t('editor.actions.typeAbc')}</span>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Piano (Fixed Bottom) */}
-      <div className="shrink-0 z-30 no-print">
-        <VirtualPiano
-          initialKeyboardEnabled={true}
-          captureInTextarea={!abcTypingEnabled}
-          onNoteClick={(n) => insertAtSource(n)}
-          onPlayNote={handlePlayNote}
-        />
-      </div>
+      {/* Piano (Fixed Bottom) - Hidden on Mobile */}
+      {!isMobile && (
+        <div className="shrink-0 z-30 no-print">
+          <VirtualPiano
+            initialKeyboardEnabled={true}
+            captureInTextarea={!abcTypingEnabled}
+            onNoteClick={(n) => insertAtSource(n)}
+            onPlayNote={handlePlayNote}
+          />
+        </div>
+      )}
+
+      {/* Mobile AI Chat (Fixed Bottom) - Only shows in Expert Mode on Mobile */}
+      {isMobile && expertMode && (
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200 p-4 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-40">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="text-[11px] font-bold text-gray-700 uppercase tracking-widest">{t("ai.assistantName", "AI Music Assistant")}</span>
+            </div>
+            {isModifying && (
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-50 text-[10px] text-indigo-600 font-medium animate-pulse">
+                <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full"></span>
+                {t("ai.processing", "Composing...")}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleModifyMusic} className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full blur opacity-10 group-focus-within:opacity-25 transition duration-500"></div>
+            <div className="relative flex gap-2 overflow-hidden bg-white rounded-full border border-gray-200 shadow-sm focus-within:border-indigo-400 focus-within:ring-4 focus-within:ring-indigo-50 transition-all duration-300">
+              <input
+                type="text"
+                value={expertChatInput}
+                onChange={(e) => setExpertChatInput(e.target.value)}
+                placeholder={t("ai.modifyPlaceholderShort", "Instruction AI: 'Transpose +1 octave', 'Modify tempo'...")}
+                className="flex-1 text-sm border-none bg-transparent pl-5 pr-12 py-3 focus:ring-0 placeholder-gray-400"
+                disabled={isModifying}
+              />
+              <button
+                type="submit"
+                disabled={!expertChatInput.trim() || isModifying}
+                className="absolute right-1.5 top-1.5 bottom-1.5 px-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-300 active:scale-95 flex items-center justify-center shadow-sm hover:shadow-md"
+                title="Apply Changes"
+              >
+                {isModifying ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       {/* AI Generation Modal */}
       {showAiModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
