@@ -118,7 +118,7 @@ const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
         <div className="flex items-center gap-3 sm:gap-6 flex-nowrap justify-end min-w-0">
           {!user
             ? renderLanguageSelect(
-                "text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                "text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500",
               )
             : null}
           {user ? (
@@ -154,7 +154,7 @@ const Navbar = ({ onOpenSidebar, useHamburgerNav = false }) => {
                   >
                     <div className="px-4 py-2">
                       {renderLanguageSelect(
-                        "w-full text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        "w-full text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500",
                       )}
                     </div>
                     <button
