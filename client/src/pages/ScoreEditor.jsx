@@ -969,7 +969,7 @@ const ScoreEditor = () => {
       </div>
 
       {/* Ribbon Toolbar - Hidden on Mobile */}
-      <div className="hidden md:block shrink-0 z-20 no-print">
+      <div className="hidden md:block shrink-0 z-20 no-print w-full min-w-0">
         <EditorRibbon
           onDurationChange={handleDurationChange}
           onAccidentalChange={handleAccidentalChange}
@@ -991,7 +991,7 @@ const ScoreEditor = () => {
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* Center Canvas */}
-        <div className={`flex-1 bg-gray-100 overflow-auto ${isMobile ? 'p-2' : 'p-8'} flex flex-col items-center shadow-inner`}>
+        <div className={`flex-1 bg-gray-100 overflow-auto relative min-w-0 ${isMobile ? 'p-2' : 'p-8'} flex flex-col items-center shadow-inner`}>
           <div
             id="paper-container"
             className={`w-full ${isMobile ? 'max-w-full' : 'max-w-[850px]'} flex flex-col gap-8 pb-32 transition-all duration-300`}
@@ -1329,7 +1329,7 @@ const ScoreEditor = () => {
 
       {/* Piano (Fixed Bottom) - Hidden on Mobile */}
       {!isMobile && (
-        <div className="shrink-0 z-30 no-print">
+        <div className="shrink-0 z-30 no-print w-full min-w-0">
           <VirtualPiano
             initialKeyboardEnabled={true}
             captureInTextarea={!abcTypingEnabled}

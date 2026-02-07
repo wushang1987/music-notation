@@ -167,7 +167,7 @@ const VirtualPiano = ({
   const [isVisible, setIsVisible] = useState(true);
 
   return (
-    <div className={`virtual-piano flex flex-col items-center bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-gray-200 transition-all duration-300 ${isVisible ? 'h-auto pb-4' : 'h-8 overflow-hidden'}`}>
+    <div className={`virtual-piano flex flex-col items-center bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] border-t border-gray-200 transition-all duration-300 w-full max-w-full overflow-hidden ${isVisible ? 'h-auto pb-4' : 'h-8 overflow-hidden'}`}>
 
       {/* Toggle Header */}
       <div

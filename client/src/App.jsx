@@ -111,9 +111,8 @@ const AppContent = () => {
           />
         )}
         <main
-          className={`flex-1 bg-white ${
-            !isAuthPage && !isEditorPage ? "shadow-inner" : ""
-          }`}
+          className={`flex-1 bg-white w-full min-w-0 ${!isAuthPage && !isEditorPage ? "shadow-inner" : ""
+            }`}
         >
           <Routes>
             <Route
