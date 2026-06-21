@@ -54,6 +54,7 @@ const createAlbum = async (req, res) => {
 
     return res.status(201).json(populated || saved);
   } catch (error) {
+    console.error("Error in createAlbum:", error);
     return res
       .status(500)
       .json({ message: "Error creating album", error: error.message });
@@ -91,6 +92,7 @@ const getAlbums = async (req, res) => {
       totalPages: Math.ceil(total / parseInt(limit)),
     });
   } catch (error) {
+    console.error("Error in getAlbums:", error);
     return res
       .status(500)
       .json({ message: "Error fetching albums", error: error.message });
@@ -125,6 +127,7 @@ const getAlbumById = async (req, res) => {
 
     return res.json(obj);
   } catch (error) {
+    console.error("Error in getAlbumById:", error);
     return res
       .status(500)
       .json({ message: "Error fetching album", error: error.message });
@@ -165,6 +168,7 @@ const updateAlbum = async (req, res) => {
 
     return res.json(populated || saved);
   } catch (error) {
+    console.error("Error in updateAlbum:", error);
     return res
       .status(500)
       .json({ message: "Error updating album", error: error.message });
@@ -185,6 +189,7 @@ const deleteAlbum = async (req, res) => {
     await album.deleteOne();
     return res.json({ message: "Album removed" });
   } catch (error) {
+    console.error("Error in deleteAlbum:", error);
     return res
       .status(500)
       .json({ message: "Error deleting album", error: error.message });
@@ -244,6 +249,7 @@ const addScoreToAlbum = async (req, res) => {
 
     return res.json(obj);
   } catch (error) {
+    console.error("Error in addScoreToAlbum:", error);
     return res
       .status(500)
       .json({ message: "Error adding score to album", error: error.message });
@@ -282,6 +288,7 @@ const removeScoreFromAlbum = async (req, res) => {
 
     return res.json(obj);
   } catch (error) {
+    console.error("Error in removeScoreFromAlbum:", error);
     return res.status(500).json({
       message: "Error removing score from album",
       error: error.message,

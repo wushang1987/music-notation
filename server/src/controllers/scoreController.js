@@ -271,6 +271,7 @@ const getScores = async (req, res) => {
       totalPages: Math.ceil(effectiveTotal / parseInt(limit)),
     });
   } catch (error) {
+    console.error("Error in getScores:", error);
     res
       .status(500)
       .json({ message: "Error fetching scores", error: error.message });
@@ -424,6 +425,7 @@ const getScoreById = async (req, res) => {
 
     return res.json(resultObj);
   } catch (error) {
+    console.error("Error in getScoreById:", error);
     res
       .status(500)
       .json({ message: "Error fetching score", error: error.message });
